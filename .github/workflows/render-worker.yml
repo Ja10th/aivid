@@ -14,12 +14,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Validate worker configuration
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        run: |
+          missing=0
+          for name in DATABASE_URL CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "Missing GitHub Actions secret: $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then exit 1; fi
+          echo "Worker configuration is present."
       - run: npm run worker:once
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
