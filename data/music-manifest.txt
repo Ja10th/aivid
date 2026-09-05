@@ -1,0 +1,38 @@
+playful|Carefree|Carefree.mp3
+playful|Wallpaper|Wallpaper.mp3
+playful|Fluffing a Duck|Fluffing_a_Duck.mp3
+mystery|Sneaky Snitch|Sneaky_Snitch.mp3
+playful|Monkeys Spinning Monkeys|Monkeys_Spinning_Monkeys.mp3
+mystery|Investigations|Investigations.mp3
+focus|Deliberate Thought|Deliberate_Thought.mp3
+calm|Airport Lounge|Airport_Lounge.mp3
+calm|Meditation Impromptu 01|Meditation_Impromptu_01.mp3
+calm|Meditation Impromptu 02|Meditation_Impromptu_02.mp3
+calm|Meditation Impromptu 03|Meditation_Impromptu_03.mp3
+focus|Thinking Music|Thinking_Music.mp3
+playful|Local Forecast - Elevator|Local_Forecast_-_Elevator.mp3
+chiptune|Pixel Peeker Polka - faster|Pixel_Peeker_Polka_-_faster.mp3
+chiptune|8bit Dungeon Boss|8bit_Dungeon_Boss.mp3
+chiptune|Bit Quest|Bit_Quest.mp3
+chiptune|Video Dungeon Boss|Video_Dungeon_Boss.mp3
+focus|Getting it Done|Getting_it_Done.mp3
+calm|Wholesome|Wholesome.mp3
+playful|Life of Riley|Life_of_Riley.mp3
+calm|Dreamy Flashback|Dreamy_Flashback.mp3
+cinematic|Frost Waltz|Frost_Waltz.mp3
+calm|Vibing Over Venus|Vibing_Over_Venus.mp3
+cinematic|Leaving Home|Leaving_Home.mp3
+cinematic|Floating Cities|Floating_Cities.mp3
+calm|Peaceful Desolation|Peaceful_Desolation.mp3
+cinematic|Ossuary 6 - Air|Ossuary_6_-_Air.mp3
+focus|Crypto|Crypto.mp3
+focus|Cool Vibes|Cool_Vibes.mp3
+energetic|Werq|Werq.mp3
+energetic|Funkorama|Funkorama.mp3
+calm|Bossa Antigua|Bossa_Antigua.mp3
+cinematic|Danse Macabre|Danse_Macabre.mp3
+playful|Kool Kats|Kool_Kats.mp3
+cinematic|Inspired|Inspired.mp3
+chiptune|Arcadia|Arcadia.mp3
+focus|Space Jazz|Space_Jazz.mp3
+energetic|Digital Lemonade|Digital_Lemonade.mp3
