@@ -6,7 +6,7 @@ import { Composition, FONT_FILES, RNG, estimateSpeech } from "@/lib/video/core";
 import { drawFrame, C2D, Cache } from "@/lib/video/draw";
 import { drawThumbnail, ThumbStyle } from "@/lib/video/thumbnail";
 
-export const DATA_DIR = path.join(process.cwd(), "data");
+export const DATA_DIR = process.env.VERCEL ? path.join("/tmp", "aiv2") : path.join(process.cwd(), "data");
 export const VIDEOS_DIR = path.join(DATA_DIR, "videos");
 export const THUMBS_DIR = path.join(DATA_DIR, "thumbs");
 export const TMP_DIR = path.join(DATA_DIR, "tmp");
