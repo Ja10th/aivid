@@ -3,6 +3,15 @@
 import { useState } from "react";
 import type { Composition } from "@/lib/video/core";
 
+async function readResponse(response: Response) {
+  const text = await response.text();
+  if (!text) return {};
+  try { return JSON.parse(text) as { error?: string }; } catch {
+    const title = /<title[^>]*>([^<]+)<\/title>/i.exec(text)?.[1]?.trim();
+    throw new Error(title ? `${response.status}: ${title}` : `${response.status}: server returned an invalid response`);
+  }
+}
+
 export default function ClipEditor({ videoId, composition }: { videoId: number; composition: Composition }) {
   const [draft, setDraft] = useState<Composition>(() => structuredClone(composition));
   const [busy, setBusy] = useState(false);
@@ -19,7 +28,7 @@ export default function ClipEditor({ videoId, composition }: { videoId: number; 
     setBusy(true); setMessage(null);
     try {
       const res = await fetch(`/api/videos/${videoId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ composition: draft }) });
-      const json = await res.json();
+      const json = await readResponse(res);
       if (!res.ok) throw new Error(json.error || "Could not save clip edits");
       setMessage("clip edits saved; render queued");
       window.location.reload();

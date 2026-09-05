@@ -17,10 +17,11 @@ export async function GET(_: NextRequest, { params }: P) {
 }
 
 export async function PATCH(req: NextRequest, { params }: P) {
-  const { id } = await params;
-  const b = await req.json().catch(() => ({}));
-  const set: Partial<typeof videos.$inferInsert> = {};
-  if (typeof b.title === "string") set.title = b.title.slice(0, 100);
+  try {
+    const { id } = await params;
+    const b = await req.json().catch(() => ({}));
+    const set: Partial<typeof videos.$inferInsert> = {};
+    if (typeof b.title === "string") set.title = b.title.slice(0, 100);
   if (typeof b.description === "string") set.description = b.description.slice(0, 4900);
   if (Array.isArray(b.tags)) set.tags = b.tags.map(String).slice(0, 30);
   if ("channelId" in b) set.channelId = b.channelId ? Number(b.channelId) : null;
@@ -53,7 +54,11 @@ export async function PATCH(req: NextRequest, { params }: P) {
   if (b.action === "retry") kickWorker();
   if (b.composition) kickWorker();
   if (b.action === "schedule") setTimeout(() => publishDue().catch(console.error), 200);
-  return Response.json(v);
+    return Response.json(v);
+  } catch (error) {
+    console.error("video update failed", error);
+    return bad((error as Error).message || "video update failed", 500);
+  }
 }
 
 export async function DELETE(_: NextRequest, { params }: P) {

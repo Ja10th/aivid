@@ -11,6 +11,15 @@ function toLocalInput(iso: string | null) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+async function readResponse(response: Response) {
+  const text = await response.text();
+  if (!text) return {};
+  try { return JSON.parse(text) as Record<string, unknown>; } catch {
+    const title = /<title[^>]*>([^<]+)<\/title>/i.exec(text)?.[1]?.trim();
+    throw new Error(title ? `${response.status}: ${title}` : `${response.status}: server returned an invalid response`);
+  }
+}
+
 export default function VideoActions({ video, channels }: { video: V; channels: { id: number; title: string }[] }) {
   const router = useRouter();
   const [title, setTitle] = useState(video.title);
@@ -24,8 +33,8 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const call = async (label: string, fn: () => Promise<Response>) => {
     setBusy(label); setMsg(null);
     try {
-      const r = await fn(); const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "failed");
+      const r = await fn(); const j = await readResponse(r);
+      if (!r.ok) throw new Error(typeof j.error === "string" ? j.error : "failed");
       setMsg(`${label}: ok`); router.refresh();
       return j;
     } catch (e) { setMsg(`${label}: ${(e as Error).message}`); }
