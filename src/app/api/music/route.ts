@@ -29,13 +29,17 @@ export async function POST(req: NextRequest) {
   } else {
     const b = await req.json().catch(() => ({}));
     if (!b.url) return bad("url required");
-    const res = await fetch(String(b.url), { headers: { "User-Agent": "Mozilla/5.0" } });
+    let sourceUrl: URL;
+    try { sourceUrl = new URL(String(b.url)); } catch { return bad("enter a valid direct audio URL"); }
+    const res = await fetch(sourceUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
     if (!res.ok) return bad(`download failed: ${res.status}`);
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.startsWith("audio/") && !/\.(mp3|wav|ogg|m4a)(?:$|\?)/i.test(sourceUrl.pathname)) return bad("that URL is not a direct audio file; download the Pixabay track and upload the file instead");
     buf = Buffer.from(await res.arrayBuffer());
-    title = String(b.title || decodeURIComponent(path.basename(new URL(String(b.url)).pathname)).replace(/\.[^.]+$/, ""));
+    title = String(b.title || decodeURIComponent(path.basename(sourceUrl.pathname)).replace(/\.[^.]+$/, ""));
     mood = String(b.mood || "focus");
     source = "url";
-    attribution = String(b.attribution || b.url);
+    attribution = String(b.attribution || sourceUrl.toString());
   }
   if (!buf || buf.length < 10000) return bad("file too small or empty");
   const safe = title.replace(/[^a-z0-9_-]+/gi, "_").slice(0, 60) || "track";

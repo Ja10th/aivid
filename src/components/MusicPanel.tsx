@@ -34,7 +34,7 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
       <Reveal delay={200} from="right" className="col-span-12 md:col-start-8 md:col-span-5 mt-4 z-10">
         <div className="block-hot p-5 tilt-l">
           <div className="h-bungee text-2xl mb-3">Add a track</div>
-          <label className="lbl">direct mp3 url (pixabay / freepd / incompetech…)</label>
+          <label className="lbl">direct audio URL (or upload a downloaded Pixabay file)</label>
           <input value={url} onChange={(e) => setUrl(e.target.value)} className="field bg-transparent" placeholder="https://…/track.mp3" />
           <div className="t-vt my-2 text-center">— or —</div>
           <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="t-vt" />
@@ -52,6 +52,12 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
           {MOODS.map((m) => <button key={m} onClick={() => setFilter(m)} className={`chip ${filter === m ? "on" : ""}`}>{m} {tracks.filter((t) => t.mood === m).length}</button>)}
         </div>
         <StaggerList className="flex flex-col">
+          {!shown.length && (
+            <div className="block-ox p-6 max-w-xl">
+              <div className="h-bungee text-2xl mb-2">No tracks yet.</div>
+              <p className="t-serif text-xl">Download an audio file from Pixabay, then use the upload control above. A Pixabay track page URL is not an audio file URL, so upload the downloaded file instead.</p>
+            </div>
+          )}
           {shown.map((t, i) => (
             <div key={t.id} className="flex flex-wrap items-center gap-3 py-2 border-b-2 border-ink" style={{ marginLeft: `${(i % 5) * 14}px` }}>
               <span className="t-vt text-magenta w-20">{t.mood}</span>
