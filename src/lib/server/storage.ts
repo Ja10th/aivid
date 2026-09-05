@@ -28,7 +28,7 @@ function cloudinaryResourceType(contentType: string) {
 
 function cloudinaryUpload(filePath: string, publicId: string, contentType: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream({ resource_type: cloudinaryResourceType(contentType), public_id: publicId, overwrite: true }, (error, result) => {
+    const stream = cloudinary.uploader.upload_stream({ resource_type: cloudinaryResourceType(contentType), public_id: publicId, overwrite: true, invalidate: true }, (error, result) => {
       if (error || !result) reject(error || new Error("Cloudinary upload failed"));
       else resolve(result.secure_url);
     });

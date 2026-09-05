@@ -59,6 +59,8 @@ npm run build
 
 Vercel does not run the render worker. The API only creates or updates queued database rows there.
 
+The repository also schedules `/api/cron` every five minutes through `vercel.json`; it processes one queued render per invocation. Set `CRON_SECRET` in Vercel if you want the endpoint protected. For long renders or higher throughput, keep the GitHub Actions or persistent worker enabled as well.
+
 ## 4. Deploy the worker
 
 ### Free option: GitHub Actions

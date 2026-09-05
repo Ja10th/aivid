@@ -130,6 +130,19 @@ export function kickWorker() {
   })();
 }
 
+export async function processQueuedOnce() {
+  if (g.__studioWorker!.running) return false;
+  const [next] = await db.select().from(videos).where(eq(videos.status, "queued")).orderBy(asc(videos.createdAt)).limit(1);
+  if (!next) return false;
+  g.__studioWorker!.running = true;
+  try {
+    await processVideo(next);
+  } finally {
+    g.__studioWorker!.running = false;
+  }
+  return true;
+}
+
 async function processVideo(v: Video) {
   await db.update(videos).set({ status: "rendering", progress: 0, stage: "starting", error: null }).where(eq(videos.id, v.id));
   const comp = v.composition as Composition;

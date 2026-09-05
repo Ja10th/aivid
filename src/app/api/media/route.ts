@@ -11,7 +11,12 @@ const ALLOWED = [path.join(ROOT, "data"), path.join(ROOT, "public", "music")];
 export async function GET(req: NextRequest) {
   const f = req.nextUrl.searchParams.get("f");
   if (!f) return new Response("missing", { status: 400 });
-  if (f.startsWith("https://res.cloudinary.com/")) return Response.redirect(f, 307);
+  if (f.startsWith("https://res.cloudinary.com/")) {
+    const url = new URL(f);
+    const version = req.nextUrl.searchParams.get("v");
+    if (version) url.searchParams.set("v", version);
+    return Response.redirect(url, 307);
+  }
   if (f.startsWith("s3:")) {
     const object = await getObject(f);
     if (!object) return new Response("not found", { status: 404 });

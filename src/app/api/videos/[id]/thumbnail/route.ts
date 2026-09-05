@@ -10,15 +10,22 @@ import { uploadFile } from "@/lib/server/storage";
 import { bad } from "@/lib/server/http";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const [video] = await db.select().from(videos).where(eq(videos.id, Number(id)));
-  if (!video) return bad("not found", 404);
-  const style = await uniqueThumbStyle(`${video.seed}-${Date.now()}`);
-  const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style);
-  const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}.png`, "image/png");
-  await db.insert(thumbnailFingerprints).values({ fingerprint: styleFingerprint(style), videoId: video.id }).onConflictDoNothing();
-  const [updated] = await db.update(videos).set({ thumbnailStyle: style, thumbnailFingerprint: styleFingerprint(style), thumbPath }).where(eq(videos.id, video.id)).returning();
-  return Response.json(updated);
+  try {
+    const { id } = await params;
+    const [video] = await db.select().from(videos).where(eq(videos.id, Number(id)));
+    if (!video) return bad("not found", 404);
+    const style = await uniqueThumbStyle(`${video.seed}-${Date.now()}`);
+    const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style);
+    const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}.png`, "image/png");
+    const fingerprint = styleFingerprint(style);
+    await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id }).onConflictDoNothing();
+    const [updated] = await db.update(videos).set({ thumbnailStyle: style, thumbnailFingerprint: fingerprint, thumbPath }).where(eq(videos.id, video.id)).returning();
+    return Response.json(updated);
+  } catch (error) {
+    return bad((error as Error).message || "thumbnail regeneration failed", 500);
+  }
 }
