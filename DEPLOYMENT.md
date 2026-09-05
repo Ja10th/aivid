@@ -1,9 +1,10 @@
 # Production deployment
 
-This app is split into two services in production:
+This app can run with Vercel plus a free GitHub Actions worker, or with a persistent worker service:
 
 - **Vercel** runs the Next.js web app and API routes.
-- **Railway or Render** runs the persistent render worker.
+- **GitHub Actions** can run one render pass every five minutes for free on a public repository.
+- **Railway or Render** can run the persistent worker if you need immediate processing.
 - **Neon or Supabase** provides PostgreSQL.
 - **Cloudinary, Cloudflare R2, or S3** stores rendered videos, thumbnails, and uploaded music.
 
@@ -59,6 +60,21 @@ npm run build
 Vercel does not run the render worker. The API only creates or updates queued database rows there.
 
 ## 4. Deploy the worker
+
+### Free option: GitHub Actions
+
+The repository includes `.github/workflows/render-worker.yml`. In GitHub, open **Settings > Secrets and variables > Actions** and add these repository secrets:
+
+```text
+DATABASE_URL
+CLOUDINARY_CLOUD_NAME
+CLOUDINARY_API_KEY
+CLOUDINARY_API_SECRET
+```
+
+The workflow runs every five minutes and can also be started manually from the **Actions** tab. It processes queued work once and exits. This is suitable for a public GitHub repository; queued videos may wait up to five minutes before processing.
+
+### Paid or trial option: persistent worker
 
 Create a Railway/Render service from the same repository. Add the same `DATABASE_URL` and `S3_*` variables. Use:
 
