@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIES, MOODS, VOICES } from "@/lib/video/core";
+import { CATEGORIES, MOODS, STUDIO_VOICES, VOICES } from "@/lib/video/core";
 import { Reveal, StaggerList } from "./Anim";
 
 interface A { id: number; name: string; categories: string[]; channelIds: number[]; perDay: number; mode: string; postTimes: string[]; orientation: string; voice: string; musicMood: string; enabled: boolean; lastPlannedDate: string | null; createdAt: string }
@@ -20,6 +20,12 @@ export default function AutomationsPanel({ autos, channels }: { autos: A[]; chan
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  const updateVoice = async (id: number, nextVoice: string) => {
+    setBusy(`voice${id}`); setMsg(null);
+    const response = await fetch(`/api/automations/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ voice: nextVoice }) });
+    if (!response.ok) setMsg("Could not update automation voice");
+    setBusy(null); router.refresh();
+  };
 
   const create = async () => {
     setBusy("create"); setMsg(null);
@@ -57,7 +63,7 @@ export default function AutomationsPanel({ autos, channels }: { autos: A[]; chan
               <select value={orientation} onChange={(e) => setOrientation(e.target.value)} className="field text-bone border-bone bg-ink"><option value="landscape">16:9 episodes (4+ min)</option><option value="portrait">9:16 shorts</option><option value="mixed">mixed</option></select></div>
             <div><label className="lbl text-acid">after render</label>
               <div className="flex gap-1"><button className={`chip text-bone ${mode === "review" ? "on" : ""}`} onClick={() => setMode("review")}>review</button><button className={`chip text-bone ${mode === "auto" ? "on" : ""}`} onClick={() => setMode("auto")}>auto-post</button></div></div>
-            <div><label className="lbl text-acid">voice</label><select value={voice} onChange={(e) => setVoice(e.target.value)} className="field text-bone border-bone bg-ink"><option value="random">random</option>{VOICES.map((v) => <option key={v} value={v}>{v.replace("Neural", "")}</option>)}</select></div>
+            <div><label className="lbl text-acid">voice</label><select value={voice} onChange={(e) => setVoice(e.target.value)} className="field text-bone border-bone bg-ink"><option value="random">random</option>{STUDIO_VOICES.map((v) => <option key={v.id} value={v.id}>{v.label} · Studio</option>)}{VOICES.map((v) => <option key={v} value={v}>{v.replace("Neural", "")}</option>)}</select></div>
             <div><label className="lbl text-acid">music</label><select value={mood} onChange={(e) => setMood(e.target.value)} className="field text-bone border-bone bg-ink"><option value="auto">auto</option>{MOODS.map((m) => <option key={m} value={m}>{m}</option>)}</select></div>
           </div>
           <button onClick={create} disabled={busy === "create" || !cats.length} className="btn btn-hot mt-6 text-xl">Create automation</button>
@@ -77,6 +83,11 @@ export default function AutomationsPanel({ autos, channels }: { autos: A[]; chan
                   <div className="t-vt text-oxblood">{a.perDay}/day · {a.mode === "auto" ? "auto-post" : "review first"} · {a.orientation} · at {a.postTimes.join(", ") || "spread"}</div>
                   <div className="t-vt mt-1">{a.categories.map((c) => CATEGORIES.find((x) => x.id === c)?.label ?? c).join(" / ")}</div>
                   <div className="t-vt opacity-70">→ {a.channelIds.map((id) => channels.find((c) => c.id === id)?.title ?? `#${id}`).join(", ") || "no channel (review only)"} · last planned {a.lastPlannedDate ?? "never"}</div>
+                  <select value={a.voice} onChange={(event) => updateVoice(a.id, event.target.value)} disabled={busy === `voice${a.id}`} className="field mt-3 border-ink bg-transparent">
+                    <option value="random">random voice</option>
+                    {STUDIO_VOICES.map((voiceOption) => <option key={voiceOption.id} value={voiceOption.id}>{voiceOption.label} · Studio</option>)}
+                    {VOICES.map((voiceOption) => <option key={voiceOption} value={voiceOption}>{voiceOption.replace("Neural", "")}</option>)}
+                  </select>
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   <button onClick={() => act(a.id, "toggle", a.enabled)} className="chip">{a.enabled ? "pause" : "resume"}</button>

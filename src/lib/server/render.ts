@@ -5,6 +5,7 @@ import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
 import { Composition, FONT_FILES, RNG, estimateSpeech } from "@/lib/video/core";
 import { drawFrame, C2D, Cache } from "@/lib/video/draw";
 import { drawThumbnail, ThumbStyle } from "@/lib/video/thumbnail";
+import { isStudioVoice, speedFromRate, studioTts } from "@/lib/server/studio-api";
 
 export const DATA_DIR = process.env.VERCEL ? path.join("/tmp", "aiv2") : path.join(process.cwd(), "data");
 export const VIDEOS_DIR = path.join(DATA_DIR, "videos");
@@ -54,6 +55,10 @@ export async function audioDuration(file: string): Promise<number> {
 
 // ---------- TTS (Microsoft Edge neural voices, no API key) ----------
 export async function synthesize(text: string, voice: string, rate: string, pitch: string, outFile: string): Promise<boolean> {
+  if (isStudioVoice(voice)) {
+    fs.writeFileSync(outFile, await studioTts(text, voice, speedFromRate(rate)));
+    return true;
+  }
   try {
     const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
     const tts = new MsEdgeTTS();
@@ -88,7 +93,7 @@ export interface RenderResult {
 
 export function mediaContentType(file: string) {
   const ext = path.extname(file).toLowerCase();
-  return ext === ".mp4" ? "video/mp4" : ext === ".png" ? "image/png" : ext === ".mp3" ? "audio/mpeg" : "application/octet-stream";
+  return ext === ".mp4" ? "video/mp4" : ext === ".png" ? "image/png" : ext === ".mp3" ? "audio/mpeg" : ext === ".wav" ? "audio/wav" : "application/octet-stream";
 }
 
 export async function renderVideo(id: number, comp: Composition, musicFile: string | null, thumbStyle: ThumbStyle, hooks: RenderHooks = {}): Promise<RenderResult> {
@@ -105,7 +110,7 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   let i = 0;
   for (const s of narrScenes) {
     i++;
-    const file = path.join(tmp, `n${i}.mp3`);
+    const file = path.join(tmp, `n${i}.${isStudioVoice(comp.voice.name) ? "wav" : "mp3"}`);
     const ok = await synthesize(s.narration!, comp.voice.name, comp.voice.rate, comp.voice.pitch, file);
     if (ok && !s.narrationMuted) {
       const dur = await audioDuration(file);

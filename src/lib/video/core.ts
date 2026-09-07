@@ -213,6 +213,13 @@ export const VOICES = [
   "en-CA-LiamNeural",
 ];
 
+export const STUDIO_VOICES = [
+  { id: "aria", label: "Aria" },
+  { id: "nicole", label: "Nicole" },
+  { id: "adam", label: "Adam" },
+  { id: "fable", label: "Fable" },
+] as const;
+
 export const MOODS = ["calm", "focus", "playful", "chiptune", "cinematic", "mystery", "energetic"] as const;
 export type Mood = (typeof MOODS)[number];
 

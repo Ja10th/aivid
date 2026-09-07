@@ -85,7 +85,7 @@ npm install
 npm run worker
 ```
 
-The worker polls PostgreSQL, renders with FFmpeg/TTS, uploads the MP4 and thumbnail to object storage, and marks the row `ready`. It also handles scheduled automation and YouTube posting.
+The worker polls PostgreSQL, renders with FFmpeg and the configured voice engines, uploads the MP4 and thumbnail to object storage, and marks the row `ready`. Studio Voices (Aria, Nicole, Adam, and Fable) use the remote Kokoro API configured by `VOXLAB_STUDIO_API_URL`; stock voices continue to use the existing local path. It also handles scheduled automation and YouTube posting.
 
 ## 5. OAuth callback
 

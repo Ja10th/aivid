@@ -1,7 +1,7 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIES, MOODS, VOICES } from "@/lib/video/core";
+import { CATEGORIES, MOODS, STUDIO_VOICES, VOICES } from "@/lib/video/core";
 import { generateComposition } from "@/lib/video/generate";
 import Player from "./Player";
 import { fmtDur } from "@/lib/format";
@@ -20,6 +20,24 @@ export default function StudioForm({ channels }: { channels: { id: number; title
   const [seed, setSeed] = useState(() => Math.random().toString(36).slice(2, 9));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [studioAvailable, setStudioAvailable] = useState(false);
+  const [previewing, setPreviewing] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/voices").then((res) => res.json()).then((body) => setStudioAvailable(body.available === true)).catch(() => setStudioAvailable(false));
+  }, []);
+
+  const preview = async (voiceId: string) => {
+    setPreviewing(voiceId); setErr(null);
+    try {
+      const res = await fetch(`/api/sample/${voiceId}`);
+      if (!res.ok) throw new Error("VoxLab Studio API is temporarily unavailable");
+      const url = URL.createObjectURL(await res.blob());
+      const audio = new Audio(url);
+      audio.onended = () => { URL.revokeObjectURL(url); setPreviewing(null); };
+      await audio.play();
+    } catch (error) { setErr((error as Error).message); setPreviewing(null); }
+  };
 
   const comp = useMemo(() => generateComposition({ category, orientation, seed, voice, mood }), [category, orientation, seed, voice, mood]);
   const reroll = () => setSeed(Math.random().toString(36).slice(2, 9));
@@ -71,8 +89,13 @@ export default function StudioForm({ channels }: { channels: { id: number; title
               <label className="lbl text-acid">voice</label>
               <select value={voice} onChange={(e) => setVoice(e.target.value)} className="field text-bone border-bone bg-ink">
                 <option value="random">random each time</option>
+                {STUDIO_VOICES.map((v) => <option key={v.id} value={v.id}>{v.label} · Studio</option>)}
                 {VOICES.map((v) => <option key={v} value={v}>{v.replace("Neural", "")}</option>)}
               </select>
+              <div className="t-vt mt-2">Studio API: {studioAvailable ? "available" : "temporarily unavailable"}</div>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {STUDIO_VOICES.map((v) => <button key={v.id} type="button" onClick={() => preview(v.id)} disabled={!studioAvailable || previewing !== null} className="chip">{previewing === v.id ? "playing…" : `preview ${v.label}`}</button>)}
+              </div>
             </div>
             <div>
               <label className="lbl text-acid">music mood</label>
