@@ -53,12 +53,23 @@ export async function audioDuration(file: string): Promise<number> {
   });
 }
 
+const STUDIO_FALLBACK_VOICE = "en-US-AriaNeural";
+
 // ---------- TTS (Microsoft Edge neural voices, no API key) ----------
 export async function synthesize(text: string, voice: string, rate: string, pitch: string, outFile: string): Promise<boolean> {
   if (isStudioVoice(voice)) {
-    fs.writeFileSync(outFile, await studioTts(text, voice, speedFromRate(rate)));
-    return true;
+    try {
+      fs.writeFileSync(outFile, await studioTts(text, voice, speedFromRate(rate)));
+      return true;
+    } catch (error) {
+      console.warn(`Studio Voice ${voice} unavailable; falling back to ${STUDIO_FALLBACK_VOICE}:`, (error as Error).message);
+      return synthesizeLocal(text, STUDIO_FALLBACK_VOICE, rate, pitch, outFile);
+    }
   }
+  return synthesizeLocal(text, voice, rate, pitch, outFile);
+}
+
+async function synthesizeLocal(text: string, voice: string, rate: string, pitch: string, outFile: string): Promise<boolean> {
   try {
     const { MsEdgeTTS, OUTPUT_FORMAT } = await import("msedge-tts");
     const tts = new MsEdgeTTS();
