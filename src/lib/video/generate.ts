@@ -399,6 +399,7 @@ export interface GenerateOptions {
   orientation: Orientation;
   seed?: string;
   voice?: string;
+  fallbackVoice?: string;
   mood?: string;
   targetDuration?: number;
 }
@@ -464,7 +465,7 @@ export function generateComposition(opts: GenerateOptions): Composition {
     },
     scenes: ctx.scenes,
     music: { mood, volume: isCalm ? 0.16 : 0.22 },
-    voice: { name: voiceName, rate: isCalm ? rng.pick(["-8%", "-12%", "-5%"]) : rng.pick(["+0%", "+4%", "-3%"]), pitch: rng.pick(["+0Hz", "-2Hz", "+2Hz"]) },
+    voice: { name: voiceName, fallbackVoice: opts.fallbackVoice || "en-CA-Liam", rate: isCalm ? rng.pick(["-8%", "-12%", "-5%"]) : rng.pick(["+0%", "+4%", "-3%"]), pitch: rng.pick(["+0Hz", "-2Hz", "+2Hz"]) },
     meta: { title: "", description: "", tags: [], thumbText: "", thumbSub: "" },
   };
   comp.meta = meta(rng.fork("meta"), category, ctx.scenes, ctx.t, orientation);

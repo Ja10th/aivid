@@ -53,17 +53,19 @@ export async function audioDuration(file: string): Promise<number> {
   });
 }
 
-const STUDIO_FALLBACK_VOICE = "en-US-AriaNeural";
+const STUDIO_FALLBACK_VOICE = "en-CA-Liam";
 
 // ---------- TTS (Microsoft Edge neural voices, no API key) ----------
-export async function synthesize(text: string, voice: string, rate: string, pitch: string, outFile: string): Promise<boolean> {
+export async function synthesize(text: string, voice: string, rate: string, pitch: string, outFile: string, fallbackVoice = STUDIO_FALLBACK_VOICE): Promise<boolean> {
   if (isStudioVoice(voice)) {
     try {
-      fs.writeFileSync(outFile, await studioTts(text, voice, speedFromRate(rate)));
+      const audio = await studioTts(text, voice, speedFromRate(rate));
+      if (audio.length <= 500 || audio.subarray(0, 4).toString() !== "RIFF") throw new Error("invalid Studio audio response");
+      fs.writeFileSync(outFile, audio);
       return true;
     } catch (error) {
-      console.warn(`Studio Voice ${voice} unavailable; falling back to ${STUDIO_FALLBACK_VOICE}:`, (error as Error).message);
-      return synthesizeLocal(text, STUDIO_FALLBACK_VOICE, rate, pitch, outFile);
+      console.warn(`Studio Voice ${voice} unavailable; falling back to ${fallbackVoice}:`, (error as Error).message);
+      return synthesizeLocal(text, fallbackVoice, rate, pitch, outFile);
     }
   }
   return synthesizeLocal(text, voice, rate, pitch, outFile);
@@ -122,7 +124,7 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   for (const s of narrScenes) {
     i++;
     const file = path.join(tmp, `n${i}.${isStudioVoice(comp.voice.name) ? "wav" : "mp3"}`);
-    const ok = await synthesize(s.narration!, comp.voice.name, comp.voice.rate, comp.voice.pitch, file);
+    const ok = await synthesize(s.narration!, comp.voice.name, comp.voice.rate, comp.voice.pitch, file, comp.voice.fallbackVoice);
     if (ok && !s.narrationMuted) {
       const dur = await audioDuration(file);
       const requestedAt = s.start + (s.narrationAt ?? 0.4);

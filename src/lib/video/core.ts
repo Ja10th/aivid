@@ -77,7 +77,7 @@ export interface Composition {
   };
   scenes: Scene[];
   music: { mood: string; volume: number };
-  voice: { name: string; rate: string; pitch: string };
+  voice: { name: string; fallbackVoice?: string; rate: string; pitch: string };
   meta: {
     title: string;
     description: string;

@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     postTimes: Array.isArray(b.postTimes) ? b.postTimes.map(String).filter((t: string) => /^\d{2}:\d{2}$/.test(t)) : [],
     orientation: ["landscape", "portrait", "mixed"].includes(b.orientation) ? b.orientation : "landscape",
     voice: b.voice || "random",
+    fallbackVoice: b.fallbackVoice || "en-CA-Liam",
     musicMood: b.musicMood || "auto",
     enabled: b.enabled !== false,
   }).returning();

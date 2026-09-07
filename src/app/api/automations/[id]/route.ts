@@ -17,6 +17,7 @@ export async function PATCH(req: NextRequest, { params }: P) {
   if ("postTimes" in b) set.postTimes = b.postTimes.map(String);
   if ("orientation" in b) set.orientation = b.orientation;
   if ("voice" in b) set.voice = b.voice;
+  if ("fallbackVoice" in b) set.fallbackVoice = b.fallbackVoice;
   if ("musicMood" in b) set.musicMood = b.musicMood;
   const [a] = await db.update(automations).set(set).where(eq(automations.id, Number(id))).returning();
   return Response.json(a);

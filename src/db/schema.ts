@@ -32,6 +32,7 @@ export const automations = pgTable("automations", {
   postTimes: jsonb("post_times").$type<string[]>().notNull(), // "HH:MM" local
   orientation: text("orientation").notNull().default("landscape"), // landscape | portrait | mixed
   voice: text("voice").notNull().default("random"),
+  fallbackVoice: text("fallback_voice").notNull().default("en-CA-Liam"),
   musicMood: text("music_mood").notNull().default("auto"),
   enabled: boolean("enabled").notNull().default(true),
   lastPlannedDate: text("last_planned_date"),

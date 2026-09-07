@@ -62,6 +62,7 @@ export interface CreateVideoInput {
   orientation: "landscape" | "portrait";
   voice?: string;
   mood?: string;
+  fallbackVoice?: string;
   channelId?: number | null;
   automationId?: number | null;
   mode?: "review" | "auto";
@@ -70,7 +71,7 @@ export interface CreateVideoInput {
 }
 
 export async function createVideo(input: CreateVideoInput): Promise<Video> {
-  const comp = generateComposition({ category: input.category, orientation: input.orientation, voice: input.voice, mood: input.mood, seed: input.seed });
+  const comp = generateComposition({ category: input.category, orientation: input.orientation, voice: input.voice, fallbackVoice: input.fallbackVoice, mood: input.mood, seed: input.seed });
   const track = await pickMusic(comp.music.mood, comp.seed);
   const style = await uniqueThumbStyle(comp.seed);
   const [row] = await db
@@ -235,6 +236,7 @@ export async function planAutomation(a: typeof automations.$inferSelect, force =
       category: rng.pick(cats),
       orientation,
       voice: a.voice,
+      fallbackVoice: a.fallbackVoice,
       mood: a.musicMood,
       channelId: chans[i % chans.length],
       automationId: a.id,
