@@ -1,5 +1,5 @@
 // Isomorphic thumbnail renderer with combinatorial, fingerprinted styles.
-import { Composition, FONTS, PALETTES, RNG } from "./core";
+import { Composition, FONTS, PALETTES, Palette, RNG } from "./core";
 import { C2D, fitText, hexA, rrect, wrap, font, poly, star } from "./draw";
 
 export const THUMB_LAYOUTS = ["left-stack", "center-burst", "diagonal-band", "corner-box", "split-vertical", "bottom-bar", "circle-badge", "scatter"] as const;
@@ -119,6 +119,99 @@ function fxText(ctx: C2D, text: string, x: number, y: number, fx: string, fg: st
   }
 }
 
+function outlinedText(ctx: C2D, text: string, x: number, y: number, size: number, fill: string, stroke = "#000", align: CanvasTextAlign = "center") {
+  ctx.font = `900 ${Math.round(size)}px "Arial Black", "DejaVu Sans", sans-serif`;
+  ctx.textAlign = align;
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = Math.max(8, size * 0.075);
+  ctx.strokeStyle = stroke;
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = fill;
+  ctx.fillText(text, x, y);
+}
+
+function fitOutlinedText(ctx: C2D, text: string, x: number, y: number, maxW: number, size: number, fill: string, stroke = "#000") {
+  ctx.font = `900 ${Math.round(size)}px "Arial Black", "DejaVu Sans", sans-serif`;
+  let fitted = size;
+  while (ctx.measureText(text).width > maxW && fitted > 34) {
+    fitted -= Math.max(1, fitted * 0.05);
+    ctx.font = `900 ${Math.round(fitted)}px "Arial Black", "DejaVu Sans", sans-serif`;
+  }
+  outlinedText(ctx, text, x, y, fitted, fill, stroke);
+}
+
+function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: number, H: number) {
+  const cat = comp.category;
+  const hook = comp.meta.thumbText || comp.meta.title;
+  const sub = comp.meta.thumbSub;
+  const centerX = W * 0.72;
+  const centerY = H * 0.43;
+
+  if (cat === "eye_training") {
+    ctx.fillStyle = p.bg; ctx.fillRect(0, 0, W, H);
+    const g = ctx.createRadialGradient(W * 0.72, H * 0.4, 20, W * 0.72, H * 0.4, W * 0.7);
+    g.addColorStop(0, p.bg2); g.addColorStop(1, p.bg); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = p.fg; ctx.beginPath(); ctx.ellipse(centerX, centerY, 220, 128, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.accent; ctx.beginPath(); ctx.arc(centerX, centerY, 84, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.bg; ctx.beginPath(); ctx.arc(centerX, centerY, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.fg; ctx.beginPath(); ctx.arc(centerX - 20, centerY - 22, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = p.accent2; ctx.lineWidth = 8; ctx.setLineDash([18, 14]); ctx.beginPath(); ctx.arc(centerX, centerY, 280, -2.6, -0.35); ctx.stroke(); ctx.setLineDash([]);
+    fitOutlinedText(ctx, hook, W * 0.32, H * 0.76, W * 0.58, 96, p.fg);
+    return true;
+  }
+
+  if (cat === "math") {
+    ctx.fillStyle = p.bg; ctx.fillRect(0, 0, W, H);
+    const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, p.bg2); g.addColorStop(1, p.bg); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    outlinedText(ctx, String((comp.scenes.find((s) => s.kind === "math-question")?.data as { q?: string } | undefined)?.q ?? "7×8+15=?"), W * 0.34, H * 0.4, 158, p.accent);
+    ctx.strokeStyle = p.accent2; ctx.lineWidth = 18; ctx.beginPath(); ctx.arc(W * 0.83, H * 0.28, 72, -Math.PI / 2, Math.PI * 1.25); ctx.stroke();
+    outlinedText(ctx, "10", W * 0.83, H * 0.28, 62, p.fg);
+    fitOutlinedText(ctx, hook, W / 2, H * 0.82, W * 0.9, 76, p.accent2, p.fg);
+    return true;
+  }
+
+  if (cat === "story") {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#24143c"); g.addColorStop(0.6, "#713554"); g.addColorStop(1, "#bd6336"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#ffe9b0"; ctx.shadowColor = "rgba(255,233,176,0.55)"; ctx.shadowBlur = 45; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.25, 74, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = "#160b22"; ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, H * 0.72); ctx.lineTo(W * 0.17, H * 0.6); ctx.lineTo(W * 0.27, H * 0.48); ctx.lineTo(W * 0.34, H * 0.68); ctx.lineTo(W * 0.52, H * 0.77); ctx.lineTo(W * 0.68, H * 0.66); ctx.lineTo(W, H * 0.78); ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+    fitOutlinedText(ctx, hook, W * 0.33, H * 0.63, W * 0.58, 88, "#fff5e6", "#24143c");
+    return true;
+  }
+
+  if (cat === "gameplay") {
+    const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#ff2fa0"); g.addColorStop(0.55, "#7b2ff7"); g.addColorStop(1, "#2fb8ff"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; rrect(ctx, 70, 62, 540, 500, 26); ctx.fill();
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) { ctx.fillStyle = ["#ffd23f", "#3fff88", "#ff5757", "#3fe0ff"][(i + j) % 4]; rrect(ctx, 110 + i * 92, 108 + j * 78, 70, 58, 12); ctx.fill(); }
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.25, 34, 0, Math.PI * 2); ctx.fill();
+    outlinedText(ctx, "SCORE", W * 0.78, H * 0.43, 52, "#fff");
+    outlinedText(ctx, "18,420", W * 0.78, H * 0.55, 82, "#ffd23f");
+    fitOutlinedText(ctx, hook, W * 0.72, H * 0.83, W * 0.82, 72, "#fff");
+    return true;
+  }
+
+  if (cat === "brain") {
+    ctx.fillStyle = "#0d1b0f"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#1c3320"; ctx.lineWidth = 4; for (let x = 0; x < W; x += 120) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 0; y < H; y += 120) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    outlinedText(ctx, "?", W * 0.22, H * 0.42, 330, "#3fff6e");
+    ctx.strokeStyle = "#ff3b3b"; ctx.lineWidth = 18; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.3, 76, -Math.PI / 2, Math.PI * 1.1); ctx.stroke();
+    outlinedText(ctx, "05", W * 0.78, H * 0.3, 72, "#fff");
+    fitOutlinedText(ctx, hook, W / 2, H * 0.82, W * 0.9, 82, "#3fff6e");
+    return true;
+  }
+
+  if (cat === "calm") {
+    ctx.fillStyle = p.bg; ctx.fillRect(0, 0, W, H);
+    for (let radius = 250; radius > 40; radius -= 36) { ctx.fillStyle = hexA(p.accent, 0.08); ctx.beginPath(); ctx.arc(W / 2, H * 0.42, radius, 0, Math.PI * 2); ctx.fill(); }
+    ctx.strokeStyle = p.accent; ctx.lineWidth = 20; ctx.beginPath(); ctx.arc(W / 2, H * 0.42, 160, 0, Math.PI * 2); ctx.stroke();
+    fitOutlinedText(ctx, hook, W / 2, H * 0.8, W * 0.82, 94, p.fg);
+    return true;
+  }
+
+  void sub;
+  return false;
+}
+
 export function drawThumbnail(ctx: C2D, comp: Composition, style: ThumbStyle, W = 1280, H = 720) {
   const base = PALETTES[style.paletteIdx];
   const p = { ...base, accent: shiftHue(base.accent, style.hueShift % 60), accent2: shiftHue(base.accent2, (style.hueShift * 2) % 90) };
@@ -137,6 +230,8 @@ export function drawThumbnail(ctx: C2D, comp: Composition, style: ThumbStyle, W 
     case "rings": ctx.strokeStyle = hexA(p.accent2, 0.5); ctx.lineWidth = 6; for (let r = 40; r < 900; r += 70) { ctx.beginPath(); ctx.arc(W * 0.8, H * 0.5, r, 0, Math.PI * 2); ctx.stroke(); } break;
     case "noise": ctx.fillStyle = hexA(p.fg, 0.08); for (let i = 0; i < 3000; i++) ctx.fillRect(rng.next() * W, rng.next() * H, 3, 3); break;
   }
+  if (drawReferenceThumbnail(ctx, comp, p, W, H)) { ctx.restore(); return; }
+
   // decoration
   switch (style.deco) {
     case "arrows": ctx.fillStyle = p.accent2; for (let i = 0; i < 3; i++) { const x = W * 0.72 + i * 60, y = H * 0.7; ctx.beginPath(); ctx.moveTo(x, y - 60); ctx.lineTo(x + 60, y); ctx.lineTo(x, y + 60); ctx.lineTo(x + 20, y); ctx.closePath(); ctx.fill(); } break;
