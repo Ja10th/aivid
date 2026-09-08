@@ -108,3 +108,14 @@ export async function uploadVideo(ch: Channel, opts: { filePath: string; thumbPa
   }
   return vid.id;
 }
+
+export async function updateVideoThumbnail(ch: Channel, videoId: string, thumbPath: string) {
+  const token = await refreshAccessToken(ch);
+  if (!fs.existsSync(thumbPath)) throw new Error("thumbnail file not found");
+  const response = await fetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${encodeURIComponent(videoId)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/png" },
+    body: fs.readFileSync(thumbPath),
+  });
+  if (!response.ok) throw new Error(`YouTube thumbnail update failed: ${response.status} ${await response.text()}`);
+}
