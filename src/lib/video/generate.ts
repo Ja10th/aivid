@@ -363,7 +363,16 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     mixed: ["brain training", "eye exercises", "mental math", "daily session", "focus"],
   };
   const tags = [...(tagBank[category] || []), "daily", orientation === "portrait" ? "shorts" : "generated"];
-  const thumbText = r.pick([base.toUpperCase(), `${mins} MIN`, base, `DAY ${day}`, r.pick(["TRY THIS", "CAN YOU?", "WATCH", "DAILY"])]);
+  const thumbHooks: Record<string, string[]> = {
+    eye_training: ["FOLLOW THE DOT", "EYE WORKOUT", "KEEP YOUR HEAD STILL", "TRACK THIS"],
+    math: ["CAN YOU SOLVE IT?", "BEAT THE TIMER", "MENTAL MATH", "NO CALCULATOR"],
+    story: [base, "THE LAST LETTER", "A STRANGE NIGHT", "WHAT HAPPENED?"],
+    gameplay: ["LEVEL UP", "CAN IT WIN?", "WATCH THE BOT", "NEW RUN"],
+    brain: ["BEAT THE CLOCK", "CAN YOU REMEMBER?", "THINK FAST", "5 SECOND CHALLENGE"],
+    calm: ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES"],
+    mixed: ["DAILY MIX", "TRY EVERYTHING", "MIND WORKOUT", "NEW SESSION"],
+  };
+  const thumbText = r.pick(thumbHooks[category] ?? [base.toUpperCase(), `${mins} MIN`, base, `DAY ${day}`]);
   const thumbSub = r.pick([catInfo?.label ?? "", `${mins} minutes`, `#${day}`, "new every day", ""]);
   return { title: title.slice(0, 100), description: desc, tags, thumbText, thumbSub };
 }

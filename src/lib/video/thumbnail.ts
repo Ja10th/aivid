@@ -18,21 +18,76 @@ export interface ThumbStyle {
   hueShift: number;
 }
 
+type ThumbnailCategory = "eye_training" | "math" | "story" | "gameplay" | "brain" | "calm" | "mixed";
+
+const CATEGORY_THUMBNAILS: Record<ThumbnailCategory, Partial<ThumbStyle>> = {
+  eye_training: { layout: "bottom-bar", paletteIdx: 4, deco: "rings", fx: "outline", pattern: "gradient" },
+  math: { layout: "center-burst", paletteIdx: 2, deco: "rings", fx: "outline", pattern: "rays" },
+  story: { layout: "left-stack", paletteIdx: 5, deco: "none", fx: "shadow", pattern: "gradient" },
+  gameplay: { layout: "split-vertical", paletteIdx: 11, deco: "arrows", fx: "outline", pattern: "gradient" },
+  brain: { layout: "bottom-bar", paletteIdx: 9, deco: "halftone", fx: "outline", pattern: "grid" },
+  calm: { layout: "center-burst", paletteIdx: 3, deco: "rings", fx: "shadow", pattern: "gradient" },
+  mixed: { layout: "diagonal-band", paletteIdx: 0, deco: "sparks", fx: "outline", pattern: "rays" },
+};
+
+const CATEGORY_LAYOUTS: Record<ThumbnailCategory, ThumbStyle["layout"][]> = {
+  eye_training: ["bottom-bar", "split-vertical", "circle-badge"],
+  math: ["center-burst", "corner-box", "diagonal-band"],
+  story: ["left-stack", "corner-box", "center-burst"],
+  gameplay: ["split-vertical", "corner-box", "diagonal-band"],
+  brain: ["bottom-bar", "center-burst", "corner-box"],
+  calm: ["center-burst", "circle-badge", "left-stack"],
+  mixed: ["diagonal-band", "center-burst", "split-vertical"],
+};
+
 export function styleFingerprint(s: ThumbStyle) {
   return `${s.layout}|${s.paletteIdx}|${s.fontIdx}|${s.deco}|${s.fx}|${s.pattern}`;
 }
 
-export function randomThumbStyle(rng: RNG): ThumbStyle {
+export function randomThumbStyle(rng: RNG, category?: string): ThumbStyle {
+  const preset = CATEGORY_THUMBNAILS[category as ThumbnailCategory] ?? {};
   return {
-    layout: rng.pick(THUMB_LAYOUTS),
-    paletteIdx: rng.int(0, PALETTES.length - 1),
+    layout: preset.layout ?? rng.pick(THUMB_LAYOUTS),
+    paletteIdx: preset.paletteIdx ?? rng.int(0, PALETTES.length - 1),
     fontIdx: rng.int(0, FONTS.display.length - 1),
-    deco: rng.pick(THUMB_DECOS),
-    fx: rng.pick(THUMB_FX),
-    pattern: rng.pick(THUMB_PATTERNS),
-    tilt: rng.range(-9, 9),
+    deco: preset.deco ?? rng.pick(THUMB_DECOS),
+    fx: preset.fx ?? rng.pick(THUMB_FX),
+    pattern: preset.pattern ?? rng.pick(THUMB_PATTERNS),
+    tilt: category === "story" ? 0 : rng.range(-2, 2),
     hueShift: rng.int(0, 359),
   };
+}
+
+export function thumbnailCandidates(seed: string, category: string): ThumbStyle[] {
+  const rng = new RNG(seed + "thumb-candidates");
+  const key = (category in CATEGORY_LAYOUTS ? category : "mixed") as ThumbnailCategory;
+  const layouts = CATEGORY_LAYOUTS[key];
+  return layouts.map((layout, index) => {
+    const style = randomThumbStyle(rng, key);
+    return {
+      ...style,
+      layout,
+      fontIdx: (style.fontIdx + index * 3) % FONTS.display.length,
+      deco: index === 0 ? style.deco : index === 1 ? "frame" : style.deco,
+      fx: index === 2 && key !== "story" ? "3d" : style.fx,
+      pattern: index === 1 ? "gradient" : style.pattern,
+      tilt: key === "story" ? 0 : index === 0 ? 0 : rng.range(-1.5, 1.5),
+      hueShift: (style.hueShift + index * 17) % 360,
+    };
+  });
+}
+
+export function thumbnailScore(style: ThumbStyle, category: string) {
+  const key = (category in CATEGORY_LAYOUTS ? category : "mixed") as ThumbnailCategory;
+  const layouts = CATEGORY_LAYOUTS[key];
+  let score = 0;
+  score += Math.max(0, 6 - layouts.indexOf(style.layout) * 2);
+  if (style.fx === "outline") score += 3;
+  if (style.pattern === "gradient" || style.pattern === "rays") score += 2;
+  if (style.tilt === 0) score += 2;
+  if (key === "story" && style.fx === "shadow") score += 4;
+  if ((key === "math" || key === "brain") && style.fx === "3d") score -= 2;
+  return score;
 }
 
 function shiftHue(hex: string, deg: number) {
@@ -92,15 +147,32 @@ export function drawThumbnail(ctx: C2D, comp: Composition, style: ThumbStyle, W 
     case "frame": ctx.strokeStyle = p.accent; ctx.lineWidth = 28; ctx.strokeRect(14, 14, W - 28, H - 28); ctx.strokeStyle = p.accent2; ctx.lineWidth = 6; ctx.strokeRect(50, 50, W - 100, H - 100); break;
     case "sparks": for (let i = 0; i < 12; i++) { ctx.fillStyle = i % 2 ? p.accent : p.fg; star(ctx, rng.next() * W, rng.next() * H, 14 + rng.next() * 30, rng.next()); ctx.fill(); } break;
   }
-  // subject graphic: a visual hint of the category
+  // The hero is category-specific so the thumbnail reads before its text does.
   const cat = comp.category;
   ctx.save(); ctx.translate(W * 0.78, H * 0.5);
-  if (cat === "eye_training") { ctx.fillStyle = p.fg; ctx.beginPath(); ctx.ellipse(0, 0, 170, 95, 0, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = p.accent; ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = p.bg; ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = p.fg; ctx.beginPath(); ctx.arc(-18, -18, 12, 0, Math.PI * 2); ctx.fill(); }
-  else if (cat === "math") { ctx.fillStyle = p.accent; font(ctx, 190, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(rng.pick(["7×8", "√81", "?", "12²", "+", "÷"]), 0, 0); }
-  else if (cat === "story") { ctx.fillStyle = p.accent; ctx.beginPath(); ctx.arc(-40, -60, 60, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = p.fg; ctx.fillRect(-160, 40, 320, 16); ctx.fillStyle = p.accent2; ctx.beginPath(); ctx.moveTo(-120, 40); ctx.lineTo(-40, -40); ctx.lineTo(40, 40); ctx.closePath(); ctx.fill(); }
-  else if (cat === "gameplay") { ctx.fillStyle = p.accent; for (let i = 0; i < 5; i++) ctx.fillRect(-120 + i * 42, 0, 38, 38); ctx.fillStyle = p.accent2; ctx.beginPath(); ctx.arc(120, -60, 24, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = p.fg; ctx.fillRect(-120, -100, 38, 38); ctx.fillRect(-78, -100, 38, 38); }
-  else if (cat === "brain") { ctx.strokeStyle = p.accent; ctx.lineWidth = 14; poly(ctx, 0, 0, 120, 6); ctx.stroke(); ctx.fillStyle = p.fg; font(ctx, 140, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("?", 0, 6); }
-  else if (cat === "calm") { for (let i = 4; i > 0; i--) { ctx.fillStyle = hexA(p.accent, 0.25 * i); ctx.beginPath(); ctx.arc(0, 0, 40 * i, 0, Math.PI * 2); ctx.fill(); } }
+  if (cat === "eye_training") {
+    ctx.fillStyle = p.fg; ctx.beginPath(); ctx.ellipse(0, 0, 210, 125, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.accent; ctx.beginPath(); ctx.arc(0, 0, 82, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.bg; ctx.beginPath(); ctx.arc(0, 0, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.fg; ctx.beginPath(); ctx.arc(-22, -22, 15, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = p.accent2; ctx.lineWidth = 9; ctx.setLineDash([18, 14]); ctx.beginPath(); ctx.arc(0, 0, 270, -2.5, -0.35); ctx.stroke(); ctx.setLineDash([]);
+  } else if (cat === "math") {
+    ctx.fillStyle = p.accent; font(ctx, 230, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(rng.pick(["7×8", "√81", "?", "12²", "+", "÷"]), 0, 0);
+  } else if (cat === "story") {
+    ctx.fillStyle = p.accent; ctx.beginPath(); ctx.arc(30, -125, 86, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.fg; ctx.beginPath(); ctx.moveTo(-240, 145); ctx.lineTo(-110, 75); ctx.lineTo(-25, 105); ctx.lineTo(80, 25); ctx.lineTo(250, 145); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = p.bg; ctx.fillRect(-24, 60, 48, 85);
+  } else if (cat === "gameplay") {
+    ctx.fillStyle = hexA(p.bg, 0.7); rrect(ctx, -240, -225, 480, 450, 28); ctx.fill();
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) { ctx.fillStyle = [p.accent, p.accent2, p.fg][(i + j) % 3]; rrect(ctx, -190 + i * 78, -175 + j * 70, 62, 54, 10); ctx.fill(); }
+    ctx.fillStyle = p.fg; ctx.beginPath(); ctx.arc(170, -160, 30, 0, Math.PI * 2); ctx.fill();
+  } else if (cat === "brain") {
+    ctx.strokeStyle = p.accent; ctx.lineWidth = 18; poly(ctx, 0, 0, 145, 6); ctx.stroke();
+    ctx.fillStyle = p.fg; font(ctx, 180, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("?", 0, 8);
+  } else if (cat === "calm") {
+    ctx.strokeStyle = p.accent; ctx.lineWidth = 24; ctx.beginPath(); ctx.arc(0, 0, 150, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = p.fg; font(ctx, 100, fam); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("BREATHE", 0, 8);
+  }
   else { ctx.fillStyle = p.accent; poly(ctx, 0, 0, 130, 3, -Math.PI / 2); ctx.fill(); ctx.fillStyle = p.accent2; ctx.beginPath(); ctx.arc(60, 60, 60, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
 

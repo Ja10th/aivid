@@ -18,7 +18,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const { id } = await params;
     const [video] = await db.select().from(videos).where(eq(videos.id, Number(id)));
     if (!video) return bad("not found", 404);
-    const style = await uniqueThumbStyle(`${video.seed}-${Date.now()}`);
+    const style = await uniqueThumbStyle(`${video.seed}-${Date.now()}`, video.category);
     const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style);
     const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}.png`, "image/png");
     const fingerprint = styleFingerprint(style);

@@ -5,7 +5,7 @@ import { automations, channels, musicTracks, thumbnailFingerprints, videos, type
 import { and, asc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { generateComposition } from "@/lib/video/generate";
 import { Composition, RNG, CATEGORIES } from "@/lib/video/core";
-import { randomThumbStyle, styleFingerprint, ThumbStyle } from "@/lib/video/thumbnail";
+import { randomThumbStyle, styleFingerprint, thumbnailCandidates, thumbnailScore, ThumbStyle } from "@/lib/video/thumbnail";
 import { renderVideo, MUSIC_DIR, UPLOADS_MUSIC_DIR, renderThumbnail } from "./render";
 import { uploadVideo } from "./youtube";
 import { downloadFile, uploadFile, deleteFile } from "./storage";
@@ -45,15 +45,17 @@ async function pickMusic(mood: string, seed: string) {
 }
 
 // ---------- thumbnail uniqueness ----------
-export async function uniqueThumbStyle(seed: string): Promise<ThumbStyle> {
+export async function uniqueThumbStyle(seed: string, category?: string): Promise<ThumbStyle> {
   const rng = new RNG(seed + "thumb" + Date.now());
-  for (let i = 0; i < 200; i++) {
-    const st = randomThumbStyle(rng);
+  const candidates = category ? thumbnailCandidates(seed, category) : [];
+  const ordered = [...candidates, ...Array.from({ length: 200 }, () => randomThumbStyle(rng, category))]
+    .sort((a, b) => (thumbnailScore(b, category ?? "mixed") - thumbnailScore(a, category ?? "mixed")) || rng.next() - 0.5);
+  for (const st of ordered) {
     const fp = styleFingerprint(st);
     const exists = await db.select({ id: thumbnailFingerprints.id }).from(thumbnailFingerprints).where(eq(thumbnailFingerprints.fingerprint, fp)).limit(1);
     if (!exists.length) return st;
   }
-  return randomThumbStyle(rng);
+  return candidates[0] ?? randomThumbStyle(rng, category);
 }
 
 // ---------- create ----------
@@ -73,7 +75,7 @@ export interface CreateVideoInput {
 export async function createVideo(input: CreateVideoInput): Promise<Video> {
   const comp = generateComposition({ category: input.category, orientation: input.orientation, voice: input.voice, fallbackVoice: input.fallbackVoice, mood: input.mood, seed: input.seed });
   const track = await pickMusic(comp.music.mood, comp.seed);
-  const style = await uniqueThumbStyle(comp.seed);
+  const style = await uniqueThumbStyle(comp.seed, comp.category);
   const [row] = await db
     .insert(videos)
     .values({
@@ -148,7 +150,7 @@ async function processVideo(v: Video) {
   await db.update(videos).set({ status: "rendering", progress: 0, stage: "starting", error: null }).where(eq(videos.id, v.id));
   const comp = v.composition as Composition;
   const track = v.musicTrackId ? (await db.select().from(musicTracks).where(eq(musicTracks.id, v.musicTrackId)))[0] : null;
-  const style = (v.thumbnailStyle as ThumbStyle) ?? randomThumbStyle(new RNG(v.seed));
+  const style = (v.thumbnailStyle as ThumbStyle) ?? randomThumbStyle(new RNG(v.seed), v.category);
   let lastWrite = 0;
   try {
     const res = await renderVideo(v.id, comp, track ? await musicLocalPath(track.filePath) : null, style, {
