@@ -2,8 +2,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Reveal } from "./Anim";
+import type { ThumbStyle } from "@/lib/video/thumbnail";
 
 interface V { id: number; title: string; description: string; tags: string[]; status: string; channelId: number | null; scheduledFor: string | null; videoUrl: string | null; mode: string }
+interface ThumbnailVariant { index: number; path: string; fingerprint: string; style: ThumbStyle }
 
 function toLocalInput(iso: string | null) {
   if (!iso) return "";
@@ -29,6 +31,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const [when, setWhen] = useState(toLocalInput(video.scheduledFor));
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [variants, setVariants] = useState<ThumbnailVariant[]>([]);
 
   const call = async (label: string, fn: () => Promise<Response>) => {
     setBusy(label); setMsg(null);
@@ -47,7 +50,16 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const unschedule = () => call("unschedule", () => patch({ action: "unschedule" }));
   const retry = () => call("retry", () => patch({ action: "retry" }));
   const regen = async () => { const j = await call("regenerate", () => fetch(`/api/videos/${video.id}/regenerate`, { method: "POST" })); if (j?.id) router.push(`/videos/${j.id}`); };
-  const regenThumb = () => call("thumbnail", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST" }));
+  const regenThumb = async () => {
+    const j = await call("thumbnail options", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST" }));
+    if (Array.isArray(j?.variants)) setVariants(j.variants as ThumbnailVariant[]);
+  };
+  const chooseThumb = async (index: number) => {
+    const variant = variants.find((item) => item.index === index);
+    if (!variant) return;
+    const j = await call("thumbnail selected", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "select", index, style: variant.style }) }));
+    if (j?.video) setVariants([]);
+  };
   const del = async () => { if (!confirm("Delete this video and its files?")) return; await call("delete", () => fetch(`/api/videos/${video.id}`, { method: "DELETE" })); router.push("/videos"); };
 
   const canPost = video.status === "ready" || video.status === "scheduled";
@@ -89,6 +101,15 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
           <button onClick={del} disabled={!!busy} className="btn btn-danger">Delete</button>
         </div>
         {msg && <div className="t-vt mt-3 ml-4 text-oxblood">{msg}</div>}
+        {variants.length > 0 && <div className="mt-6 ml-4">
+          <div className="t-vt text-oxblood mb-2">choose a thumbnail</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {variants.map((variant) => <button key={variant.fingerprint} onClick={() => chooseThumb(variant.index)} disabled={!!busy} className="text-left group">
+              <img src={`/api/media?f=${encodeURIComponent(variant.path)}&v=${encodeURIComponent(variant.fingerprint)}`} alt={`Thumbnail option ${variant.index + 1}`} className="thumb-frame w-full group-hover:scale-[1.03] transition-transform" />
+              <span className="t-vt block mt-1">option {variant.index + 1} · use this</span>
+            </button>)}
+          </div>
+        </div>}
       </Reveal>
     </>
   );

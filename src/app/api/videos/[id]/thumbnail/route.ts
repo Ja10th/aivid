@@ -4,8 +4,7 @@ import { channels, thumbnailFingerprints, videos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { Composition } from "@/lib/video/core";
 import { renderThumbnail } from "@/lib/server/render";
-import { styleFingerprint } from "@/lib/video/thumbnail";
-import { uniqueThumbStyle } from "@/lib/server/engine";
+import { styleFingerprint, thumbnailCandidates, type ThumbStyle } from "@/lib/video/thumbnail";
 import { uploadFile } from "@/lib/server/storage";
 import { updateVideoThumbnail } from "@/lib/server/youtube";
 import { bad } from "@/lib/server/http";
@@ -19,7 +18,23 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const { id } = await params;
     const [video] = await db.select().from(videos).where(eq(videos.id, Number(id)));
     if (!video) return bad("not found", 404);
-    const style = await uniqueThumbStyle(`${video.seed}-${Date.now()}`, video.category);
+    const body = await _.json().catch(() => ({})) as { action?: string; index?: number; style?: ThumbStyle };
+    const candidates = thumbnailCandidates(`${video.seed}-${Date.now()}`, video.category);
+
+    if (body.action !== "select") {
+      const variants = [];
+      for (let index = 0; index < candidates.length; index++) {
+        const style = candidates[index];
+        const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style);
+        const path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${styleFingerprint(style)}.png`, "image/png");
+        variants.push({ index, path, fingerprint: styleFingerprint(style), style });
+      }
+      return Response.json({ video, variants });
+    }
+
+    const index = Number(body.index);
+    if (!Number.isInteger(index) || index < 0 || index >= candidates.length) return bad("invalid thumbnail option", 400);
+    const style = body.style ?? candidates[index];
     const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style);
     const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}.png`, "image/png");
     if (video.youtubeVideoId) {
@@ -31,7 +46,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const fingerprint = styleFingerprint(style);
     await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id }).onConflictDoNothing();
     const [updated] = await db.update(videos).set({ thumbnailStyle: style, thumbnailFingerprint: fingerprint, thumbPath }).where(eq(videos.id, video.id)).returning();
-    return Response.json(updated);
+    return Response.json({ video: updated, variants: [] });
   } catch (error) {
     return bad((error as Error).message || "thumbnail regeneration failed", 500);
   }
