@@ -48,14 +48,15 @@ async function pickMusic(mood: string, seed: string) {
 export async function uniqueThumbStyle(seed: string, category?: string): Promise<ThumbStyle> {
   const rng = new RNG(seed + "thumb" + Date.now());
   const candidates = category ? thumbnailCandidates(seed, category) : [];
-  const ordered = [...candidates, ...Array.from({ length: 200 }, () => randomThumbStyle(rng, category))]
+  const shuffledCandidates = rng.shuffle([...candidates]);
+  const ordered = [...shuffledCandidates, ...Array.from({ length: 200 }, () => randomThumbStyle(rng, category))]
     .sort((a, b) => (thumbnailScore(b, category ?? "mixed") - thumbnailScore(a, category ?? "mixed")) || rng.next() - 0.5);
   for (const st of ordered) {
     const fp = styleFingerprint(st);
     const exists = await db.select({ id: thumbnailFingerprints.id }).from(thumbnailFingerprints).where(eq(thumbnailFingerprints.fingerprint, fp)).limit(1);
     if (!exists.length) return st;
   }
-  return candidates[0] ?? randomThumbStyle(rng, category);
+  return rng.pick(candidates) ?? randomThumbStyle(rng, category);
 }
 
 // ---------- create ----------
