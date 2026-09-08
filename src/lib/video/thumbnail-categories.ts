@@ -1,6 +1,90 @@
 import { Composition, Palette, RNG } from "./core";
 import { C2D, rrect, hexA, star, poly } from "./draw";
 
+// ==========================================
+// PARAMETRIC 3-LAYER DECODE SYSTEM
+// themeVariant (0-799) decodes to:
+//   sceneType   = v % 10        (10 distinct artworks)
+//   colorIdx    = floor(v/10) % 20  (20 color palettes)
+//   layoutMicro = floor(v/200) % 4  (4 micro-layout tweaks)
+// Total: 10 × 20 × 4 = 800 unique variations per category
+// ==========================================
+
+interface ThemeColors {
+  bg: string;
+  bgSecondary?: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  text: string;
+}
+
+// 20 COLOR PALETTES (Universal — each category remixes them)
+const COLOR_PALETTES: ThemeColors[] = [
+  // 0-4: Cool spectrum
+  { bg: "#0a1628", primary: "#3fe0ff", secondary: "#ff2323", accent: "#ffd23f", text: "#ffffff" },
+  { bg: "#1a0f2e", primary: "#a855f7", secondary: "#3fe0ff", accent: "#ffd23f", text: "#ffffff" },
+  { bg: "#0c1821", primary: "#38bdf8", secondary: "#ec4899", accent: "#fbbf24", text: "#ffffff" },
+  { bg: "#041c1e", primary: "#2dd4bf", secondary: "#f43f5e", accent: "#fde047", text: "#ffffff" },
+  { bg: "#0f172a", primary: "#818cf8", secondary: "#fb923c", accent: "#4ade80", text: "#ffffff" },
+  
+  // 5-9: Warm spectrum  
+  { bg: "#1a0e0a", primary: "#ff6b35", secondary: "#ffd23f", accent: "#3fe0ff", text: "#ffffff" },
+  { bg: "#2d1b0e", primary: "#f97316", secondary: "#a3e635", accent: "#06b6d4", text: "#ffffff" },
+  { bg: "#1f0a0f", primary: "#dc2626", secondary: "#fbbf24", accent: "#10b981", text: "#ffffff" },
+  { bg: "#0d0703", primary: "#d4a373", secondary: "#dc2626", accent: "#ffd700", text: "#ffe9b0" },
+  { bg: "#2f1c14", primary: "#ca8a04", secondary: "#dc2626", accent: "#3b82f6", text: "#fef3c7" },
+  
+  // 10-14: Neon/Electric
+  { bg: "#000000", primary: "#10b981", secondary: "#6ee7b7", accent: "#ffffff", text: "#ffffff" },
+  { bg: "#04050d", primary: "#e879f9", secondary: "#38bdf8", accent: "#ffd23f", text: "#ffffff" },
+  { bg: "#0c0a09", primary: "#eab308", secondary: "#ef4444", accent: "#06b6d4", text: "#ffffff" },
+  { bg: "#050b14", primary: "#3b82f6", secondary: "#f59e0b", accent: "#22c55e", text: "#fef08a" },
+  { bg: "#020617", primary: "#f43f5e", secondary: "#38bdf8", accent: "#ffd23f", text: "#ffffff" },
+  
+  // 15-19: Mystic/Cosmic
+  { bg: "#0b041c", bgSecondary: "#080214", primary: "#a855f7", secondary: "#3fe0ff", accent: "#ffd700", text: "#ffffff" },
+  { bg: "#030712", bgSecondary: "#0a102b", primary: "#f43f5e", secondary: "#38bdf8", accent: "#fbbf24", text: "#ffffff" },
+  { bg: "#111827", bgSecondary: "#030712", primary: "#38bdf8", secondary: "#ec4899", accent: "#facc15", text: "#ffffff" },
+  { bg: "#05010d", bgSecondary: "#1e0b36", primary: "#67e8f9", secondary: "#c084fc", accent: "#fde047", text: "#ffffff" },
+  { bg: "#020614", bgSecondary: "#0a1628", primary: "#34d399", secondary: "#f472b6", accent: "#fbbf24", text: "#ffffff" },
+];
+
+function decodeThemeVariant(variant: number): { sceneType: number; colorIdx: number; layoutMicro: number } {
+  const v = Math.abs(variant) % 800;
+  return {
+    sceneType: v % 10,
+    colorIdx: Math.floor(v / 10) % 20,
+    layoutMicro: Math.floor(v / 200) % 4,
+  };
+}
+
+function applyMicroLayout(ctx: C2D, W: number, H: number, micro: number): { badgeX: number; badgeY: number; flip: boolean } {
+  let badgeX = W * 0.84, badgeY = H * 0.1, flip = false;
+  
+  switch (micro) {
+    case 0: // Default centered
+      break;
+    case 1: // Left-heavy, badge top-left
+      badgeX = W * 0.18;
+      badgeY = H * 0.12;
+      break;
+    case 2: // Mirrored horizontally
+      ctx.scale(-1, 1);
+      ctx.translate(-W, 0);
+      flip = true;
+      break;
+    case 3: // Zoomed + badge bottom-right
+      ctx.translate(W * 0.05, H * 0.05);
+      ctx.scale(1.08, 1.08);
+      badgeX = W * 0.82;
+      badgeY = H * 0.88;
+      break;
+  }
+  
+  return { badgeX, badgeY, flip };
+}
+
 export function outlinedText(ctx: C2D, text: string, x: number, y: number, size: number, fill: string, stroke = "#000", align: CanvasTextAlign = "center") {
   ctx.font = `900 ${Math.round(size)}px "Anton", "Arial Black", "DejaVu Sans", sans-serif`;
   ctx.textAlign = align;
@@ -73,16 +157,39 @@ function splitHeadline(text: string): string[] {
 }
 
 // ==========================================
-// 1. EYE TRAINING (5 DISTINCT COMPOSITIONS)
+// PARAMETRIC 3-LAYER DECODE SYSTEM
+// themeVariant (0-799) decodes to:
+//   sceneType   = v % 10        (10 distinct artworks)
+//   colorIdx    = floor(v/10) % 20  (20 color palettes)
+//   layoutMicro = floor(v/200) % 4  (4 micro-layout tweaks)
+// Total: 10 × 20 × 4 = 800 unique variations per category
+// ==========================================
+
+interface ThemeColors {
+  bg: string;
+  bgSecondary?: string;
+  primary: string;
+  secondary: string;
+  accent: string;
+  text: string;
+}
+
+// ==========================================
+// 1. EYE TRAINING (10 DISTINCT COMPOSITIONS)
 // ==========================================
 export function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
-  const v = Math.abs(themeVariant) % 5;
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
   const hook = hookOverride && hookOverride.length > 2 ? hookOverride : "FOLLOW THE DOT";
+  
+  ctx.save();
+  const { badgeX, badgeY, flip } = applyMicroLayout(ctx, W, H, layoutMicro);
 
-  if (v === 0) {
+  if (sceneType === 0) {
     // V0: Giant Realistic Eye + Ballistic Flight Arc + Target Dot
+
     const bg = ctx.createRadialGradient(W * 0.32, H * 0.48, 40, W * 0.32, H * 0.48, W * 0.85);
-    bg.addColorStop(0, "#123246"); bg.addColorStop(1, "#04141c");
+    bg.addColorStop(0, colors.bg); bg.addColorStop(1, colors.bgSecondary || colors.bg);
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
     const eyeCX = W * 0.34, eyeCY = H * 0.46, eyeW = W * 0.52, eyeH = H * 0.44;
@@ -119,7 +226,7 @@ export function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVa
     drawBadge(ctx, "TRACK IT →", W * 0.84, H * 0.1, "#3fe0ff", "#000", 28, -5);
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.81 + (i - (lines.length - 1) / 2) * 104, W * 0.86, 100, i === 1 ? "#3fe0ff" : "#fff"));
-  } else if (v === 1) {
+  } else if (sceneType === 1) {
     // V1: Tactical Concentric Optical Radar / HUD Bullseye
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#010f17"); bg.addColorStop(1, "#04222f");
@@ -158,7 +265,7 @@ export function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVa
 
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.84 + (i - (lines.length - 1) / 2) * 94, W * 0.88, 92, "#ffffff", "#000"));
-  } else if (v === 2) {
+  } else if (sceneType === 2) {
     // V2: Cosmic Neon Infinity Lemniscate (Figure-8 Smooth Pursuit)
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#0b041c"); bg.addColorStop(0.5, "#1f093f"); bg.addColorStop(1, "#080214");
@@ -197,7 +304,7 @@ export function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVa
     drawBadge(ctx, "SMOOTH PURSUIT · 60FPS", W * 0.5, H * 0.1, "#ffd700", "#000", 28, 0);
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.83 + (i - (lines.length - 1) / 2) * 96, W * 0.86, 94, i === 1 ? "#ffd700" : "#ffffff", "#000"));
-  } else if (v === 3) {
+  } else if (sceneType === 3) {
     // V3: Dual Saccades Ballistic Speed Duel (Left vs Right with lightning snap)
     ctx.fillStyle = "#070712"; ctx.fillRect(0, 0, W, H);
     // Background speed lines
@@ -278,10 +385,14 @@ export function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVa
 // 2. GAMEPLAY (5 DISTINCT COMPOSITIONS)
 // ==========================================
 export function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
-  const v = Math.abs(themeVariant) % 5;
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
+  
+  ctx.save();
+  const { badgeX, badgeY, flip } = applyMicroLayout(ctx, W, H, layoutMicro);
   const hook = hookOverride && hookOverride.length > 2 ? hookOverride : "WATCH IT RUN";
 
-  if (v === 0) {
+  if (sceneType === 0) {
     // V0: Match-3 Candy Gem Blitz
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#ff3fb0"); bg.addColorStop(0.55, "#7b2ff7"); bg.addColorStop(1, "#1a1150");
@@ -308,7 +419,7 @@ export function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVaria
     outlinedText(ctx, "18,420", W * 0.8, H * 0.42, 66, "#ffffff", "#000");
 
     fitOutlinedText(ctx, hook, W / 2, H * 0.88, W * 0.86, 88, "#ffffff", "#000");
-  } else if (v === 1) {
+  } else if (sceneType === 1) {
     // V1: Neon Retro Arcade Space Shooter (Vector Asteroids / Galaga)
     ctx.fillStyle = "#04050d"; ctx.fillRect(0, 0, W, H);
     // CRT scanlines
@@ -344,7 +455,7 @@ export function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVaria
     drawBadge(ctx, "INSERT COIN · 1P", W * 0.5, H * 0.12, "#ef4444", "#fff", 26, 0);
 
     fitOutlinedText(ctx, hook, W / 2, H * 0.88, W * 0.86, 88, "#ffd23f", "#000");
-  } else if (v === 2) {
+  } else if (sceneType === 2) {
     // V2: Tetris Matrix Block Cascade
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#08071a"); bg.addColorStop(1, "#180f33");
@@ -387,7 +498,7 @@ export function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVaria
 
     drawBadge(ctx, "MAX LINES 🏆", W * 0.38, H * 0.08, "#22c55e", "#000", 24, -3);
     fitOutlinedText(ctx, hook, W / 2, H * 0.88, W * 0.86, 88, "#ffffff", "#000");
-  } else if (v === 3) {
+  } else if (sceneType === 3) {
     // V3: Cyberpunk Pong / AI vs AI Battle Arena
     ctx.fillStyle = "#020617"; ctx.fillRect(0, 0, W, H);
     // Court borders
@@ -485,10 +596,14 @@ export function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVaria
 // 3. MATH (5 DISTINCT COMPOSITIONS)
 // ==========================================
 export function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, equation: string, hookOverride?: string) {
-  const v = Math.abs(themeVariant) % 5;
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
   const hook = hookOverride && hookOverride.length > 2 ? hookOverride : "CAN YOU SOLVE IT?";
+  
+  ctx.save();
+  const { badgeX, badgeY, flip } = applyMicroLayout(ctx, W, H, layoutMicro);
 
-  if (v === 0) {
+  if (sceneType === 0) {
     // V0: Chalkboard Classroom Storm
     const bg = ctx.createRadialGradient(W * 0.72, H * 0.24, 30, W * 0.72, H * 0.24, W * 0.9);
     bg.addColorStop(0, "#2a3170"); bg.addColorStop(1, "#0a0d24");
@@ -514,7 +629,7 @@ export function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: 
 
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.84 + (i - (lines.length - 1) / 2) * 90, W * 0.86, 86, "#ffffff", "#ff3b3b"));
-  } else if (v === 1) {
+  } else if (sceneType === 1) {
     // V1: 4-Choice Multiple Choice Pressure Card
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#081028"); bg.addColorStop(1, "#020512");
@@ -544,7 +659,7 @@ export function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: 
     drawBadge(ctx, "99% GET THIS WRONG", W * 0.5, H * 0.08, "#ef4444", "#fff", 26, 0);
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.86 + (i - (lines.length - 1) / 2) * 88, W * 0.88, 86, "#ffffff", "#000"));
-  } else if (v === 2) {
+  } else if (sceneType === 2) {
     // V2: Digital Bomb Timer / Emergency Countdown
     ctx.fillStyle = "#0c0a09"; ctx.fillRect(0, 0, W, H);
 
@@ -567,7 +682,7 @@ export function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: 
 
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.84 + (i - (lines.length - 1) / 2) * 90, W * 0.86, 86, "#ffffff", "#ef4444"));
-  } else if (v === 3) {
+  } else if (sceneType === 3) {
     // V3: Geometric Shape / Symbol Algebra Riddle
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#1e1035"); bg.addColorStop(1, "#070212");
@@ -626,10 +741,14 @@ export function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: 
 // 4. BRAIN TEASERS (5 DISTINCT COMPOSITIONS)
 // ==========================================
 export function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
-  const v = Math.abs(themeVariant) % 5;
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
   const hook = hookOverride && hookOverride.length > 2 ? hookOverride : "BEAT THE CLOCK";
+  
+  ctx.save();
+  const { badgeX, badgeY, flip } = applyMicroLayout(ctx, W, H, layoutMicro);
 
-  if (v === 0) {
+  if (sceneType === 0) {
     // V0: Tactile Jigsaw Piece & Stopwatch Ring
     const bg = ctx.createRadialGradient(W * 0.76, H * 0.3, 30, W * 0.76, H * 0.3, W * 0.85);
     bg.addColorStop(0, "#123018"); bg.addColorStop(1, "#050c07");
@@ -654,7 +773,7 @@ export function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant:
 
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.86 + (i - (lines.length - 1) / 2) * 92, W * 0.86, 92, "#3fff6e", "#000"));
-  } else if (v === 1) {
+  } else if (sceneType === 1) {
     // V1: Glowing Holographic Neural Brain
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#030712"); bg.addColorStop(1, "#0a102b");
@@ -688,7 +807,7 @@ export function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant:
 
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.85 + (i - (lines.length - 1) / 2) * 92, W * 0.86, 92, "#38bdf8", "#000"));
-  } else if (v === 2) {
+  } else if (sceneType === 2) {
     // V2: Impossible Optical Illusion (Penrose Triangle)
     const bg = ctx.createLinearGradient(0, 0, W, H);
     bg.addColorStop(0, "#111827"); bg.addColorStop(1, "#030712");
@@ -714,7 +833,7 @@ export function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant:
 
     const lines = splitHeadline(hook);
     lines.forEach((ln, i) => fitOutlinedText(ctx, ln, W / 2, H * 0.85 + (i - (lines.length - 1) / 2) * 92, W * 0.86, 92, "#ffffff", "#ec4899"));
-  } else if (v === 3) {
+  } else if (sceneType === 3) {
     // V3: Noir Detective Dossier / Mystery Clue
     const bg = ctx.createRadialGradient(W * 0.5, H * 0.45, 40, W * 0.5, H * 0.45, W * 0.8);
     bg.addColorStop(0, "#2c1c0f"); bg.addColorStop(1, "#0d0703");
@@ -778,9 +897,9 @@ export function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant:
 // 5. STORY (5 DISTINCT COMPOSITIONS)
 // ==========================================
 export function drawStoryThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, titleText: string) {
-  const v = Math.abs(themeVariant) % 5;
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
 
-  if (v === 0) {
+  if (sceneType === 0) {
     // V0: Moonlit Cottage on Twilight Hill
     const sky = ctx.createLinearGradient(0, 0, 0, H);
     ["#1a1030", "#4a1f45", "#a84a35", "#d97f3f"].forEach((c, i) => sky.addColorStop(i / 3, c));
@@ -801,7 +920,7 @@ export function drawStoryThumbnail(ctx: C2D, W: number, H: number, themeVariant:
     ctx.fillStyle = "#fbbf24"; ctx.fillRect(W * 0.22, H * 0.63, 24, 28);
 
     drawBadge(ctx, "BEDTIME STORY 🌙", W * 0.82, H * 0.6, "#fbbf24", "#000", 24, 0);
-  } else if (v === 1) {
+  } else if (sceneType === 1) {
     // V1: Misty Deep Forest & Solitary Lantern Traveler
     const sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, "#031317"); sky.addColorStop(0.6, "#08333e"); sky.addColorStop(1, "#185868");
@@ -832,7 +951,7 @@ export function drawStoryThumbnail(ctx: C2D, W: number, H: number, themeVariant:
     ctx.fillStyle = "#fef08a"; ctx.fillRect(lx + 20, ly - 12, 12, 16);
 
     drawBadge(ctx, "ORIGINAL FICTION 🌲", W * 0.82, H * 0.6, "#22d3ee", "#000", 24, 0);
-  } else if (v === 2) {
+  } else if (sceneType === 2) {
     // V2: Stormy Ocean & Lighthouse Lightbeam
     const sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, "#050b14"); sky.addColorStop(0.5, "#0f172a"); sky.addColorStop(1, "#1e293b");
@@ -856,7 +975,7 @@ export function drawStoryThumbnail(ctx: C2D, W: number, H: number, themeVariant:
     ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
 
     drawBadge(ctx, "TALES OF THE SEA 🌊", W * 0.82, H * 0.6, "#38bdf8", "#000", 24, 0);
-  } else if (v === 3) {
+  } else if (sceneType === 3) {
     // V3: Cosmic Voyage / Crescent Planet & Nebula
     const bg = ctx.createRadialGradient(W * 0.3, H * 0.4, 60, W * 0.3, H * 0.4, W * 0.9);
     bg.addColorStop(0, "#4a154b"); bg.addColorStop(0.5, "#1e0b36"); bg.addColorStop(1, "#05010d");
@@ -915,10 +1034,10 @@ export function drawStoryThumbnail(ctx: C2D, W: number, H: number, themeVariant:
 // 6. CALM (5 DISTINCT COMPOSITIONS)
 // ==========================================
 export function drawCalmThumbnail(ctx: C2D, comp: Composition, p: Palette, W: number, H: number, variant: number, hookOverride?: string) {
-  const v = Math.abs(variant) % 5;
-  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"][v];
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(variant);
+  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"][sceneType % 5];
 
-  if (v === 0) {
+  if (sceneType === 0) {
     // V0: Concentric Expanding Breathing Waves
     ctx.fillStyle = p.bg; ctx.fillRect(0, 0, W, H);
     for (let r = 260; r > 40; r -= 36) {
@@ -927,7 +1046,7 @@ export function drawCalmThumbnail(ctx: C2D, comp: Composition, p: Palette, W: nu
     ctx.strokeStyle = p.accent; ctx.lineWidth = 18;
     ctx.beginPath(); ctx.arc(W / 2, H * 0.42, 160, 0, Math.PI * 2); ctx.stroke();
     drawBadge(ctx, "MEDITATION", W * 0.5, H * 0.12, p.accent, p.bg, 26, 0);
-  } else if (v === 1) {
+  } else if (sceneType === 1) {
     // V1: Zen Balancing Stones (Cairn) on Reflecting Water
     const bg = ctx.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0, "#2d1b4e"); bg.addColorStop(0.55, "#e07a5f"); bg.addColorStop(1, "#1d3557");
@@ -945,7 +1064,7 @@ export function drawCalmThumbnail(ctx: C2D, comp: Composition, p: Palette, W: nu
     ctx.beginPath(); ctx.ellipse(bx, by - 160, 28, 14, 0, 0, Math.PI * 2); ctx.fill();
 
     drawBadge(ctx, "DEEP RELAXATION", W * 0.5, H * 0.1, "#f4a261", "#000", 26, 0);
-  } else if (v === 2) {
+  } else if (sceneType === 2) {
     // V2: Sacred Lotus Mandala
     ctx.fillStyle = "#071318"; ctx.fillRect(0, 0, W, H);
     const cx = W * 0.5, cy = H * 0.42;
@@ -961,7 +1080,7 @@ export function drawCalmThumbnail(ctx: C2D, comp: Composition, p: Palette, W: nu
     ctx.restore();
 
     drawBadge(ctx, "INNER PEACE", W * 0.5, H * 0.1, "#2dd4bf", "#000", 26, 0);
-  } else if (v === 3) {
+  } else if (sceneType === 3) {
     // V3: Northern Lights Aurora Borealis
     const bg = ctx.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0, "#030b14"); bg.addColorStop(0.5, "#081c24"); bg.addColorStop(1, "#03080e");

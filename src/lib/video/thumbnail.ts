@@ -65,28 +65,36 @@ export function randomThumbStyle(rng: RNG, category?: string): ThumbStyle {
     pattern: preset.pattern ?? rng.pick(THUMB_PATTERNS),
     tilt: category === "story" ? 0 : rng.range(-2, 2),
     hueShift: rng.int(0, 359),
-    themeVariant: rng.int(0, 4),
+    // 800 unique variants per category: 10 scene types × 20 palettes × 4 micro-layouts
+    themeVariant: rng.int(0, 799),
   };
 }
 
 export function thumbnailCandidates(seed: string, category: string): ThumbStyle[] {
-  const rng = new RNG(seed + "thumb-candidates-v4");
+  const rng = new RNG(seed + "thumb-candidates-v6");
   const key = (category in CATEGORY_LAYOUTS ? category : "mixed") as ThumbnailCategory;
   const layouts = CATEGORY_LAYOUTS[key];
 
-  // Generate 5 candidates, each with a distinct themeVariant (0-4) for visually different compositions
+  // Pick a random starting colorIdx and microLayout for this regenerate session
+  const colorBase = rng.int(0, 19);
+  const microBase = rng.int(0, 3);
+
+  // Shuffle 10 scene types, take first 5 — guarantees 5 visually distinct artworks every time
+  const allSceneTypes = rng.shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
   return Array.from({ length: 5 }, (_, index) => {
-    const themeVariant = index % 5;
+    const sceneType = allSceneTypes[index]; // guaranteed unique scene type
+    const colorIdx = (colorBase + index * 4) % 20; // spread across 20 palettes
+    const micro = (microBase + index) % 4;
+    // Encode into themeVariant: sceneType + colorIdx*10 + micro*200
+    const themeVariant = sceneType + colorIdx * 10 + micro * 200;
+
     const style = randomThumbStyle(rng, key);
     return {
       ...style,
       layout: layouts[index % layouts.length],
       fontIdx: (style.fontIdx + index * 3) % FONTS.display.length,
-      deco: index === 0 ? style.deco : index === 1 ? "frame" : index === 3 ? "sparks" : style.deco,
-      fx: index === 2 && key !== "story" ? "3d" : style.fx,
-      pattern: index === 1 ? "gradient" : style.pattern,
-      tilt: key === "story" ? 0 : index === 0 ? 0 : rng.range(-1.5, 1.5),
-      hueShift: index * 72, // spread evenly around color wheel
+      hueShift: index * 72,
       textVariant: index,
       themeVariant,
     };
