@@ -42,7 +42,7 @@ const CATEGORY_LAYOUTS: Record<ThumbnailCategory, ThumbStyle["layout"][]> = {
 };
 
 export function styleFingerprint(s: ThumbStyle) {
-  return `${s.layout}|${s.paletteIdx}|${s.fontIdx}|${s.deco}|${s.fx}|${s.pattern}|${s.textVariant ?? 0}`;
+  return `v3|${s.layout}|${s.paletteIdx}|${s.fontIdx}|${s.deco}|${s.fx}|${s.pattern}|${s.textVariant ?? 0}`;
 }
 
 export function randomThumbStyle(rng: RNG, category?: string): ThumbStyle {
@@ -207,12 +207,24 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
   }
 
   if (cat === "brain") {
-    ctx.fillStyle = "#0d1b0f"; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "#1c3320"; ctx.lineWidth = 4; for (let x = 0; x < W; x += 120) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 0; y < H; y += 120) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
     const brainAccent = ["#3fff6e", "#ffd23f", "#3fe0ff"][variant];
-    outlinedText(ctx, "?", W * (variant === 2 ? 0.28 : 0.22), H * 0.42, 330, brainAccent);
-    ctx.strokeStyle = "#ff3b3b"; ctx.lineWidth = 18; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.3, 76, -Math.PI / 2, Math.PI * 1.1); ctx.stroke();
-    outlinedText(ctx, "05", W * 0.78, H * 0.3, 72, "#fff");
+    if (variant === 0) {
+      ctx.fillStyle = "#0d1b0f"; ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "#1c3320"; ctx.lineWidth = 4; for (let x = 0; x < W; x += 120) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 0; y < H; y += 120) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      outlinedText(ctx, "?", W * 0.22, H * 0.42, 330, brainAccent);
+      ctx.strokeStyle = "#ff3b3b"; ctx.lineWidth = 18; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.3, 76, -Math.PI / 2, Math.PI * 1.1); ctx.stroke();
+      outlinedText(ctx, "05", W * 0.78, H * 0.3, 72, "#fff");
+    } else if (variant === 1) {
+      ctx.fillStyle = "#191919"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#ffd23f"; ctx.beginPath(); ctx.arc(W * 0.27, H * 0.4, 190, 0, Math.PI * 2); ctx.fill();
+      outlinedText(ctx, "?", W * 0.27, H * 0.4, 300, "#191919", "#fff");
+      ctx.fillStyle = "#ff3b3b"; rrect(ctx, W * 0.7, H * 0.18, 220, 96, 18); ctx.fill();
+      outlinedText(ctx, "05 SEC", W * 0.785, H * 0.25, 48, "#fff");
+    } else {
+      ctx.fillStyle = "#14233a"; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#3fe0ff"; for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) { rrect(ctx, 90 + i * 105, 88 + j * 105, 76, 76, 14); ctx.fill(); }
+      outlinedText(ctx, "?", W * 0.78, H * 0.42, 280, "#3fe0ff");
+    }
     fitOutlinedText(ctx, hook, W / 2, H * 0.82, W * 0.9, 82, brainAccent);
     return true;
   }
