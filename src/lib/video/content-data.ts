@@ -98,21 +98,121 @@ export const TRIVIA: TriviaData[] = [
 
 
 // ==========================================
-// MEMORY CHALLENGES DATABASE
+// MEMORY CHALLENGES DATABASE - SIMON SAYS STYLE
 // ==========================================
 export interface MemoryData {
-  type: "sequence" | "pairs" | "pattern" | "spot-difference";
+  type: "sequence";
   difficulty: "easy" | "medium" | "hard";
-  data: unknown;
+  data: { length: number };
 }
 
 export const MEMORY_CHALLENGES: MemoryData[] = [
-  { type: "sequence", difficulty: "easy", data: { length: 4, grid: "2x2" } },
-  { type: "sequence", difficulty: "easy", data: { length: 5, grid: "4x1" } },
-  { type: "sequence", difficulty: "medium", data: { length: 6, grid: "2x2" } },
-  { type: "sequence", difficulty: "medium", data: { length: 7, grid: "diamond" } },
-  { type: "sequence", difficulty: "hard", data: { length: 8, grid: "2x2" } },
-  { type: "sequence", difficulty: "hard", data: { length: 9, grid: "diamond" } },
+  { type: "sequence", difficulty: "easy", data: { length: 4 } },
+  { type: "sequence", difficulty: "easy", data: { length: 5 } },
+  { type: "sequence", difficulty: "medium", data: { length: 6 } },
+  { type: "sequence", difficulty: "medium", data: { length: 7 } },
+  { type: "sequence", difficulty: "hard", data: { length: 8 } },
+  { type: "sequence", difficulty: "hard", data: { length: 9 } },
+];
+
+// ==========================================
+// WOULD YOU RATHER DATABASE
+// ==========================================
+export interface WouldYouRatherData {
+  question: string;
+  optionA: string;
+  optionB: string;
+  category: "fun" | "deep" | "silly" | "tough";
+  funFact?: string;
+}
+
+export const WOULD_YOU_RATHER: WouldYouRatherData[] = [
+  { question: "Would you rather...", optionA: "Have the ability to fly", optionB: "Have the ability to be invisible", category: "fun", funFact: "Most people choose flying!" },
+  { question: "Would you rather...", optionA: "Live without music", optionB: "Live without movies", category: "tough" },
+  { question: "Would you rather...", optionA: "Always be 10 minutes late", optionB: "Always be 20 minutes early", category: "fun" },
+  { question: "Would you rather...", optionA: "Have unlimited money", optionB: "Have unlimited time", category: "deep" },
+  { question: "Would you rather...", optionA: "Never use social media again", optionB: "Never watch TV/movies again", category: "tough" },
+  { question: "Would you rather...", optionA: "Be able to talk to animals", optionB: "Be able to speak all languages", category: "fun" },
+  { question: "Would you rather...", optionA: "Live in the past", optionB: "Live in the future", category: "deep" },
+  { question: "Would you rather...", optionA: "Always have to sing instead of speak", optionB: "Always have to dance everywhere you go", category: "silly" },
+  { question: "Would you rather...", optionA: "Be famous when you're alive and forgotten when you die", optionB: "Be unknown when alive but famous after death", category: "deep" },
+  { question: "Would you rather...", optionA: "Have a rewind button for life", optionB: "Have a pause button for life", category: "deep" },
+  { question: "Would you rather...", optionA: "Read minds but can't turn it off", optionB: "Be invisible but naked while invisible", category: "tough" },
+  { question: "Would you rather...", optionA: "Fight one horse-sized duck", optionB: "Fight 100 duck-sized horses", category: "silly" },
+  { question: "Would you rather...", optionA: "Have no internet", optionB: "Have no phone", category: "tough" },
+  { question: "Would you rather...", optionA: "Always know when someone is lying", optionB: "Always get away with lying", category: "deep" },
+  { question: "Would you rather...", optionA: "Have free Wi-Fi wherever you go", optionB: "Have free coffee wherever you go", category: "fun" },
+  { question: "Would you rather...", optionA: "Be stuck on a broken ski lift", optionB: "Be stuck in a broken elevator", category: "tough" },
+  { question: "Would you rather...", optionA: "Have to wear clown shoes every day", optionB: "Have to wear a clown nose every day", category: "silly" },
+  { question: "Would you rather...", optionA: "Live forever at your current age", optionB: "Live to 100 but age normally", category: "deep" },
+  { question: "Would you rather...", optionA: "Have dinner with anyone from history", optionB: "Have dinner with anyone alive today", category: "fun" },
+  { question: "Would you rather...", optionA: "Lose all your old memories", optionB: "Never be able to make new memories", category: "deep" },
+];
+
+// ==========================================
+// MYTH BUSTERS DATABASE
+// ==========================================
+export interface MythData {
+  myth: string;
+  isTrue: boolean;
+  explanation: string;
+  category: "science" | "history" | "food" | "animals" | "health";
+}
+
+export const MYTHS: MythData[] = [
+  { myth: "Lightning never strikes the same place twice", isTrue: false, explanation: "Lightning can and does strike the same place multiple times. The Empire State Building gets hit about 20-25 times per year.", category: "science" },
+  { myth: "You only use 10% of your brain", isTrue: false, explanation: "Brain imaging shows all parts of the brain are active throughout the day, even during sleep.", category: "science" },
+  { myth: "Goldfish have a 3-second memory", isTrue: false, explanation: "Goldfish can remember things for months and can be trained to recognize patterns.", category: "animals" },
+  { myth: "Eating carrots improves your eyesight", isTrue: false, explanation: "While carrots contain vitamin A which is good for eyes, they won't give you super vision. This myth started as British WWII propaganda.", category: "health" },
+  { myth: "The Great Wall of China is visible from space", isTrue: false, explanation: "You can't see it with the naked eye from space. This is a common misconception.", category: "history" },
+  { myth: "Cracking your knuckles causes arthritis", isTrue: false, explanation: "Studies have found no connection between knuckle cracking and arthritis.", category: "health" },
+  { myth: "Sugar makes kids hyper", isTrue: false, explanation: "Multiple studies show no link between sugar and hyperactivity. It's usually the exciting environment (like birthday parties).", category: "health" },
+  { myth: "Bats are blind", isTrue: false, explanation: "All bats can see. Many species have excellent vision, especially for seeing in low light.", category: "animals" },
+  { myth: "Dropping a penny from a tall building could kill someone", isTrue: false, explanation: "A penny's terminal velocity isn't fast enough to kill. It would just sting a bit.", category: "science" },
+  { myth: "Chameleons change color to blend with their surroundings", isTrue: false, explanation: "They change color based on mood, temperature, and light - not to camouflage.", category: "animals" },
+  { myth: "You lose most body heat through your head", isTrue: false, explanation: "You lose heat from any exposed skin equally. This myth came from a flawed military study.", category: "science" },
+  { myth: "Vikings wore horned helmets", isTrue: false, explanation: "No evidence exists of Vikings wearing horned helmets. This image came from 19th-century opera costumes.", category: "history" },
+  { myth: "Eating before swimming causes cramps", isTrue: false, explanation: "There's no scientific evidence that eating before swimming is dangerous.", category: "health" },
+  { myth: "Bulls are enraged by the color red", isTrue: false, explanation: "Bulls are colorblind to red. They charge at the movement of the cape, not its color.", category: "animals" },
+  { myth: "Hair and nails keep growing after death", isTrue: false, explanation: "The skin recedes as it dehydrates, making hair and nails appear longer.", category: "science" },
+  { myth: "Mount Everest is the tallest mountain on Earth", isTrue: false, explanation: "Measured from base to peak, Mauna Kea in Hawaii is taller (though most is underwater).", category: "science" },
+  { myth: "Shaving makes hair grow back thicker", isTrue: false, explanation: "Hair looks thicker because you're cutting the tapered end, leaving a blunt tip.", category: "health" },
+  { myth: "You can't fold a paper more than 7 times", isTrue: false, explanation: "In 2002, Britney Gallivan folded paper 12 times using a long sheet of toilet paper.", category: "science" },
+  { myth: "Napoleon was short", isTrue: false, explanation: "Napoleon was 5'7\", which was average height for his time. British propaganda portrayed him as short.", category: "history" },
+  { myth: "We evolved from monkeys", isTrue: false, explanation: "Humans and monkeys evolved from a common ancestor millions of years ago. We didn't evolve FROM monkeys.", category: "science" },
+];
+
+// ==========================================
+// QUICK POLLS DATABASE
+// ==========================================
+export interface PollData {
+  question: string;
+  options: string[];
+  category: "fun" | "food" | "life" | "random";
+  funFact?: string;
+}
+
+export const POLLS: PollData[] = [
+  { question: "What's the best pizza topping?", options: ["Pepperoni", "Pineapple", "Mushrooms", "Plain Cheese"], category: "food", funFact: "Pineapple on pizza was invented in Canada!" },
+  { question: "How do you eat Oreos?", options: ["Twist and lick", "Dunk in milk", "Eat whole", "Just eat the cream"], category: "food" },
+  { question: "Morning person or night owl?", options: ["Morning Person", "Night Owl", "Both", "Neither"], category: "life" },
+  { question: "Cats or dogs?", options: ["Cats", "Dogs", "Both", "Neither"], category: "fun", funFact: "There are more pet dogs than cats worldwide!" },
+  { question: "How do you pronounce GIF?", options: ["JIF (soft G)", "GIF (hard G)", "I don't care", "What's a GIF?"], category: "random" },
+  { question: "Toilet paper: over or under?", options: ["Over", "Under", "Doesn't matter", "I use bidets"], category: "random", funFact: "The patent shows 'over' as correct!" },
+  { question: "Best superpower?", options: ["Flight", "Invisibility", "Super Strength", "Time Travel"], category: "fun" },
+  { question: "Hot dog: sandwich or not?", options: ["It's a sandwich", "Not a sandwich", "It's a taco", "Who cares?"], category: "food" },
+  { question: "Best season?", options: ["Spring", "Summer", "Fall", "Winter"], category: "life" },
+  { question: "Pineapple on pizza?", options: ["Love it", "Hate it", "It's okay", "Never tried it"], category: "food" },
+  { question: "How do you butter toast?", options: ["Edge to edge", "Leave crust dry", "One side only", "No butter"], category: "food" },
+  { question: "Socks to bed?", options: ["Always", "Never", "Sometimes", "Only in winter"], category: "life" },
+  { question: "Best streaming service?", options: ["Netflix", "Disney+", "YouTube", "Other"], category: "random" },
+  { question: "Coffee or tea?", options: ["Coffee", "Tea", "Both", "Neither"], category: "food" },
+  { question: "Beach or mountains?", options: ["Beach", "Mountains", "Both", "Neither"], category: "life" },
+  { question: "Books or movies?", options: ["Books", "Movies", "Both", "Neither"], category: "fun" },
+  { question: "Early bird or procrastinator?", options: ["Early bird", "Procrastinator", "Depends", "Balanced"], category: "life" },
+  { question: "Ketchup on eggs?", options: ["Yes, always", "Never", "Sometimes", "That's gross"], category: "food" },
+  { question: "Text or call?", options: ["Text", "Call", "Video call", "In person only"], category: "random" },
+  { question: "Pancakes or waffles?", options: ["Pancakes", "Waffles", "French toast", "All of them"], category: "food" },
 ];
 
 // ==========================================

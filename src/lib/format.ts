@@ -27,8 +27,8 @@ export const CAT_LABEL: Record<string, string> = {
   riddles: "Riddles",
   trivia: "Trivia",
   memory: "Memory",
-  language: "Language",
-  science: "Science",
-  history: "History",
+  wouldyourather: "Would You Rather",
+  mythbusters: "Myth Busters",
+  polls: "Polls",
   mixed: "Mixed" 
 };

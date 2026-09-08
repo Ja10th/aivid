@@ -36,9 +36,9 @@ export type SceneKind =
   | "riddle"
   | "trivia-quiz"
   | "memory-challenge"
-  | "language-puzzle"
-  | "science-fact"
-  | "history-mystery";
+  | "would-you-rather"
+  | "myth-buster"
+  | "quick-poll";
 
 export interface Palette {
   name: string;
@@ -248,10 +248,10 @@ export const CATEGORIES: { id: string; label: string; blurb: string; moods: Mood
   { id: "calm", label: "Calm & Breathing", blurb: "Breathing pacers and slow visual drift for focus resets.", moods: ["calm"] },
   { id: "riddles", label: "Riddles", blurb: "Classic riddles, lateral thinking puzzles, and brain-bending mysteries with timed reveals.", moods: ["mystery", "playful", "focus"] },
   { id: "trivia", label: "Trivia", blurb: "Multi-category knowledge tests with multiple choice answers — history, science, geography, pop culture.", moods: ["playful", "focus", "energetic"] },
-  { id: "memory", label: "Memory Challenges", blurb: "Sequence recall, pattern matching, spot the difference, and visual memory tests.", moods: ["focus", "playful", "mystery"] },
-  { id: "language", label: "Language Puzzles", blurb: "Word scrambles, anagrams, vocabulary challenges, and linguistic brain teasers.", moods: ["playful", "focus", "calm"] },
-  { id: "science", label: "Science Facts", blurb: "Quick science demonstrations, physics principles, chemistry reactions, and mind-blowing discoveries.", moods: ["mystery", "energetic", "focus"] },
-  { id: "history", label: "History Mysteries", blurb: "Fascinating historical events, ancient civilizations, famous figures, and historical what-ifs.", moods: ["mystery", "cinematic", "calm"] },
+  { id: "memory", label: "Memory Game", blurb: "Simon Says style color sequence challenges - watch, remember, and recall the pattern.", moods: ["focus", "playful", "energetic"] },
+  { id: "wouldyourather", label: "Would You Rather", blurb: "Tough choices, fun dilemmas, and thought-provoking questions that make you think.", moods: ["playful", "mystery", "calm"] },
+  { id: "mythbusters", label: "Myth Busters", blurb: "Common myths revealed - true or false? Learn the truth behind popular misconceptions.", moods: ["mystery", "playful", "focus"] },
+  { id: "polls", label: "Quick Polls", blurb: "Fun opinion questions - cats or dogs? Pizza toppings? Morning or night? Share your vote!", moods: ["playful", "energetic", "calm"] },
   { id: "mixed", label: "Everything Mixed", blurb: "A different blend of all engines every time.", moods: ["playful", "focus", "cinematic"] },
 ];
 

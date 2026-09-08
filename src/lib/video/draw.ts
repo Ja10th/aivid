@@ -1370,50 +1370,59 @@ const sceneRiddle: SceneFn = (ctx, comp, s, lt) => {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   
-  // Difficulty badge
-  const badgeColor = difficulty === "easy" ? "#10b981" : difficulty === "medium" ? "#f59e0b" : "#ef4444";
-  ctx.fillStyle = badgeColor;
-  rrect(ctx, W * 0.05, H * 0.05, land ? 120 : 100, land ? 40 : 35, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  font(ctx, land ? 20 : 18, th.fontMono, "bold");
-  ctx.fillText(difficulty.toUpperCase(), W * 0.05 + (land ? 60 : 50), H * 0.05 + (land ? 20 : 17.5));
-  
   if (phase === "question") {
-    // Question phase
+    // Clean question display
     ctx.fillStyle = p.fg;
-    font(ctx, land ? 44 : 36, th.fontBody);
-    const lines = wrap(ctx, question, W * 0.86);
-    lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.35 + i * (land ? 52 : 44)));
+    font(ctx, land ? 50 : 40, th.fontBody, "bold");
+    const lines = wrap(ctx, question, W * 0.88);
+    const startY = H * 0.5 - (lines.length * (land ? 60 : 50)) / 2;
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, startY + i * (land ? 60 : 50)));
     
-    // Thinking animation - question marks
-    const alpha = (Math.sin(lt * 2) + 1) / 2;
-    ctx.fillStyle = hexA(p.accent, 0.3 + alpha * 0.3);
-    font(ctx, land ? 80 : 64, th.fontDisplay);
-    ctx.fillText("?", W * 0.85, H * 0.75);
-    ctx.fillText("?", W * 0.15, H * 0.7);
+    // Single animated question mark
+    const pulse = 0.9 + Math.sin(lt * 3) * 0.1;
+    ctx.save();
+    ctx.translate(W / 2, H * 0.82);
+    ctx.scale(pulse, pulse);
+    ctx.fillStyle = p.accent;
+    ctx.shadowColor = p.accent;
+    ctx.shadowBlur = 30;
+    font(ctx, land ? 100 : 80, th.fontDisplay, "bold");
+    ctx.fillText("?", 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    
+    // Difficulty indicator (subtle)
+    ctx.fillStyle = hexA(p.fg, 0.4);
+    font(ctx, land ? 24 : 20, th.fontMono);
+    ctx.fillText(difficulty.toUpperCase(), W / 2, H * 0.12);
     
   } else {
-    // Answer phase
-    ctx.fillStyle = hexA(p.fg, 0.6);
-    font(ctx, land ? 32 : 28, th.fontBody);
-    const lines = wrap(ctx, question, W * 0.86);
-    lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.22 + i * (land ? 40 : 36)));
+    // Fade out question
+    ctx.fillStyle = hexA(p.fg, 0.3);
+    font(ctx, land ? 32 : 26, th.fontBody);
+    const qLines = wrap(ctx, question, W * 0.88);
+    qLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.2 + i * (land ? 38 : 34)));
     
-    // Answer reveal
-    const revealProgress = easeOutBack(clamp(lt / 0.8, 0, 1));
+    // Big animated answer reveal
+    const revealProgress = easeOutBack(clamp(lt / 0.6, 0, 1));
     ctx.save();
-    ctx.translate(W / 2, H * 0.55);
+    ctx.translate(W / 2, H * 0.58);
     ctx.scale(revealProgress, revealProgress);
     
+    // Answer box with glow
+    ctx.shadowColor = p.accent;
+    ctx.shadowBlur = 40;
     ctx.fillStyle = p.accent;
-    rrect(ctx, -W * 0.42, -land ? 70 : 60, W * 0.84, land ? 140 : 120, 16);
+    const boxH = land ? 150 : 130;
+    rrect(ctx, -W * 0.44, -boxH / 2, W * 0.88, boxH, 20);
     ctx.fill();
+    ctx.shadowBlur = 0;
     
-    ctx.fillStyle = p.bg;
-    font(ctx, land ? 48 : 40, th.fontDisplay, "bold");
-    const answerLines = wrap(ctx, answer, W * 0.75);
-    answerLines.forEach((l, i) => ctx.fillText(l, 0, (i - (answerLines.length - 1) / 2) * (land ? 56 : 48)));
+    // Answer text - high contrast
+    ctx.fillStyle = "#000";
+    font(ctx, land ? 56 : 44, th.fontDisplay, "bold");
+    const answerLines = wrap(ctx, answer, W * 0.8);
+    answerLines.forEach((l, i) => ctx.fillText(l, 0, (i - (answerLines.length - 1) / 2) * (land ? 64 : 52)));
     ctx.restore();
   }
   
@@ -1500,260 +1509,292 @@ const sceneMemoryChallenge: SceneFn = (ctx, comp, s, lt) => {
   const seq = s.data.seq as number[];
   const showDur = Number(s.data.showDur);
   const recall = Number(s.data.recall);
-  const grid = String(s.data.grid);
-  const difficulty = String(s.data.difficulty);
   const showing = lt < showDur;
   
-  // Difficulty badge
-  const badgeColor = difficulty === "easy" ? "#10b981" : difficulty === "medium" ? "#f59e0b" : "#ef4444";
-  ctx.fillStyle = badgeColor;
-  rrect(ctx, W * 0.05, H * 0.05, land ? 120 : 100, land ? 40 : 35, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  font(ctx, land ? 20 : 18, th.fontMono, "bold");
+  // Simon Says style - 4 colorful quadrants
+  const colors = [
+    { main: "#ef4444", glow: "#dc2626", name: "RED" },
+    { main: "#3b82f6", glow: "#2563eb", name: "BLUE" },
+    { main: "#10b981", glow: "#059669", name: "GREEN" },
+    { main: "#f59e0b", glow: "#d97706", name: "YELLOW" },
+  ];
+  
+  const size = Math.min(W, H) * 0.35;
+  const gap = 15;
+  const positions = [
+    { x: W / 2 - size / 2 - gap, y: H / 2 - size / 2 - gap }, // Top-left
+    { x: W / 2 + gap, y: H / 2 - size / 2 - gap },            // Top-right
+    { x: W / 2 - size / 2 - gap, y: H / 2 + gap },            // Bottom-left
+    { x: W / 2 + gap, y: H / 2 + gap },                       // Bottom-right
+  ];
+  
+  // Title
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 40 : 32, th.fontDisplay, "bold");
   ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(difficulty.toUpperCase(), W * 0.05 + (land ? 60 : 50), H * 0.05 + (land ? 20 : 17.5));
+  ctx.fillText(showing ? "WATCH & REMEMBER" : "WHAT WAS THE SEQUENCE?", W / 2, H * 0.12);
   
-  // Grid layout
-  const boxSize = land ? 140 : 110;
-  const gap = 20;
-  let positions: { x: number; y: number }[] = [];
-  
-  if (grid === "2x2") {
-    positions = [
-      { x: W / 2 - boxSize - gap / 2, y: H / 2 - boxSize - gap / 2 },
-      { x: W / 2 + gap / 2, y: H / 2 - boxSize - gap / 2 },
-      { x: W / 2 - boxSize - gap / 2, y: H / 2 + gap / 2 },
-      { x: W / 2 + gap / 2, y: H / 2 + gap / 2 },
-    ];
-  } else if (grid === "4x1") {
-    positions = [
-      { x: W / 2 - boxSize * 2 - gap * 1.5, y: H / 2 - boxSize / 2 },
-      { x: W / 2 - boxSize / 2 - gap / 2, y: H / 2 - boxSize / 2 },
-      { x: W / 2 + gap / 2, y: H / 2 - boxSize / 2 },
-      { x: W / 2 + boxSize + gap * 1.5, y: H / 2 - boxSize / 2 },
-    ];
-  }
-  
-  // Draw sequence
+  // Draw quadrants
   seq.forEach((val, idx) => {
-    if (idx >= positions.length) return;
+    const elapsed = lt - idx * 0.9;
+    const highlight = showing && elapsed > 0 && elapsed < 0.85;
+    
+    const col = colors[val];
     const pos = positions[val];
-    const elapsed = lt - idx * 0.8;
-    const highlight = showing && elapsed > 0 && elapsed < 0.8;
     
-    ctx.fillStyle = highlight ? p.accent : p.bg2;
-    rrect(ctx, pos.x, pos.y, boxSize, boxSize, 12);
-    ctx.fill();
-    
-    ctx.strokeStyle = p.fg;
-    ctx.lineWidth = 3;
-    ctx.stroke();
+    ctx.save();
     
     if (highlight) {
-      ctx.shadowColor = p.accent;
-      ctx.shadowBlur = 30;
-      ctx.fillStyle = p.accent;
-      rrect(ctx, pos.x, pos.y, boxSize, boxSize, 12);
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      // Active glow
+      ctx.shadowColor = col.glow;
+      ctx.shadowBlur = 60;
+      ctx.fillStyle = col.glow;
+    } else {
+      ctx.fillStyle = showing ? hexA(col.main, 0.5) : col.main;
     }
+    
+    rrect(ctx, pos.x, pos.y, size, size, 20);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Number on quadrant
+    if (!showing) {
+      ctx.fillStyle = "#000";
+      font(ctx, size * 0.3, th.fontDisplay, "bold");
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(val + 1), pos.x + size / 2, pos.y + size / 2);
+    }
+    
+    ctx.restore();
   });
   
-  if (!showing) {
-    ctx.fillStyle = p.fg;
-    font(ctx, land ? 36 : 30, th.fontBody);
+  // Sequence counter
+  if (showing) {
+    const currentIdx = seq.findIndex((_, i) => lt < (i + 1) * 0.9);
+    const showingIdx = currentIdx === -1 ? seq.length : currentIdx;
+    
+    ctx.fillStyle = p.accent;
+    font(ctx, land ? 48 : 38, th.fontMono, "bold");
     ctx.textAlign = "center";
-    ctx.fillText("What was the sequence?", W / 2, H * 0.15);
+    ctx.fillText(`${showingIdx} / ${seq.length}`, W / 2, H * 0.88);
+  } else {
+    ctx.fillStyle = hexA(p.fg, 0.6);
+    font(ctx, land ? 28 : 24, th.fontBody);
+    ctx.fillText(`${seq.length} colors to remember`, W / 2, H * 0.88);
   }
   
   progressBar(ctx, comp, s, lt, p.accent2);
 };
 
-const sceneLanguagePuzzle: SceneFn = (ctx, comp, s, lt) => {
+const sceneWouldYouRather: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const question = String(s.data.question);
+  const optionA = String(s.data.optionA);
+  const optionB = String(s.data.optionB);
+  const funFact = s.data.funFact ? String(s.data.funFact) : null;
+  
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  // Title
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 44 : 36, th.fontDisplay, "bold");
+  ctx.fillText("WOULD YOU RATHER...", W / 2, H * 0.15);
+  
+  // VS divider
+  ctx.fillStyle = p.accent;
+  font(ctx, land ? 80 : 64, th.fontDisplay, "bold");
+  ctx.fillText("VS", W / 2, H * 0.5);
+  
+  // Option A (top)
+  const boxH = land ? 140 : 120;
+  const pulse = 0.95 + Math.sin(lt * 2) * 0.05;
+  
+  ctx.save();
+  ctx.translate(W / 2, H * 0.3);
+  ctx.scale(pulse, pulse);
+  ctx.fillStyle = hexA(p.accent2, 0.3);
+  rrect(ctx, -W * 0.42, -boxH / 2, W * 0.84, boxH, 16);
+  ctx.fill();
+  ctx.strokeStyle = p.accent2;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 36 : 30, th.fontBody, "bold");
+  const aLines = wrap(ctx, optionA, W * 0.75);
+  aLines.forEach((l, i) => ctx.fillText(l, 0, (i - (aLines.length - 1) / 2) * (land ? 44 : 38)));
+  ctx.restore();
+  
+  // Option B (bottom)
+  ctx.save();
+  ctx.translate(W / 2, H * 0.7);
+  ctx.scale(pulse, pulse);
+  ctx.fillStyle = hexA(p.accent, 0.3);
+  rrect(ctx, -W * 0.42, -boxH / 2, W * 0.84, boxH, 16);
+  ctx.fill();
+  ctx.strokeStyle = p.accent;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 36 : 30, th.fontBody, "bold");
+  const bLines = wrap(ctx, optionB, W * 0.75);
+  bLines.forEach((l, i) => ctx.fillText(l, 0, (i - (bLines.length - 1) / 2) * (land ? 44 : 38)));
+  ctx.restore();
+  
+  // Fun fact if available
+  if (funFact && lt > 3) {
+    ctx.fillStyle = hexA(p.fg, 0.6);
+    font(ctx, land ? 22 : 19, th.fontMono);
+    ctx.fillText(funFact, W / 2, H * 0.92);
+  }
+  
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneMythBuster: SceneFn = (ctx, comp, s, lt) => {
   const { width: W, height: H } = comp;
   const p = s.palette;
   const th = comp.theme;
   const land = comp.orientation === "landscape";
   const phase = String(s.data.phase);
-  const word = String(s.data.word);
-  const scrambled = String(s.data.scrambled);
-  const hint = s.data.hint ? String(s.data.hint) : null;
-  const difficulty = String(s.data.difficulty);
+  const myth = String(s.data.myth);
+  const isTrue = Boolean(s.data.isTrue);
+  const explanation = String(s.data.explanation);
   
-  // Difficulty badge
-  const badgeColor = difficulty === "easy" ? "#10b981" : difficulty === "medium" ? "#f59e0b" : "#ef4444";
-  ctx.fillStyle = badgeColor;
-  rrect(ctx, W * 0.05, H * 0.05, land ? 120 : 100, land ? 40 : 35, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  font(ctx, land ? 20 : 18, th.fontMono, "bold");
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(difficulty.toUpperCase(), W * 0.05 + (land ? 60 : 50), H * 0.05 + (land ? 20 : 17.5));
   
-  const shown = phase === "question" ? scrambled : word;
-  const tile = Math.min(land ? 110 : 80, (W * 0.9) / shown.length);
-  
-  // Instruction
-  ctx.fillStyle = p.fg;
-  font(ctx, land ? 36 : 30, th.fontBody);
-  ctx.fillText(phase === "question" ? "Unscramble this word:" : "The word is:", W / 2, H * 0.2);
-  
-  // Hint
-  if (hint && phase === "question") {
-    ctx.fillStyle = hexA(p.fg, 0.6);
-    font(ctx, land ? 24 : 20, th.fontMono);
-    ctx.fillText(`Hint: ${hint}`, W / 2, H * 0.3);
+  if (phase === "question") {
+    // Question phase
+    ctx.fillStyle = p.fg;
+    font(ctx, land ? 46 : 38, th.fontBody, "bold");
+    const lines = wrap(ctx, myth, W * 0.88);
+    const startY = H * 0.4 - (lines.length * (land ? 54 : 46)) / 2;
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, startY + i * (land ? 54 : 46)));
+    
+    // TRUE or FALSE options
+    const optionY = H * 0.7;
+    const optionGap = W * 0.25;
+    
+    // TRUE box
+    ctx.fillStyle = hexA("#10b981", 0.3);
+    rrect(ctx, W / 2 - optionGap - W * 0.15, optionY - 50, W * 0.3, 100, 12);
+    ctx.fill();
+    ctx.strokeStyle = "#10b981";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = "#10b981";
+    font(ctx, land ? 48 : 40, th.fontDisplay, "bold");
+    ctx.fillText("TRUE", W / 2 - optionGap, optionY);
+    
+    // FALSE box
+    ctx.fillStyle = hexA("#ef4444", 0.3);
+    rrect(ctx, W / 2 + optionGap - W * 0.15, optionY - 50, W * 0.3, 100, 12);
+    ctx.fill();
+    ctx.strokeStyle = "#ef4444";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.fillStyle = "#ef4444";
+    font(ctx, land ? 48 : 40, th.fontDisplay, "bold");
+    ctx.fillText("FALSE", W / 2 + optionGap, optionY);
+    
+  } else {
+    // Answer phase
+    // Fade myth
+    ctx.fillStyle = hexA(p.fg, 0.3);
+    font(ctx, land ? 30 : 26, th.fontBody);
+    const lines = wrap(ctx, myth, W * 0.88);
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.18 + i * (land ? 36 : 32)));
+    
+    // Big reveal
+    const revealProgress = easeOutBack(clamp(lt / 0.6, 0, 1));
+    ctx.save();
+    ctx.translate(W / 2, H * 0.42);
+    ctx.scale(revealProgress, revealProgress);
+    
+    const resultColor = isTrue ? "#10b981" : "#ef4444";
+    const resultText = isTrue ? "TRUE!" : "BUSTED!";
+    
+    ctx.shadowColor = resultColor;
+    ctx.shadowBlur = 50;
+    ctx.fillStyle = resultColor;
+    font(ctx, land ? 90 : 72, th.fontDisplay, "bold");
+    ctx.fillText(resultText, 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    
+    // Explanation
+    ctx.fillStyle = p.fg;
+    font(ctx, land ? 28 : 24, th.fontBody);
+    const expLines = wrap(ctx, explanation, W * 0.85);
+    expLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.65 + i * (land ? 34 : 30)));
   }
   
-  // Letter tiles
-  for (let i = 0; i < shown.length; i++) {
-    const x = W / 2 + (i - (shown.length - 1) / 2) * tile;
-    const wob = phase === "question" ? Math.sin(lt * 3 + i) * 0.08 : 0;
-    const pop = easeOutBack(clamp((lt - i * 0.08) / 0.5, 0, 1));
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneQuickPoll: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const question = String(s.data.question);
+  const options = s.data.options as string[];
+  const funFact = s.data.funFact ? String(s.data.funFact) : null;
+  
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  // Question
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 46 : 38, th.fontBody, "bold");
+  const qLines = wrap(ctx, question, W * 0.88);
+  qLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.18 + i * (land ? 52 : 44)));
+  
+  // Options
+  const optionColors = [p.accent, p.accent2, p.fg, p.muted];
+  const boxH = land ? 70 : 60;
+  const startY = H * 0.42;
+  const spacing = boxH + 14;
+  
+  options.forEach((opt, i) => {
+    const y = startY + i * spacing;
+    const pop = easeOutBack(clamp((lt - 0.2 - i * 0.15) / 0.5, 0, 1));
     
     ctx.save();
-    ctx.translate(x, H / 2);
-    ctx.rotate(wob);
+    ctx.translate(W / 2, y);
     ctx.scale(pop, pop);
     
-    ctx.fillStyle = phase === "answer" ? p.accent : p.fg;
-    rrect(ctx, -tile * 0.42, -tile * 0.42, tile * 0.84, tile * 0.84, 10);
+    ctx.fillStyle = hexA(optionColors[i % 4], 0.25);
+    rrect(ctx, -W * 0.42, -boxH / 2, W * 0.84, boxH, 12);
     ctx.fill();
     
-    ctx.fillStyle = p.bg;
-    font(ctx, tile * 0.55, th.fontDisplay);
-    ctx.fillText(shown[i], 0, 3);
+    ctx.strokeStyle = optionColors[i % 4];
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    ctx.fillStyle = p.fg;
+    const label = String.fromCharCode(65 + i); // A, B, C, D
+    fitText(ctx, `${label}. ${opt}`, W * 0.78, th.fontBody, land ? 30 : 26, 18, "bold");
+    ctx.fillText(`${label}. ${opt}`, 0, 2);
     
     ctx.restore();
+  });
+  
+  // Fun fact or prompt
+  if (funFact && lt > 2) {
+    ctx.fillStyle = hexA(p.fg, 0.7);
+    font(ctx, land ? 24 : 20, th.fontMono);
+    ctx.fillText(funFact, W / 2, H * 0.9);
+  } else {
+    ctx.fillStyle = hexA(p.accent, 0.8);
+    font(ctx, land ? 26 : 22, th.fontBody, "bold");
+    ctx.fillText("Vote in the comments!", W / 2, H * 0.9);
   }
-  
-  progressBar(ctx, comp, s, lt, p.accent2);
-};
-
-const sceneScienceFact: SceneFn = (ctx, comp, s, lt) => {
-  const { width: W, height: H } = comp;
-  const p = s.palette;
-  const th = comp.theme;
-  const land = comp.orientation === "landscape";
-  const fact = String(s.data.fact);
-  const explanation = String(s.data.explanation);
-  const category = String(s.data.category).toUpperCase();
-  
-  // Category badge
-  const categoryColors: Record<string, string> = {
-    PHYSICS: "#3b82f6",
-    CHEMISTRY: "#10b981",
-    BIOLOGY: "#f59e0b",
-    ASTRONOMY: "#8b5cf6",
-    EARTH: "#06b6d4",
-  };
-  const badgeColor = categoryColors[category] || "#6b7280";
-  
-  ctx.fillStyle = badgeColor;
-  rrect(ctx, W * 0.05, H * 0.05, land ? 160 : 140, land ? 40 : 35, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  font(ctx, land ? 18 : 16, th.fontMono, "bold");
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(category, W * 0.05 + (land ? 80 : 70), H * 0.05 + (land ? 20 : 17.5));
-  
-  // Animated icon based on category
-  const iconSize = land ? 120 : 90;
-  const iconX = W * 0.85;
-  const iconY = H * 0.25;
-  const spin = lt * 2;
-  
-  ctx.save();
-  ctx.translate(iconX, iconY);
-  ctx.rotate(spin);
-  ctx.strokeStyle = hexA(p.accent, 0.3);
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.arc(0, 0, iconSize / 2, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
-  
-  // Fact text
-  ctx.fillStyle = p.fg;
-  font(ctx, land ? 40 : 34, th.fontBody, "bold");
-  ctx.textAlign = "center";
-  const factLines = wrap(ctx, fact, W * 0.75);
-  factLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.35 + i * (land ? 48 : 42)));
-  
-  // Explanation
-  ctx.fillStyle = hexA(p.fg, 0.7);
-  font(ctx, land ? 28 : 24, th.fontBody);
-  const expLines = wrap(ctx, explanation, W * 0.8);
-  expLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.6 + i * (land ? 36 : 32)));
-  
-  progressBar(ctx, comp, s, lt, p.accent2);
-};
-
-const sceneHistoryMystery: SceneFn = (ctx, comp, s, lt) => {
-  const { width: W, height: H } = comp;
-  const p = s.palette;
-  const th = comp.theme;
-  const land = comp.orientation === "landscape";
-  const title = String(s.data.title);
-  const event = String(s.data.event);
-  const year = String(s.data.year);
-  const mystery = String(s.data.mystery);
-  const category = String(s.data.category).toUpperCase();
-  
-  // Category badge
-  const categoryColors: Record<string, string> = {
-    ANCIENT: "#8b5cf6",
-    MEDIEVAL: "#f59e0b",
-    MODERN: "#3b82f6",
-    MYSTERY: "#ef4444",
-  };
-  const badgeColor = categoryColors[category] || "#6b7280";
-  
-  ctx.fillStyle = badgeColor;
-  rrect(ctx, W * 0.05, H * 0.05, land ? 140 : 120, land ? 40 : 35, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  font(ctx, land ? 18 : 16, th.fontMono, "bold");
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(category, W * 0.05 + (land ? 70 : 60), H * 0.05 + (land ? 20 : 17.5));
-  
-  // Year badge
-  ctx.fillStyle = hexA(p.accent, 0.8);
-  rrect(ctx, W * 0.88 - (land ? 80 : 70), H * 0.05, land ? 160 : 140, land ? 40 : 35, 8);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  font(ctx, land ? 20 : 18, th.fontMono, "bold");
-  ctx.fillText(year, W * 0.88, H * 0.05 + (land ? 20 : 17.5));
-  
-  // Title
-  ctx.fillStyle = p.accent;
-  font(ctx, land ? 44 : 36, th.fontDisplay, "bold");
-  ctx.textAlign = "center";
-  const titleLines = wrap(ctx, title, W * 0.85);
-  titleLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.22 + i * (land ? 52 : 44)));
-  
-  // Event
-  ctx.fillStyle = p.fg;
-  font(ctx, land ? 30 : 26, th.fontBody);
-  const eventLines = wrap(ctx, event, W * 0.82);
-  eventLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.42 + i * (land ? 38 : 34)));
-  
-  // Mystery question
-  ctx.fillStyle = hexA(p.accent, 0.8);
-  font(ctx, land ? 32 : 28, th.fontBody, "bold");
-  const mysteryLines = wrap(ctx, mystery, W * 0.8);
-  mysteryLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.68 + i * (land ? 40 : 36)));
-  
-  // Decorative question mark
-  const alpha = (Math.sin(lt * 2) + 1) / 2;
-  ctx.fillStyle = hexA(p.accent, 0.2 + alpha * 0.2);
-  font(ctx, land ? 160 : 120, th.fontDisplay);
-  ctx.fillText("?", W * 0.15, H * 0.7);
   
   progressBar(ctx, comp, s, lt, p.accent2);
 };
@@ -1768,8 +1809,8 @@ const RENDERERS: Record<string, SceneFn> = {
   "game-sort": sceneSort, "game-pathfinder": scenePathfinder, "game-sand": sceneSand, "game-chess": sceneChess,
   "memory-sequence": sceneMemory, trivia: sceneTrivia, "word-scramble": sceneWord,
   riddle: sceneRiddle, "trivia-quiz": sceneTriviaQuiz,
-  "memory-challenge": sceneMemoryChallenge, "language-puzzle": sceneLanguagePuzzle,
-  "science-fact": sceneScienceFact, "history-mystery": sceneHistoryMystery,
+  "memory-challenge": sceneMemoryChallenge, "would-you-rather": sceneWouldYouRather,
+  "myth-buster": sceneMythBuster, "quick-poll": sceneQuickPoll,
 };
 
 export function sceneAt(comp: Composition, t: number) {

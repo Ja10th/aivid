@@ -13,7 +13,7 @@ import {
   Palette,
   Mood,
 } from "./core";
-import { RIDDLES, TRIVIA, MEMORY_CHALLENGES, LANGUAGE_PUZZLES, SCIENCE_FACTS, HISTORY_MYSTERIES } from "./content-data";
+import { RIDDLES, TRIVIA, MEMORY_CHALLENGES, WOULD_YOU_RATHER, MYTHS, POLLS } from "./content-data";
 
 const TRANSITIONS: Scene["transition"][] = ["cut", "fade", "wipe", "zoom", "slide", "iris"];
 const BGS: BgStyle[] = ["solid", "gradient", "grid", "dots", "noise", "rays", "diagonal", "blobs", "rings"];
@@ -740,155 +740,149 @@ function memory(ctx: Ctx, target: number) {
     const memData = shuffled[memIndex % shuffled.length];
     memIndex++;
     
-    if (memData.type === "sequence") {
-      const data = memData.data as { length: number; grid: string };
-      const seq = Array.from({ length: data.length }, () => r.int(0, 3));
-      const showDur = data.length * 0.9 + 1.5;
-      const recall = memData.difficulty === "easy" ? r.int(6, 8) : memData.difficulty === "medium" ? r.int(5, 7) : r.int(4, 6);
-      
-      push(ctx, "memory-challenge", showDur + recall + 4, {
-        seq,
-        showDur,
-        recall,
-        grid: data.grid,
-        difficulty: memData.difficulty,
-        phase: "show"
-      }, r.pick([
-        "Memorize this sequence.",
-        "Watch carefully and remember the order.",
-        "Pay attention to the pattern.",
-      ]));
-    }
+    const data = memData.data as { length: number };
+    const seq = Array.from({ length: data.length }, () => r.int(0, 3));
+    const showDur = data.length * 0.9 + 1.5;
+    const recall = memData.difficulty === "easy" ? r.int(6, 8) : memData.difficulty === "medium" ? r.int(5, 7) : r.int(4, 6);
+    
+    push(ctx, "memory-challenge", showDur + recall + 4, {
+      seq,
+      showDur,
+      recall,
+      difficulty: memData.difficulty,
+    }, r.pick([
+      "Watch the sequence carefully.",
+      "Memorize the pattern.",
+      "Remember the colors in order.",
+    ]));
   }
   
   push(ctx, "outro", 10, { text: r.pick(["Great recall!", "Well remembered", "Nice work"]) }, r.pick(["How many did you get? Memory improves with practice.", "That's it for today. Come back tomorrow to train your memory again."]));
 }
 
-// ---------------- LANGUAGE PUZZLES ----------------
-function language(ctx: Ctx, target: number) {
+// ---------------- WOULD YOU RATHER ----------------
+function wouldyourather(ctx: Ctx, target: number) {
   const r = ctx.rng;
   push(ctx, "title", 6, {
-    title: r.pick(["Word Play", "Language Puzzles", "Word Master", "Scramble Challenge", "Wordsmith"]),
-    sub: r.pick(["word scrambles", "anagrams", "vocabulary", "language skills"]),
+    title: r.pick(["Would You Rather", "Tough Choices", "Pick One", "This or That", "Choose Wisely"]),
+    sub: r.pick(["impossible decisions", "fun dilemmas", "thought-provoking", "make your choice"]),
   }, r.pick([
-    "Time for word puzzles. Unscramble the letters and find the hidden words.",
-    "Language challenge. Can you figure out these scrambled words?",
-    "Word games ahead. Rearrange the letters and solve the puzzles.",
+    "Time for some tough choices. Would you rather scenarios that will make you think.",
+    "Welcome to Would You Rather. Some easy, some impossible. What would YOU choose?",
+    "Fun dilemmas ahead. Pick your choice and see what most people would do.",
   ]));
 
-  const shuffled = r.shuffle([...LANGUAGE_PUZZLES]);
-  let langIndex = 0;
+  const shuffled = r.shuffle([...WOULD_YOU_RATHER]);
+  let index = 0;
   
   while (ctx.t < target - 12) {
-    const langData = shuffled[langIndex % shuffled.length];
-    langIndex++;
+    const data = shuffled[index % shuffled.length];
+    index++;
     
-    const scrambled = r.shuffle(langData.word.split("")).join("");
-    const thinkTime = langData.difficulty === "easy" ? r.int(8, 12) : langData.difficulty === "medium" ? r.int(10, 14) : r.int(12, 16);
-    const revealTime = r.int(4, 6);
+    const duration = r.int(10, 15);
     
-    // Question
-    push(ctx, "language-puzzle", thinkTime, {
-      word: langData.word,
-      scrambled,
-      hint: langData.hint,
-      difficulty: langData.difficulty,
+    push(ctx, "would-you-rather", duration, {
+      question: data.question,
+      optionA: data.optionA,
+      optionB: data.optionB,
+      category: data.category,
+      funFact: data.funFact,
+    }, r.pick([
+      `${data.question} ${data.optionA}, or ${data.optionB}?`,
+      `Tough choice: ${data.optionA} or ${data.optionB}?`,
+      data.funFact || `${data.optionA} versus ${data.optionB}. What's your pick?`,
+    ]));
+  }
+  
+  push(ctx, "outro", 10, { text: r.pick(["What did you choose?", "Tough choices", "Thanks for playing"]) }, r.pick(["Which scenarios stumped you? Let us know in the comments.", "That's all the dilemmas for today. More tomorrow!"]));
+}
+
+// ---------------- MYTH BUSTERS ----------------
+function mythbusters(ctx: Ctx, target: number) {
+  const r = ctx.rng;
+  push(ctx, "title", 6, {
+    title: r.pick(["Myth Busters", "True or False", "Fact Check", "Busted!", "Myth or Fact"]),
+    sub: r.pick(["common misconceptions", "truth revealed", "fact vs fiction", "busting myths"]),
+  }, r.pick([
+    "Time to bust some myths. Common beliefs that are actually wrong. True or false?",
+    "Myth Busters! Let's separate fact from fiction and reveal the truth.",
+    "How many of these myths did you believe? Prepare to be surprised.",
+  ]));
+
+  const shuffled = r.shuffle([...MYTHS]);
+  let index = 0;
+  
+  while (ctx.t < target - 12) {
+    const data = shuffled[index % shuffled.length];
+    index++;
+    
+    const thinkTime = r.int(6, 10);
+    const revealTime = r.int(5, 8);
+    
+    // Question phase
+    push(ctx, "myth-buster", thinkTime, {
+      myth: data.myth,
+      isTrue: data.isTrue,
+      explanation: data.explanation,
+      category: data.category,
       phase: "question"
     }, r.pick([
-      `Unscramble this ${langData.difficulty} word.`,
-      langData.hint ? `Hint: ${langData.hint}. Now unscramble it.` : "Figure out the word.",
-      "Rearrange these letters.",
+      `True or false: ${data.myth}`,
+      `Myth: ${data.myth}. Is this true?`,
+      `${data.myth}. Fact or fiction?`,
     ]));
     
-    // Reveal
-    push(ctx, "language-puzzle", revealTime, {
-      word: langData.word,
-      scrambled,
-      hint: langData.hint,
-      difficulty: langData.difficulty,
+    // Reveal phase
+    push(ctx, "myth-buster", revealTime, {
+      myth: data.myth,
+      isTrue: data.isTrue,
+      explanation: data.explanation,
+      category: data.category,
       phase: "answer"
     }, r.pick([
-      `The word is ${langData.word}.`,
-      `It's ${langData.word}. ${r.pick(["Got it?", "Did you get it?", "Easy one!"])}`,
-      langData.word,
+      `${data.isTrue ? "TRUE!" : "BUSTED!"} ${data.explanation}`,
+      `The answer is ${data.isTrue ? "true" : "false"}. ${data.explanation}`,
+      data.explanation,
     ]));
   }
   
-  push(ctx, "outro", 10, { text: r.pick(["Word master!", "Nice solving", "Well done"]) }, r.pick(["How many words did you get? Keep practicing your vocabulary.", "That's all the puzzles for today. More word games tomorrow."]));
+  push(ctx, "outro", 10, { text: r.pick(["Myths busted!", "Now you know", "Truth revealed"]) }, r.pick(["How many did you guess correctly? More myth busting tomorrow.", "That's all the myths for today. Keep questioning everything!"]));
 }
 
-// ---------------- SCIENCE FACTS ----------------
-function science(ctx: Ctx, target: number) {
+// ---------------- QUICK POLLS ----------------
+function polls(ctx: Ctx, target: number) {
   const r = ctx.rng;
   push(ctx, "title", 6, {
-    title: r.pick(["Science Facts", "Mind-Blowing Science", "Science Today", "Did You Know?", "Science Lab"]),
-    sub: r.pick(["amazing discoveries", "quick science", "fun facts", "fascinating phenomena"]),
+    title: r.pick(["Quick Polls", "You Decide", "Cast Your Vote", "Opinion Time", "What Do You Think"]),
+    sub: r.pick(["fun questions", "share your opinion", "vote now", "quick polls"]),
   }, r.pick([
-    "Welcome to science facts. Quick demonstrations and mind-blowing discoveries from physics, chemistry, and biology.",
-    "Time for science. Get ready to learn something fascinating.",
-    "Science facts ahead. Prepare to have your mind blown.",
+    "Quick polls! Fun questions to see what everyone thinks. Cast your vote in the comments.",
+    "Time for some quick polls. What's your opinion? Vote and see what others think.",
+    "Simple questions, fun answers. Let's see where you stand on these topics.",
   ]));
 
-  const shuffled = r.shuffle([...SCIENCE_FACTS]);
-  let sciIndex = 0;
+  const shuffled = r.shuffle([...POLLS]);
+  let index = 0;
   
   while (ctx.t < target - 12) {
-    const sciData = shuffled[sciIndex % shuffled.length];
-    sciIndex++;
+    const data = shuffled[index % shuffled.length];
+    index++;
     
-    const duration = r.int(10, 16);
+    const duration = r.int(8, 12);
     
-    push(ctx, "science-fact", duration, {
-      fact: sciData.fact,
-      explanation: sciData.explanation,
-      category: sciData.category,
-      visualType: sciData.visualType,
+    push(ctx, "quick-poll", duration, {
+      question: data.question,
+      options: data.options,
+      category: data.category,
+      funFact: data.funFact,
     }, r.pick([
-      `${sciData.fact}. ${sciData.explanation}`,
-      `Did you know? ${sciData.fact}. ${sciData.explanation}`,
-      `Here's a cool fact: ${sciData.fact}. ${sciData.explanation}`,
+      `${data.question} ${data.options.join(", or ")}?`,
+      data.funFact || data.question,
+      `Poll: ${data.question}`,
     ]));
   }
   
-  push(ctx, "outro", 10, { text: r.pick(["Science is amazing", "Keep learning", "Stay curious"]) }, r.pick(["That's today's science session. Subscribe for more amazing facts.", "Science is everywhere. Come back tomorrow for more discoveries."]));
-}
-
-// ---------------- HISTORY MYSTERIES ----------------
-function history(ctx: Ctx, target: number) {
-  const r = ctx.rng;
-  push(ctx, "title", 6, {
-    title: r.pick(["History Mysteries", "Unsolved History", "Ancient Secrets", "Historical Enigmas", "Time Travel"]),
-    sub: r.pick(["unsolved mysteries", "ancient civilizations", "historical what-ifs", "fascinating events"]),
-  }, r.pick([
-    "Welcome to history mysteries. Fascinating events, unsolved enigmas, and questions that still puzzle historians today.",
-    "Journey through time. These historical mysteries continue to intrigue us.",
-    "History is full of mysteries. Let's explore some of the most fascinating.",
-  ]));
-
-  const shuffled = r.shuffle([...HISTORY_MYSTERIES]);
-  let histIndex = 0;
-  
-  while (ctx.t < target - 12) {
-    const histData = shuffled[histIndex % shuffled.length];
-    histIndex++;
-    
-    const duration = r.int(12, 18);
-    
-    push(ctx, "history-mystery", duration, {
-      title: histData.title,
-      event: histData.event,
-      year: histData.year,
-      mystery: histData.mystery,
-      category: histData.category,
-      visualType: histData.visualType,
-    }, r.pick([
-      `${histData.title}. ${histData.event} in ${histData.year}. ${histData.mystery}`,
-      `The mystery of ${histData.title}. ${histData.event}. ${histData.mystery}`,
-      `${histData.year}: ${histData.event}. ${histData.mystery}`,
-    ]));
-  }
-  
-  push(ctx, "outro", 10, { text: r.pick(["History endures", "Mysteries remain", "Keep wondering"]) }, r.pick(["Which mystery intrigued you most? Let us know in the comments.", "That's our journey through history. More mysteries await tomorrow."]));
+  push(ctx, "outro", 10, { text: r.pick(["Thanks for voting!", "Your turn", "Cast your votes"]) }, r.pick(["Drop your answers in the comments. Let's see what the majority thinks!", "That's all the polls for today. More fun questions tomorrow!"]));
 }
 
 function mixed(ctx: Ctx, target: number) {
@@ -941,10 +935,10 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     calm: [`${base} — ${mins} Minute Breathing Pacer ${emoji}`, `Guided Breathing & Focus Reset (${mins} min)`, `Quiet Minutes #${day}: Breathe With The Circle`, `Calm Reset — Slow Breathing Visual`],
     riddles: [`${base} — Can You Solve Them All? ${emoji}`, `${mins} Min Riddle Challenge #${day}`, `Brain Bending Riddles (${mins} min)`, `Classic Riddles & Lateral Thinking Puzzles`],
     trivia: [`${base}: ${scenes.filter((s) => s.kind === "trivia-quiz").length / 2} Questions ${emoji}`, `Trivia Quiz #${day} — Test Your Knowledge`, `${mins} Min General Knowledge Quiz`, `How Many Can You Get Right?`],
-    memory: [`${base} — Memory Challenge #${day} ${emoji}`, `${mins} Min Recall Test`, `Can You Remember? Memory Training`, `Memory Master Challenge (${mins} min)`],
-    language: [`${base} — Word Puzzles ${emoji}`, `${mins} Min Language Challenge`, `Scramble & Solve #${day}`, `Wordsmith Training (${mins} min)`],
-    science: [`${base} — Mind-Blowing Science ${emoji}`, `${mins} Min of Amazing Facts`, `Science Discovery #${day}`, `Did You Know? Science Edition`],
-    history: [`${base} — Historical Mystery ${emoji}`, `${mins} Min History Enigmas`, `Unsolved History #${day}`, `Ancient Secrets & Mysteries`],
+    memory: [`${base} — Simon Says Memory ${emoji}`, `${mins} Min Color Sequence Challenge`, `Memory Game #${day}`, `Can You Remember The Pattern?`],
+    wouldyourather: [`${base} — Impossible Choices ${emoji}`, `${mins} Min Would You Rather`, `This or That #${day}`, `Tough Decisions Ahead`],
+    mythbusters: [`${base} — True or False ${emoji}`, `${mins} Min Myth Busting`, `Fact Check #${day}`, `Common Myths Revealed`],
+    polls: [`${base} — Quick Polls ${emoji}`, `${mins} Min Opinion Questions`, `You Decide #${day}`, `Vote Now!`],
     mixed: [`${base} #${day} — Eyes, Brain & Breath ${emoji}`, `${mins} Minute Mixed Mind Session`, `Daily Variety Session #${day}`],
   };
   const title = r.pick(tmpl[category] || tmpl.mixed);
@@ -962,10 +956,10 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     calm: ["breathing exercise", "meditation", "calm", "focus", "relax", "breathing pacer", "anxiety relief"],
     riddles: ["riddles", "brain teasers", "lateral thinking", "logic puzzles", "classic riddles", "wordplay", "mystery", "puzzle solving"],
     trivia: ["trivia quiz", "general knowledge", "quiz", "trivia questions", "test your knowledge", "multiple choice", "quiz challenge", "brain training"],
-    memory: ["memory challenge", "recall test", "pattern matching", "sequence memory", "visual memory", "brain training", "memory game"],
-    language: ["word puzzles", "anagrams", "word scramble", "vocabulary", "language skills", "wordplay", "spelling", "brain training"],
-    science: ["science facts", "amazing science", "physics", "chemistry", "biology", "astronomy", "science experiments", "fun facts", "educational"],
-    history: ["history mysteries", "ancient history", "unsolved mysteries", "historical events", "ancient civilizations", "fascinating history", "historical enigmas"],
+    memory: ["memory game", "simon says", "color sequence", "pattern matching", "recall challenge", "brain training", "memory test"],
+    wouldyourather: ["would you rather", "this or that", "tough choices", "dilemmas", "impossible decisions", "fun questions", "opinion"],
+    mythbusters: ["myth busters", "true or false", "fact check", "myths", "misconceptions", "busted", "truth revealed", "educational"],
+    polls: ["quick polls", "opinion polls", "vote", "you decide", "surveys", "fun questions", "cast your vote"],
     mixed: ["brain training", "eye exercises", "mental math", "daily session", "focus"],
   };
   const tags = [...(tagBank[category] || []), "daily", orientation === "portrait" ? "shorts" : "generated"];
@@ -978,10 +972,10 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     calm: ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"],
     riddles: ["CAN YOU SOLVE IT?", "THINK ABOUT IT", "MYSTERY TIME", "BRAIN BENDER", "WHAT AM I?", "RIDDLE THIS", "GOT THE ANSWER?"],
     trivia: ["DO YOU KNOW?", "QUIZ TIME", "TEST YOUR KNOWLEDGE", "TRUE OR FALSE?", "THINK FAST", "TRIVIA CHALLENGE", "HOW MANY CAN YOU GET?"],
-    memory: ["REMEMBER THIS", "CAN YOU RECALL?", "MEMORY TEST", "PATTERN CHALLENGE", "SEQUENCE RECALL", "FOCUS NOW", "WATCH CAREFULLY"],
-    language: ["UNSCRAMBLE IT", "WORD PUZZLE", "CAN YOU SOLVE?", "LANGUAGE MASTER", "SPELLING CHALLENGE", "FIND THE WORD", "LETTERS ONLY"],
-    science: ["DID YOU KNOW?", "SCIENCE FACT", "MIND BLOWN", "AMAZING DISCOVERY", "SCIENCE TIME", "FUN FACT", "LEARN THIS"],
-    history: ["MYSTERY TIME", "UNSOLVED", "ANCIENT SECRET", "WHAT HAPPENED?", "HISTORY ENIGMA", "TIME TRAVEL", "FASCINATING"],
+    memory: ["WATCH CAREFULLY", "REMEMBER THIS", "SIMON SAYS", "COLOR CHALLENGE", "CAN YOU RECALL?", "MEMORY TEST", "PATTERN TIME"],
+    wouldyourather: ["WOULD YOU RATHER", "THIS OR THAT", "TOUGH CHOICE", "YOU DECIDE", "PICK ONE", "IMPOSSIBLE DECISION", "CHOOSE WISELY"],
+    mythbusters: ["TRUE OR FALSE?", "MYTH BUSTED", "FACT CHECK", "IS THIS REAL?", "TRUTH REVEALED", "BELIEVE IT?", "MYTH OR FACT"],
+    polls: ["YOU DECIDE", "CAST YOUR VOTE", "WHAT DO YOU THINK?", "OPINION TIME", "VOTE NOW", "YOUR CHOICE", "QUICK POLL"],
     mixed: ["DAILY MIX", "TRY EVERYTHING", "MIND WORKOUT", "NEW SESSION"],
   };
   const thumbText = r.pick(thumbHooks[category] ?? [base.toUpperCase(), `${mins} MIN`, base, `DAY ${day}`]);
@@ -1053,9 +1047,9 @@ export function generateComposition(opts: GenerateOptions): Composition {
     case "riddles": riddles(ctx, target); break;
     case "trivia": trivia(ctx, target); break;
     case "memory": memory(ctx, target); break;
-    case "language": language(ctx, target); break;
-    case "science": science(ctx, target); break;
-    case "history": history(ctx, target); break;
+    case "wouldyourather": wouldyourather(ctx, target); break;
+    case "mythbusters": mythbusters(ctx, target); break;
+    case "polls": polls(ctx, target); break;
     default: mixed(ctx, target);
   }
   // Portrait (shorts): cap scene lengths and total under 60s

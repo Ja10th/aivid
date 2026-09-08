@@ -2044,1143 +2044,361 @@ export function drawMemoryThumbnail(ctx: C2D, W: number, H: number, themeVariant
 }
 
 // ==========================================
-// 10. LANGUAGE PUZZLES (10 DISTINCT COMPOSITIONS)
+// 10. WOULD YOU RATHER (10 DISTINCT COMPOSITIONS)
 // ==========================================
-export function drawLanguageThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
+export function drawWouldYouRatherThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
   const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
   const colors = COLOR_PALETTES[colorIdx];
-  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["UNSCRAMBLE IT", "WORD PUZZLE", "CAN YOU SOLVE?", "LANGUAGE MASTER", "SPELLING CHALLENGE", "FIND THE WORD", "LETTERS ONLY", "WORD GAME", "VOCABULARY", "SPELL IT"][sceneType % 10];
+  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["WOULD YOU RATHER?", "TOUGH CHOICE!", "YOU DECIDE", "CHOOSE WISELY", "WHICH ONE?", "PICK YOUR PATH", "MAKE A CHOICE", "WHAT DO YOU PICK?", "EITHER OR", "YOUR CHOICE"][sceneType % 10];
 
   ctx.fillStyle = colors.bg;
   ctx.fillRect(0, 0, W, H);
 
   if (sceneType === 0) {
-    // Scrambled Letters
+    // Two paths splitting
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, colors.bg);
     grad.addColorStop(1, colors.secondary);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    const letters = ["P", "L", "A", "N", "E", "T"];
-    const tileSize = W * 0.13;
-
-    letters.forEach((letter, i) => {
-      const x = W * 0.15 + i * W * 0.14;
-      const y = H * 0.5;
-      const rotation = (Math.random() - 0.5) * 0.3;
-      
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(rotation);
-      
-      ctx.fillStyle = colors.primary;
-      ctx.fillRect(-tileSize / 2, -tileSize / 2, tileSize, tileSize);
-      
-      ctx.fillStyle = colors.bg;
-      ctx.font = `bold ${tileSize * 0.6}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(letter, 0, 0);
-      
-      ctx.restore();
-    });
-
-  } else if (sceneType === 1) {
-    // Crossword Grid
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    const gridSize = 5;
-    const cellSize = W * 0.12;
-    const startX = W * 0.5 - (gridSize * cellSize) / 2;
-    const startY = H * 0.5 - (gridSize * cellSize) / 2;
-
-    for (let i = 0; i < gridSize; i++) {
-      for (let j = 0; j < gridSize; j++) {
-        const isBlack = (i === 1 && j > 2) || (i === 3 && j < 2);
-        ctx.fillStyle = isBlack ? colors.bg : "#fff";
-        ctx.fillRect(startX + j * cellSize, startY + i * cellSize, cellSize, cellSize);
-        ctx.strokeStyle = colors.primary;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(startX + j * cellSize, startY + i * cellSize, cellSize, cellSize);
-      }
-    }
-
-  } else if (sceneType === 2) {
-    // Word Building Blocks
-    const grad = ctx.createLinearGradient(0, H, 0, 0);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    const word = "WORD";
-    const blockSize = W * 0.15;
-
-    word.split("").forEach((letter, i) => {
-      const x = W * 0.25 + i * W * 0.17;
-      const y = H * 0.5;
-      
-      // 3D block effect
-      ctx.fillStyle = colors.primary;
-      ctx.fillRect(x, y, blockSize, blockSize);
-      
-      // Top face
-      ctx.fillStyle = colors.accent;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + blockSize * 0.3, y - blockSize * 0.3);
-      ctx.lineTo(x + blockSize + blockSize * 0.3, y - blockSize * 0.3);
-      ctx.lineTo(x + blockSize, y);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Right face
-      ctx.fillStyle = colors.secondary;
-      ctx.beginPath();
-      ctx.moveTo(x + blockSize, y);
-      ctx.lineTo(x + blockSize + blockSize * 0.3, y - blockSize * 0.3);
-      ctx.lineTo(x + blockSize + blockSize * 0.3, y + blockSize - blockSize * 0.3);
-      ctx.lineTo(x + blockSize, y + blockSize);
-      ctx.closePath();
-      ctx.fill();
-      
-      // Letter
-      ctx.fillStyle = colors.bg;
-      ctx.font = `bold ${blockSize * 0.5}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(letter, x + blockSize / 2, y + blockSize / 2);
-    });
-
-  } else if (sceneType === 3) {
-    // Alphabet Soup
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Bowl
-    ctx.fillStyle = colors.primary;
+    // Split arrow
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 16;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    
+    // Left path
     ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.55, W * 0.3, 0, Math.PI);
-    ctx.lineTo(W * 0.5 - W * 0.3, H * 0.65);
-    ctx.lineTo(W * 0.5 + W * 0.3, H * 0.65);
-    ctx.closePath();
+    ctx.moveTo(W * 0.5, H * 0.7);
+    ctx.lineTo(W * 0.3, H * 0.3);
+    ctx.stroke();
+    
+    // Right path
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.7);
+    ctx.lineTo(W * 0.7, H * 0.3);
+    ctx.stroke();
+    
+    // Circles at ends
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.arc(W * 0.3, H * 0.3, W * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.arc(W * 0.7, H * 0.3, W * 0.08, 0, Math.PI * 2);
     ctx.fill();
 
-    // Floating letters
-    const floatingLetters = ["A", "B", "C", "D", "E"];
-    ctx.fillStyle = colors.accent;
-    ctx.font = `bold ${W * 0.08}px Arial`;
-    ctx.textAlign = "center";
-    
-    floatingLetters.forEach((letter, i) => {
-      const angle = (i / floatingLetters.length) * Math.PI * 2;
-      const radius = W * 0.2;
-      const x = W * 0.5 + Math.cos(angle) * radius;
-      const y = H * 0.5 + Math.sin(angle) * radius * 0.5;
-      ctx.fillText(letter, x, y);
-    });
-
-  } else if (sceneType === 4) {
-    // Typewriter
-    const grad = ctx.createLinearGradient(W, 0, 0, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
+  } else if (sceneType === 1) {
+    // VS split screen
+    const grad = ctx.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, colors.primary);
+    grad.addColorStop(0.5, colors.secondary);
+    grad.addColorStop(1, colors.accent);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Typewriter body
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(W * 0.25, H * 0.4, W * 0.5, H * 0.3);
-    
-    // Paper
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(W * 0.35, H * 0.25, W * 0.3, H * 0.25);
-    
-    // Typed text
-    ctx.fillStyle = colors.primary;
-    ctx.font = `${W * 0.05}px monospace`;
+    // VS text
+    ctx.fillStyle = colors.bg;
+    ctx.font = `bold ${W * 0.25}px Arial`;
     ctx.textAlign = "center";
-    ctx.fillText("WORD", W * 0.5, H * 0.37);
+    ctx.textBaseline = "middle";
+    ctx.fillText("VS", W * 0.5, H * 0.5);
 
-  } else if (sceneType === 5) {
-    // Dictionary Page
+  } else if (sceneType === 2) {
+    // Question mark with options
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
+    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Big question mark
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${W * 0.4}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("?", W * 0.5, H * 0.5);
+
+  } else {
+    // Two boxes side by side
     const grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, colors.bg);
     grad.addColorStop(1, colors.secondary);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Book pages
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(W * 0.2, H * 0.2, W * 0.28, H * 0.6);
-    ctx.fillRect(W * 0.52, H * 0.2, W * 0.28, H * 0.6);
-    
-    // Text lines
+    // Left box
+    ctx.fillStyle = hexA(colors.primary, 0.3);
+    ctx.fillRect(W * 0.1, H * 0.3, W * 0.35, H * 0.4);
     ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 8; i++) {
-      ctx.beginPath();
-      ctx.moveTo(W * 0.25, H * 0.3 + i * H * 0.06);
-      ctx.lineTo(W * 0.43, H * 0.3 + i * H * 0.06);
-      ctx.stroke();
-      
-      ctx.beginPath();
-      ctx.moveTo(W * 0.57, H * 0.3 + i * H * 0.06);
-      ctx.lineTo(W * 0.75, H * 0.3 + i * H * 0.06);
-      ctx.stroke();
-    }
+    ctx.lineWidth = 6;
+    ctx.strokeRect(W * 0.1, H * 0.3, W * 0.35, H * 0.4);
 
-    // Highlight one word
-    ctx.fillStyle = hexA(colors.accent, 0.4);
-    ctx.fillRect(W * 0.25, H * 0.48, W * 0.18, H * 0.05);
+    // Right box
+    ctx.fillStyle = hexA(colors.accent, 0.3);
+    ctx.fillRect(W * 0.55, H * 0.3, W * 0.35, H * 0.4);
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(W * 0.55, H * 0.3, W * 0.35, H * 0.4);
 
-  } else if (sceneType === 6) {
-    // Letter Magnets
+    // Letters
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${W * 0.15}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("A", W * 0.275, H * 0.5);
+    
+    ctx.fillStyle = colors.accent;
+    ctx.fillText("B", W * 0.725, H * 0.5);
+  }
+
+  applyMicroLayout(ctx, W, H, layoutMicro);
+  fitOutlinedText(ctx, hook, W / 2, H * 0.87, W * 0.88, 96, colors.primary, colors.bg);
+}
+
+// ==========================================
+// 11. MYTH BUSTERS (10 DISTINCT COMPOSITIONS)
+// ==========================================
+export function drawMythBustersThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
+  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["MYTH BUSTED!", "TRUE OR FALSE?", "FACT CHECK", "BUSTING MYTHS", "IS IT REAL?", "MYTH OR FACT?", "SCIENCE SAYS", "DEBUNKED", "TRUTH REVEALED", "MYTH BUSTER"][sceneType % 10];
+
+  ctx.fillStyle = colors.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  if (sceneType === 0) {
+    // Stamp "BUSTED" effect
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, colors.bg);
     grad.addColorStop(1, colors.secondary);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Fridge/board background
-    ctx.fillStyle = hexA(colors.primary, 0.3);
-    ctx.fillRect(W * 0.15, H * 0.25, W * 0.7, H * 0.5);
+    // Red stamp
+    ctx.save();
+    ctx.translate(W * 0.5, H * 0.5);
+    ctx.rotate(-0.2);
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 12;
+    ctx.strokeRect(-W * 0.3, -H * 0.15, W * 0.6, H * 0.3);
+    
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("BUSTED", 0, 0);
+    ctx.restore();
 
-    const magnets = ["W", "O", "R", "D", "S"];
-    const magnetW = W * 0.1;
-    const magnetH = H * 0.12;
-
-    magnets.forEach((letter, i) => {
-      const x = W * 0.25 + i * W * 0.12;
-      const y = H * 0.5;
-      
-      ctx.fillStyle = [colors.accent, colors.primary, colors.secondary, colors.accent, colors.primary][i];
-      ctx.fillRect(x - magnetW / 2, y - magnetH / 2, magnetW, magnetH);
-      
-      ctx.strokeStyle = colors.bg;
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x - magnetW / 2, y - magnetH / 2, magnetW, magnetH);
-      
-      ctx.fillStyle = colors.bg;
-      ctx.font = `bold ${magnetH * 0.6}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(letter, x, y);
-    });
-
-  } else if (sceneType === 7) {
-    // Pencil and Paper
+  } else if (sceneType === 1) {
+    // True/False checkmark and X
     const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
     grad.addColorStop(0, colors.secondary);
     grad.addColorStop(1, colors.bg);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Paper
-    ctx.fillStyle = "#fff";
-    ctx.save();
-    ctx.translate(W * 0.5, H * 0.5);
-    ctx.rotate(0.05);
-    ctx.fillRect(-W * 0.3, -H * 0.25, W * 0.6, H * 0.5);
-    
-    // Lines on paper
-    ctx.strokeStyle = hexA(colors.primary, 0.3);
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 6; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-W * 0.25, -H * 0.15 + i * H * 0.08);
-      ctx.lineTo(W * 0.25, -H * 0.15 + i * H * 0.08);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // Pencil
-    ctx.fillStyle = colors.accent;
-    ctx.save();
-    ctx.translate(W * 0.7, H * 0.6);
-    ctx.rotate(0.7);
-    ctx.fillRect(-W * 0.03, -H * 0.15, W * 0.06, H * 0.3);
-    
-    // Pencil tip
-    ctx.fillStyle = colors.primary;
+    // Checkmark
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 16;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.moveTo(0, H * 0.15);
-    ctx.lineTo(-W * 0.03, H * 0.15 - H * 0.05);
-    ctx.lineTo(W * 0.03, H * 0.15 - H * 0.05);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+    ctx.moveTo(W * 0.2, H * 0.5);
+    ctx.lineTo(W * 0.3, H * 0.6);
+    ctx.lineTo(W * 0.45, H * 0.35);
+    ctx.stroke();
 
-  } else if (sceneType === 8) {
-    // Speech Bubbles
-    const grad = ctx.createLinearGradient(W, H, 0, 0);
+    // X mark
+    ctx.strokeStyle = colors.accent;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.55, H * 0.35);
+    ctx.lineTo(W * 0.8, H * 0.65);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W * 0.8, H * 0.35);
+    ctx.lineTo(W * 0.55, H * 0.65);
+    ctx.stroke();
+
+  } else if (sceneType === 2) {
+    // Magnifying glass
+    const grad = ctx.createLinearGradient(0, H, W, 0);
     grad.addColorStop(0, colors.bg);
     grad.addColorStop(1, colors.secondary);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Left bubble
-    ctx.fillStyle = colors.primary;
+    // Glass
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 12;
     ctx.beginPath();
-    ctx.arc(W * 0.3, H * 0.4, W * 0.15, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.moveTo(W * 0.25, H * 0.52);
-    ctx.lineTo(W * 0.2, H * 0.6);
-    ctx.lineTo(W * 0.3, H * 0.52);
-    ctx.closePath();
-    ctx.fill();
+    ctx.arc(W * 0.45, H * 0.4, W * 0.2, 0, Math.PI * 2);
+    ctx.stroke();
 
-    // Right bubble
-    ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.arc(W * 0.7, H * 0.5, W * 0.15, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.moveTo(W * 0.75, H * 0.62);
-    ctx.lineTo(W * 0.8, H * 0.7);
-    ctx.lineTo(W * 0.7, H * 0.62);
-    ctx.closePath();
-    ctx.fill();
-
-    // Letters in bubbles
-    ctx.fillStyle = colors.bg;
-    ctx.font = `bold ${W * 0.08}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("A", W * 0.3, H * 0.4);
-    ctx.fillText("B", W * 0.7, H * 0.5);
-
-  } else {
-    // Word Search Grid
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(0.5, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    const gridSize = 6;
-    const cellSize = W * 0.1;
-    const startX = W * 0.5 - (gridSize * cellSize) / 2;
-    const startY = H * 0.5 - (gridSize * cellSize) / 2;
-    const randomLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    ctx.font = `bold ${cellSize * 0.6}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    for (let i = 0; i < gridSize; i++) {
-      for (let j = 0; j < gridSize; j++) {
-        const x = startX + j * cellSize;
-        const y = startY + i * cellSize;
-        
-        // Cell background
-        ctx.fillStyle = hexA(colors.primary, 0.2);
-        ctx.fillRect(x, y, cellSize, cellSize);
-        ctx.strokeStyle = colors.primary;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, cellSize, cellSize);
-        
-        // Letter
-        const isHighlight = (i === 2 && j >= 1 && j <= 4);
-        ctx.fillStyle = isHighlight ? colors.accent : colors.primary;
-        const letter = randomLetters[Math.floor(Math.random() * randomLetters.length)];
-        ctx.fillText(letter, x + cellSize / 2, y + cellSize / 2);
-      }
-    }
-
-    // Highlight line
-    ctx.strokeStyle = hexA(colors.accent, 0.5);
-    ctx.lineWidth = 8;
+    // Handle
+    ctx.lineWidth = 16;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(startX + 1 * cellSize + cellSize / 2, startY + 2 * cellSize + cellSize / 2);
-    ctx.lineTo(startX + 4 * cellSize + cellSize / 2, startY + 2 * cellSize + cellSize / 2);
-    ctx.stroke();
-  }
-
-  applyMicroLayout(ctx, W, H, layoutMicro);
-  fitOutlinedText(ctx, hook, W / 2, H * 0.87, W * 0.88, 96, colors.primary, colors.bg);
-}
-
-// ==========================================
-// 11. SCIENCE FACTS (10 DISTINCT COMPOSITIONS)
-// ==========================================
-export function drawScienceThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
-  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
-  const colors = COLOR_PALETTES[colorIdx];
-  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["DID YOU KNOW?", "SCIENCE FACT", "MIND BLOWN", "AMAZING DISCOVERY", "SCIENCE TIME", "FUN FACT", "LEARN THIS", "FASCINATING", "SCIENCE IS COOL", "WOW SCIENCE"][sceneType % 10];
-
-  ctx.fillStyle = colors.bg;
-  ctx.fillRect(0, 0, W, H);
-
-  if (sceneType === 0) {
-    // Atom Model
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Nucleus
-    ctx.fillStyle = colors.accent;
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 30;
-    ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.5, W * 0.06, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Electron orbits
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 3; i++) {
-      const angle = (i / 3) * Math.PI * 2;
-      ctx.save();
-      ctx.translate(W * 0.5, H * 0.5);
-      ctx.rotate(angle);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, W * 0.25, W * 0.12, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // Electrons
-    ctx.fillStyle = colors.accent;
-    for (let i = 0; i < 3; i++) {
-      const angle = (i / 3) * Math.PI * 2;
-      const x = W * 0.5 + Math.cos(angle) * W * 0.25;
-      const y = H * 0.5 + Math.sin(angle) * W * 0.12;
-      ctx.beginPath();
-      ctx.arc(x, y, W * 0.03, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-  } else if (sceneType === 1) {
-    // DNA Helix
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    const helixW = W * 0.15;
-    const steps = 20;
-
-    for (let i = 0; i < steps; i++) {
-      const t = i / steps;
-      const y = H * 0.2 + t * H * 0.6;
-      const angle1 = t * Math.PI * 4;
-      const angle2 = angle1 + Math.PI;
-      
-      const x1 = W * 0.5 + Math.cos(angle1) * helixW;
-      const x2 = W * 0.5 + Math.cos(angle2) * helixW;
-      
-      // Connecting line
-      ctx.strokeStyle = hexA(colors.primary, 0.5);
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x1, y);
-      ctx.lineTo(x2, y);
-      ctx.stroke();
-      
-      // Dots
-      ctx.fillStyle = colors.accent;
-      ctx.beginPath();
-      ctx.arc(x1, y, W * 0.02, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(x2, y, W * 0.02, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-  } else if (sceneType === 2) {
-    // Test Tubes
-    const grad = ctx.createLinearGradient(0, H, 0, 0);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    const tubeColors = [colors.accent, colors.primary, colors.secondary];
-    const tubeW = W * 0.08;
-    const tubeH = H * 0.4;
-
-    tubeColors.forEach((col, i) => {
-      const x = W * 0.3 + i * W * 0.2;
-      const y = H * 0.6;
-      const fillLevel = 0.5 + i * 0.15;
-      
-      // Tube outline
-      ctx.strokeStyle = colors.primary;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(x - tubeW / 2, y);
-      ctx.lineTo(x - tubeW / 2, y - tubeH);
-      ctx.lineTo(x + tubeW / 2, y - tubeH);
-      ctx.lineTo(x + tubeW / 2, y);
-      ctx.stroke();
-      
-      // Liquid
-      ctx.fillStyle = col;
-      ctx.fillRect(x - tubeW / 2 + 2, y - tubeH * fillLevel, tubeW - 4, tubeH * fillLevel);
-      
-      // Bubbles
-      ctx.fillStyle = hexA("#fff", 0.5);
-      ctx.beginPath();
-      ctx.arc(x, y - tubeH * fillLevel * 0.5, W * 0.015, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-  } else if (sceneType === 3) {
-    // Microscope
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Base
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(W * 0.35, H * 0.65, W * 0.3, H * 0.05);
-    
-    // Stand
-    ctx.fillRect(W * 0.48, H * 0.4, W * 0.04, H * 0.25);
-    
-    // Body
-    ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.35, W * 0.08, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Eyepiece
-    ctx.fillRect(W * 0.48, H * 0.25, W * 0.04, H * 0.1);
-    
-    // Objective lens
-    ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.55, W * 0.04, 0, Math.PI * 2);
-    ctx.fill();
-
-  } else if (sceneType === 4) {
-    // Planet System
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Sun
-    ctx.fillStyle = colors.accent;
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 50;
-    ctx.beginPath();
-    ctx.arc(W * 0.25, H * 0.5, W * 0.1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Planets
-    const planetSizes = [0.03, 0.05, 0.04, 0.06];
-    const planetDistances = [0.25, 0.35, 0.45, 0.55];
-    
-    planetSizes.forEach((size, i) => {
-      const x = W * 0.25 + W * planetDistances[i];
-      const y = H * 0.5;
-      
-      // Orbit
-      ctx.strokeStyle = hexA(colors.primary, 0.3);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(W * 0.25, H * 0.5, W * planetDistances[i], 0, Math.PI * 2);
-      ctx.stroke();
-      
-      // Planet
-      ctx.fillStyle = i === 2 ? colors.accent : colors.primary;
-      ctx.beginPath();
-      ctx.arc(x, y, W * size, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-  } else if (sceneType === 5) {
-    // Beaker with Reaction
-    const grad = ctx.createLinearGradient(W, 0, 0, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Beaker
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.35, H * 0.3);
-    ctx.lineTo(W * 0.35, H * 0.65);
-    ctx.lineTo(W * 0.65, H * 0.65);
-    ctx.lineTo(W * 0.65, H * 0.3);
-    ctx.stroke();
-    
-    // Liquid
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(W * 0.36, H * 0.5, W * 0.28, H * 0.14);
-    
-    // Bubbles rising
-    for (let i = 0; i < 5; i++) {
-      const x = W * 0.4 + Math.random() * W * 0.2;
-      const y = H * 0.35 + Math.random() * H * 0.15;
-      const r = W * 0.01 + Math.random() * W * 0.02;
-      
-      ctx.fillStyle = hexA(colors.accent, 0.5);
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-  } else if (sceneType === 6) {
-    // Lightning Bolt
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Lightning bolt
-    ctx.fillStyle = colors.accent;
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 40;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.15);
-    ctx.lineTo(W * 0.45, H * 0.4);
-    ctx.lineTo(W * 0.52, H * 0.4);
-    ctx.lineTo(W * 0.48, H * 0.65);
-    ctx.lineTo(W * 0.55, H * 0.65);
-    ctx.lineTo(W * 0.5, H * 0.85);
-    ctx.lineTo(W * 0.53, H * 0.55);
-    ctx.lineTo(W * 0.48, H * 0.55);
-    ctx.lineTo(W * 0.52, H * 0.3);
-    ctx.lineTo(W * 0.45, H * 0.3);
-    ctx.closePath();
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-  } else if (sceneType === 7) {
-    // Magnet
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Horseshoe magnet
-    const magnetW = W * 0.35;
-    const magnetH = H * 0.4;
-    const thickness = W * 0.08;
-    
-    // Left side (red)
-    ctx.fillStyle = "#ef4444";
-    ctx.fillRect(W * 0.5 - magnetW / 2, H * 0.35, thickness, magnetH);
-    
-    // Top
-    ctx.fillRect(W * 0.5 - magnetW / 2, H * 0.35, magnetW, thickness);
-    
-    // Right side (blue)
-    ctx.fillStyle = "#3b82f6";
-    ctx.fillRect(W * 0.5 + magnetW / 2 - thickness, H * 0.35, thickness, magnetH);
-    
-    // Field lines
-    ctx.strokeStyle = hexA(colors.accent, 0.5);
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.arc(W * 0.5, H * 0.5, W * 0.15 + i * W * 0.06, 0, Math.PI);
-      ctx.stroke();
-    }
-
-  } else if (sceneType === 8) {
-    // Rocket Launch
-    const grad = ctx.createLinearGradient(0, H, 0, 0);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Rocket body
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(W * 0.45, H * 0.4, W * 0.1, H * 0.3);
-    
-    // Nose cone
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.3);
-    ctx.lineTo(W * 0.45, H * 0.4);
-    ctx.lineTo(W * 0.55, H * 0.4);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Fins
-    ctx.beginPath();
-    ctx.moveTo(W * 0.45, H * 0.65);
-    ctx.lineTo(W * 0.4, H * 0.7);
-    ctx.lineTo(W * 0.45, H * 0.7);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.moveTo(W * 0.55, H * 0.65);
-    ctx.lineTo(W * 0.6, H * 0.7);
-    ctx.lineTo(W * 0.55, H * 0.7);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Flames
-    ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.47, H * 0.7);
-    ctx.lineTo(W * 0.5, H * 0.8);
-    ctx.lineTo(W * 0.53, H * 0.7);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 30;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-  } else {
-    // Brain Scan
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(0.5, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Brain outline
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.5, W * 0.2, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Brain waves/activity
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2;
-      const x1 = W * 0.5 + Math.cos(angle) * W * 0.1;
-      const y1 = H * 0.5 + Math.sin(angle) * W * 0.1;
-      const x2 = W * 0.5 + Math.cos(angle) * W * 0.2;
-      const y2 = H * 0.5 + Math.sin(angle) * W * 0.2;
-      
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-    
-    // Activity indicator
-    ctx.fillStyle = colors.accent;
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 20;
-    ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.5, W * 0.05, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
-
-  applyMicroLayout(ctx, W, H, layoutMicro);
-  fitOutlinedText(ctx, hook, W / 2, H * 0.87, W * 0.88, 96, colors.primary, colors.bg);
-}
-
-// ==========================================
-// 12. HISTORY MYSTERIES (10 DISTINCT COMPOSITIONS)
-// ==========================================
-export function drawHistoryThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
-  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
-  const colors = COLOR_PALETTES[colorIdx];
-  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["MYSTERY TIME", "UNSOLVED", "ANCIENT SECRET", "WHAT HAPPENED?", "HISTORY ENIGMA", "TIME TRAVEL", "FASCINATING", "TRUE STORY", "LOST IN TIME", "HISTORICAL"][sceneType % 10];
-
-  ctx.fillStyle = colors.bg;
-  ctx.fillRect(0, 0, W, H);
-
-  if (sceneType === 0) {
-    // Ancient Scroll
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Scroll
-    ctx.fillStyle = "#f4e4c1";
-    ctx.fillRect(W * 0.25, H * 0.25, W * 0.5, H * 0.5);
-    
-    // Rolled edges
-    ctx.fillStyle = "#d4c4a1";
-    ctx.fillRect(W * 0.2, H * 0.25, W * 0.05, H * 0.5);
-    ctx.fillRect(W * 0.75, H * 0.25, W * 0.05, H * 0.5);
-    
-    // Text lines
-    ctx.strokeStyle = hexA(colors.primary, 0.4);
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 6; i++) {
-      ctx.beginPath();
-      ctx.moveTo(W * 0.3, H * 0.35 + i * H * 0.06);
-      ctx.lineTo(W * 0.7, H * 0.35 + i * H * 0.06);
-      ctx.stroke();
-    }
-    
-    // Mysterious symbol
-    ctx.fillStyle = colors.accent;
-    ctx.font = `bold ${W * 0.1}px Arial`;
-    ctx.textAlign = "center";
-    ctx.fillText("?", W * 0.5, H * 0.55);
-
-  } else if (sceneType === 1) {
-    // Old Map
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, "#f4e4c1");
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Map border
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 8;
-    ctx.strokeRect(W * 0.15, H * 0.2, W * 0.7, H * 0.6);
-    
-    // Continents (abstract shapes)
-    ctx.fillStyle = colors.secondary;
-    ctx.beginPath();
-    ctx.arc(W * 0.35, H * 0.4, W * 0.08, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.arc(W * 0.6, H * 0.55, W * 0.1, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // X marks the spot
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.47, H * 0.47);
-    ctx.lineTo(W * 0.53, H * 0.53);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(W * 0.53, H * 0.47);
-    ctx.lineTo(W * 0.47, H * 0.53);
+    ctx.moveTo(W * 0.58, H * 0.53);
+    ctx.lineTo(W * 0.75, H * 0.75);
     ctx.stroke();
 
-  } else if (sceneType === 2) {
-    // Pyramid
-    const grad = ctx.createLinearGradient(0, H, 0, 0);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Sand dunes
-    ctx.fillStyle = hexA(colors.secondary, 0.5);
-    ctx.beginPath();
-    ctx.arc(W * 0.3, H * 0.75, W * 0.3, Math.PI, 0);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(W * 0.7, H * 0.75, W * 0.25, Math.PI, 0);
-    ctx.fill();
-
-    // Pyramid
-    ctx.fillStyle = colors.primary;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.25);
-    ctx.lineTo(W * 0.3, H * 0.65);
-    ctx.lineTo(W * 0.7, H * 0.65);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Shading
-    ctx.fillStyle = hexA(colors.bg, 0.3);
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.25);
-    ctx.lineTo(W * 0.7, H * 0.65);
-    ctx.lineTo(W * 0.5, H * 0.65);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Sun
+    // Question mark inside
     ctx.fillStyle = colors.accent;
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 30;
-    ctx.beginPath();
-    ctx.arc(W * 0.8, H * 0.3, W * 0.08, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-  } else if (sceneType === 3) {
-    // Crown
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Crown base
-    ctx.fillStyle = colors.accent;
-    ctx.fillRect(W * 0.3, H * 0.55, W * 0.4, H * 0.1);
-    
-    // Crown points
-    ctx.beginPath();
-    ctx.moveTo(W * 0.3, H * 0.55);
-    ctx.lineTo(W * 0.35, H * 0.4);
-    ctx.lineTo(W * 0.4, H * 0.55);
-    ctx.lineTo(W * 0.45, H * 0.35);
-    ctx.lineTo(W * 0.5, H * 0.55);
-    ctx.lineTo(W * 0.55, H * 0.35);
-    ctx.lineTo(W * 0.6, H * 0.55);
-    ctx.lineTo(W * 0.65, H * 0.4);
-    ctx.lineTo(W * 0.7, H * 0.55);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Jewels
-    ctx.fillStyle = colors.primary;
-    [0.35, 0.45, 0.55, 0.65].forEach((x) => {
-      ctx.beginPath();
-      ctx.arc(W * x, H * 0.58, W * 0.02, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-  } else if (sceneType === 4) {
-    // Castle Silhouette
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Castle
-    ctx.fillStyle = colors.primary;
-    
-    // Towers
-    ctx.fillRect(W * 0.25, H * 0.4, W * 0.08, H * 0.3);
-    ctx.fillRect(W * 0.67, H * 0.4, W * 0.08, H * 0.3);
-    
-    // Main building
-    ctx.fillRect(W * 0.33, H * 0.5, W * 0.34, H * 0.2);
-    
-    // Battlements
-    for (let i = 0; i < 5; i++) {
-      ctx.fillRect(W * 0.34 + i * W * 0.07, H * 0.47, W * 0.04, H * 0.06);
-    }
-    
-    // Tower tops
-    ctx.beginPath();
-    ctx.moveTo(W * 0.29, H * 0.4);
-    ctx.lineTo(W * 0.25, H * 0.35);
-    ctx.lineTo(W * 0.33, H * 0.35);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.moveTo(W * 0.71, H * 0.4);
-    ctx.lineTo(W * 0.67, H * 0.35);
-    ctx.lineTo(W * 0.75, H * 0.35);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Moon
-    ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.arc(W * 0.8, H * 0.25, W * 0.06, 0, Math.PI * 2);
-    ctx.fill();
-
-  } else if (sceneType === 5) {
-    // Hourglass
-    const grad = ctx.createLinearGradient(W, 0, 0, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Hourglass frame
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 6;
-    
-    // Top
-    ctx.beginPath();
-    ctx.moveTo(W * 0.4, H * 0.25);
-    ctx.lineTo(W * 0.6, H * 0.25);
-    ctx.lineTo(W * 0.5, H * 0.5);
-    ctx.closePath();
-    ctx.stroke();
-    
-    // Bottom
-    ctx.beginPath();
-    ctx.moveTo(W * 0.4, H * 0.75);
-    ctx.lineTo(W * 0.6, H * 0.75);
-    ctx.lineTo(W * 0.5, H * 0.5);
-    ctx.closePath();
-    ctx.stroke();
-    
-    // Sand in bottom
-    ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.42, H * 0.73);
-    ctx.lineTo(W * 0.58, H * 0.73);
-    ctx.lineTo(W * 0.5, H * 0.62);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Sand falling
-    ctx.fillStyle = hexA(colors.accent, 0.6);
-    ctx.fillRect(W * 0.49, H * 0.5, W * 0.02, H * 0.1);
-
-  } else if (sceneType === 6) {
-    // Ancient Ruins
-    const grad = ctx.createLinearGradient(0, H, 0, 0);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Broken columns
-    ctx.fillStyle = colors.primary;
-    
-    // Left column (broken)
-    ctx.fillRect(W * 0.3, H * 0.4, W * 0.06, H * 0.3);
-    ctx.fillRect(W * 0.28, H * 0.4, W * 0.1, H * 0.05);
-    
-    // Middle column (tall)
-    ctx.fillRect(W * 0.47, H * 0.3, W * 0.06, H * 0.4);
-    ctx.fillRect(W * 0.45, H * 0.3, W * 0.1, H * 0.05);
-    
-    // Right column (shortest)
-    ctx.fillRect(W * 0.64, H * 0.5, W * 0.06, H * 0.2);
-    ctx.fillRect(W * 0.62, H * 0.5, W * 0.1, H * 0.05);
-    
-    // Fallen pieces
-    ctx.save();
-    ctx.translate(W * 0.4, H * 0.68);
-    ctx.rotate(0.3);
-    ctx.fillRect(-W * 0.04, -W * 0.02, W * 0.08, W * 0.04);
-    ctx.restore();
-
-  } else if (sceneType === 7) {
-    // Treasure Chest
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Chest base
-    ctx.fillStyle = colors.primary;
-    ctx.fillRect(W * 0.3, H * 0.5, W * 0.4, H * 0.2);
-    
-    // Chest lid (open)
-    ctx.save();
-    ctx.translate(W * 0.5, H * 0.5);
-    ctx.rotate(-0.4);
-    ctx.fillRect(-W * 0.2, -H * 0.12, W * 0.4, H * 0.12);
-    ctx.restore();
-    
-    // Gold coins/treasure
-    ctx.fillStyle = colors.accent;
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 20;
-    for (let i = 0; i < 5; i++) {
-      const x = W * 0.4 + Math.random() * W * 0.2;
-      const y = H * 0.55 + Math.random() * H * 0.1;
-      ctx.beginPath();
-      ctx.arc(x, y, W * 0.02, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.shadowBlur = 0;
-    
-    // Keyhole
-    ctx.fillStyle = colors.bg;
-    ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.58, W * 0.02, 0, Math.PI * 2);
-    ctx.fill();
-
-  } else if (sceneType === 8) {
-    // Compass
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(0.5, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Compass circle
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.arc(W * 0.5, H * 0.5, W * 0.22, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Cardinal directions
-    ctx.fillStyle = colors.primary;
-    ctx.font = `bold ${W * 0.08}px Arial`;
+    ctx.font = `bold ${W * 0.15}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("N", W * 0.5, H * 0.3);
-    ctx.fillText("S", W * 0.5, H * 0.7);
-    ctx.fillText("E", W * 0.68, H * 0.5);
-    ctx.fillText("W", W * 0.32, H * 0.5);
-    
-    // Needle
-    ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.35);
-    ctx.lineTo(W * 0.48, H * 0.5);
-    ctx.lineTo(W * 0.52, H * 0.5);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.fillStyle = colors.primary;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.65);
-    ctx.lineTo(W * 0.48, H * 0.5);
-    ctx.lineTo(W * 0.52, H * 0.5);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillText("?", W * 0.45, H * 0.4);
 
   } else {
-    // Ancient Key
+    // Explosion burst
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.5);
+    grad.addColorStop(0, colors.accent);
+    grad.addColorStop(0.7, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Star burst
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const outerR = W * 0.3;
+      const innerR = W * 0.15;
+      const isOuter = i % 2 === 0;
+      const r = isOuter ? outerR : innerR;
+      const x = W * 0.5 + Math.cos(angle) * r;
+      const y = H * 0.5 + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  applyMicroLayout(ctx, W, H, layoutMicro);
+  fitOutlinedText(ctx, hook, W / 2, H * 0.87, W * 0.88, 96, colors.primary, colors.bg);
+}
+
+// ==========================================
+// 12. QUICK POLLS (10 DISTINCT COMPOSITIONS)
+// ==========================================
+export function drawQuickPollThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
+  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["QUICK POLL!", "YOU VOTE", "PICK ONE", "POLL TIME", "WHAT DO YOU THINK?", "VOTE NOW", "YOUR OPINION", "SURVEY SAYS", "CHOOSE", "FAST POLL"][sceneType % 10];
+
+  ctx.fillStyle = colors.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  if (sceneType === 0) {
+    // Bar chart
+    const grad = ctx.createLinearGradient(0, H, 0, 0);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Four bars
+    const barWidth = W * 0.15;
+    const barColors = [colors.primary, colors.accent, colors.secondary, colors.text];
+    const barHeights = [0.6, 0.8, 0.5, 0.4];
+
+    barHeights.forEach((height, i) => {
+      const x = W * 0.15 + i * W * 0.2;
+      const barH = H * height * 0.5;
+      const y = H * 0.65 - barH;
+      
+      ctx.fillStyle = barColors[i];
+      ctx.fillRect(x, y, barWidth, barH);
+      ctx.strokeStyle = colors.text;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, barWidth, barH);
+    });
+
+  } else if (sceneType === 1) {
+    // Pie chart
     const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
     grad.addColorStop(0, colors.secondary);
     grad.addColorStop(1, colors.bg);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // Key bow (handle)
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.arc(W * 0.35, H * 0.5, W * 0.08, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Key shaft
+    const radius = W * 0.25;
+    const slices = [0.4, 0.3, 0.2, 0.1];
+    let currentAngle = -Math.PI / 2;
+
+    slices.forEach((slice, i) => {
+      const sliceAngle = slice * Math.PI * 2;
+      ctx.fillStyle = [colors.primary, colors.accent, colors.secondary, colors.text][i];
+      ctx.beginPath();
+      ctx.moveTo(W * 0.5, H * 0.5);
+      ctx.arc(W * 0.5, H * 0.5, radius, currentAngle, currentAngle + sliceAngle);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = colors.bg;
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      currentAngle += sliceAngle;
+    });
+
+  } else if (sceneType === 2) {
+    // Checkboxes
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    const boxSize = W * 0.12;
+    const positions = [[0.3, 0.35], [0.3, 0.55], [0.6, 0.35], [0.6, 0.55]];
+
+    positions.forEach(([xRatio, yRatio], i) => {
+      const x = W * xRatio;
+      const y = H * yRatio;
+      
+      ctx.fillStyle = hexA(colors.primary, 0.2);
+      ctx.fillRect(x, y, boxSize, boxSize);
+      ctx.strokeStyle = colors.primary;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x, y, boxSize, boxSize);
+      
+      // Checkmark on first box
+      if (i === 0) {
+        ctx.strokeStyle = colors.accent;
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(x + boxSize * 0.2, y + boxSize * 0.5);
+        ctx.lineTo(x + boxSize * 0.4, y + boxSize * 0.7);
+        ctx.lineTo(x + boxSize * 0.8, y + boxSize * 0.3);
+        ctx.stroke();
+      }
+    });
+
+  } else {
+    // Thumbs up/down
+    const grad = ctx.createLinearGradient(W, 0, 0, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Thumbs up (left)
+    ctx.fillStyle = colors.primary;
+    ctx.font = `${W * 0.25}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("👍", W * 0.35, H * 0.5);
+
+    // Thumbs down (right)
     ctx.fillStyle = colors.accent;
-    ctx.fillRect(W * 0.43, H * 0.48, W * 0.25, H * 0.04);
-    
-    // Key teeth
-    ctx.fillRect(W * 0.64, H * 0.48, W * 0.02, H * 0.08);
-    ctx.fillRect(W * 0.66, H * 0.48, W * 0.02, H * 0.06);
-    
-    // Glow effect
-    ctx.shadowColor = colors.accent;
-    ctx.shadowBlur = 40;
-    ctx.fillRect(W * 0.43, H * 0.48, W * 0.25, H * 0.04);
-    ctx.shadowBlur = 0;
+    ctx.fillText("👎", W * 0.65, H * 0.5);
   }
 
   applyMicroLayout(ctx, W, H, layoutMicro);
