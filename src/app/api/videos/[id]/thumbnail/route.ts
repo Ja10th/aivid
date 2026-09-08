@@ -25,9 +25,10 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       const variants = [];
       for (let index = 0; index < candidates.length; index++) {
         const style = candidates[index];
-        const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style);
-        const path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${styleFingerprint(style)}.png`, "image/png");
-        variants.push({ index, path, fingerprint: styleFingerprint(style), style });
+        const fingerprint = styleFingerprint(style);
+        const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style, `${video.id}-variant-${index}-${fingerprint}`);
+        const path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
+        variants.push({ index, path, fingerprint, style });
       }
       return Response.json({ video, variants });
     }

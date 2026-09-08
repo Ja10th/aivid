@@ -207,11 +207,11 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   return { videoPath: out, thumbPath, durationSec: D };
 }
 
-export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle): Promise<string> {
+export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string): Promise<string> {
   ensureFonts();
   const c = createCanvas(1280, 720);
   drawThumbnail(c.getContext("2d") as unknown as C2D, comp, style, 1280, 720);
-  const file = path.join(THUMBS_DIR, `${id}.png`);
+  const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
   fs.writeFileSync(file, await c.encode("png"));
   return file;
 }

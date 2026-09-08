@@ -16,6 +16,7 @@ export interface ThumbStyle {
   pattern: (typeof THUMB_PATTERNS)[number];
   tilt: number; // degrees
   hueShift: number;
+  textVariant?: number;
 }
 
 type ThumbnailCategory = "eye_training" | "math" | "story" | "gameplay" | "brain" | "calm" | "mixed";
@@ -41,7 +42,7 @@ const CATEGORY_LAYOUTS: Record<ThumbnailCategory, ThumbStyle["layout"][]> = {
 };
 
 export function styleFingerprint(s: ThumbStyle) {
-  return `${s.layout}|${s.paletteIdx}|${s.fontIdx}|${s.deco}|${s.fx}|${s.pattern}`;
+  return `${s.layout}|${s.paletteIdx}|${s.fontIdx}|${s.deco}|${s.fx}|${s.pattern}|${s.textVariant ?? 0}`;
 }
 
 export function randomThumbStyle(rng: RNG, category?: string): ThumbStyle {
@@ -72,7 +73,8 @@ export function thumbnailCandidates(seed: string, category: string): ThumbStyle[
       fx: index === 2 && key !== "story" ? "3d" : style.fx,
       pattern: index === 1 ? "gradient" : style.pattern,
       tilt: key === "story" ? 0 : index === 0 ? 0 : rng.range(-1.5, 1.5),
-      hueShift: (style.hueShift + index * 17) % 360,
+      hueShift: index * 120,
+      textVariant: index,
     };
   });
 }
@@ -141,9 +143,17 @@ function fitOutlinedText(ctx: C2D, text: string, x: number, y: number, maxW: num
   outlinedText(ctx, text, x, y, fitted, fill, stroke);
 }
 
-function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: number, H: number) {
+function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: number, H: number, variant: number) {
   const cat = comp.category;
-  const hook = comp.meta.thumbText || comp.meta.title;
+  const hooks: Record<string, string[]> = {
+    eye_training: ["FOLLOW THE DOT", "TRACK THIS", "KEEP YOUR HEAD STILL"],
+    math: ["CAN YOU SOLVE IT?", "BEAT THE TIMER", "NO CALCULATOR"],
+    story: [comp.meta.thumbText || comp.meta.title, "A STRANGE NIGHT", "THE LAST LETTER"],
+    gameplay: ["WATCH THE BOT", "CAN IT WIN?", "NEW RUN"],
+    brain: ["CAN YOU REMEMBER?", "BEAT THE CLOCK", "THINK FAST"],
+    calm: ["SLOW DOWN", "BREATHE WITH ME", "RESET YOUR MIND"],
+  };
+  const hook = hooks[cat]?.[variant] ?? comp.meta.thumbText ?? comp.meta.title;
   const sub = comp.meta.thumbSub;
   const centerX = W * 0.72;
   const centerY = H * 0.43;
@@ -156,7 +166,8 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
     ctx.fillStyle = p.accent; ctx.beginPath(); ctx.arc(centerX, centerY, 84, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = p.bg; ctx.beginPath(); ctx.arc(centerX, centerY, 38, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = p.fg; ctx.beginPath(); ctx.arc(centerX - 20, centerY - 22, 15, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = p.accent2; ctx.lineWidth = 8; ctx.setLineDash([18, 14]); ctx.beginPath(); ctx.arc(centerX, centerY, 280, -2.6, -0.35); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = p.accent2; ctx.lineWidth = 8; ctx.setLineDash([18, 14]); ctx.beginPath(); ctx.arc(centerX, centerY, 280, -2.6 + variant * 0.35, -0.35 + variant * 0.35); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = p.accent2; ctx.beginPath(); ctx.arc([W * 0.58, W * 0.68, W * 0.78][variant], H * 0.25, 18, 0, Math.PI * 2); ctx.fill();
     fitOutlinedText(ctx, hook, W * 0.32, H * 0.76, W * 0.58, 96, p.fg);
     return true;
   }
@@ -164,7 +175,8 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
   if (cat === "math") {
     ctx.fillStyle = p.bg; ctx.fillRect(0, 0, W, H);
     const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, p.bg2); g.addColorStop(1, p.bg); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    outlinedText(ctx, String((comp.scenes.find((s) => s.kind === "math-question")?.data as { q?: string } | undefined)?.q ?? "7×8+15=?"), W * 0.34, H * 0.4, 158, p.accent);
+    const equation = String((comp.scenes.find((s) => s.kind === "math-question")?.data as { q?: string } | undefined)?.q ?? "7×8+15=?");
+    outlinedText(ctx, variant === 1 ? equation.replace("?", "=") : variant === 2 ? "?" : equation, W * 0.34, H * 0.4, 158, p.accent);
     ctx.strokeStyle = p.accent2; ctx.lineWidth = 18; ctx.beginPath(); ctx.arc(W * 0.83, H * 0.28, 72, -Math.PI / 2, Math.PI * 1.25); ctx.stroke();
     outlinedText(ctx, "10", W * 0.83, H * 0.28, 62, p.fg);
     fitOutlinedText(ctx, hook, W / 2, H * 0.82, W * 0.9, 76, p.accent2, p.fg);
@@ -172,15 +184,19 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
   }
 
   if (cat === "story") {
-    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#24143c"); g.addColorStop(0.6, "#713554"); g.addColorStop(1, "#bd6336"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#ffe9b0"; ctx.shadowColor = "rgba(255,233,176,0.55)"; ctx.shadowBlur = 45; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.25, 74, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+    const storyGradients = [["#24143c", "#713554", "#bd6336"], ["#102d4a", "#286b78", "#e18b53"], ["#34142f", "#8d3d5c", "#e6a247"]];
+    const storyGradient = storyGradients[variant];
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, storyGradient[0]); g.addColorStop(0.6, storyGradient[1]); g.addColorStop(1, storyGradient[2]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = variant === 1 ? "#d8f5ff" : "#ffe9b0"; ctx.shadowColor = "rgba(255,233,176,0.55)"; ctx.shadowBlur = 45; ctx.beginPath(); ctx.arc([W * 0.78, W * 0.64, W * 0.82][variant], H * 0.25, 74, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
     ctx.fillStyle = "#160b22"; ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, H * 0.72); ctx.lineTo(W * 0.17, H * 0.6); ctx.lineTo(W * 0.27, H * 0.48); ctx.lineTo(W * 0.34, H * 0.68); ctx.lineTo(W * 0.52, H * 0.77); ctx.lineTo(W * 0.68, H * 0.66); ctx.lineTo(W, H * 0.78); ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
     fitOutlinedText(ctx, hook, W * 0.33, H * 0.63, W * 0.58, 88, "#fff5e6", "#24143c");
     return true;
   }
 
   if (cat === "gameplay") {
-    const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#ff2fa0"); g.addColorStop(0.55, "#7b2ff7"); g.addColorStop(1, "#2fb8ff"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const gameGradients = [["#ff2fa0", "#7b2ff7", "#2fb8ff"], ["#ff6b35", "#e91e63", "#4527a0"], ["#00bfa5", "#0066cc", "#191970"]];
+    const gameGradient = gameGradients[variant];
+    const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, gameGradient[0]); g.addColorStop(0.55, gameGradient[1]); g.addColorStop(1, gameGradient[2]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = "rgba(0,0,0,0.6)"; rrect(ctx, 70, 62, 540, 500, 26); ctx.fill();
     for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) { ctx.fillStyle = ["#ffd23f", "#3fff88", "#ff5757", "#3fe0ff"][(i + j) % 4]; rrect(ctx, 110 + i * 92, 108 + j * 78, 70, 58, 12); ctx.fill(); }
     ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.25, 34, 0, Math.PI * 2); ctx.fill();
@@ -193,10 +209,11 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
   if (cat === "brain") {
     ctx.fillStyle = "#0d1b0f"; ctx.fillRect(0, 0, W, H);
     ctx.strokeStyle = "#1c3320"; ctx.lineWidth = 4; for (let x = 0; x < W; x += 120) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); } for (let y = 0; y < H; y += 120) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-    outlinedText(ctx, "?", W * 0.22, H * 0.42, 330, "#3fff6e");
+    const brainAccent = ["#3fff6e", "#ffd23f", "#3fe0ff"][variant];
+    outlinedText(ctx, "?", W * (variant === 2 ? 0.28 : 0.22), H * 0.42, 330, brainAccent);
     ctx.strokeStyle = "#ff3b3b"; ctx.lineWidth = 18; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.3, 76, -Math.PI / 2, Math.PI * 1.1); ctx.stroke();
     outlinedText(ctx, "05", W * 0.78, H * 0.3, 72, "#fff");
-    fitOutlinedText(ctx, hook, W / 2, H * 0.82, W * 0.9, 82, "#3fff6e");
+    fitOutlinedText(ctx, hook, W / 2, H * 0.82, W * 0.9, 82, brainAccent);
     return true;
   }
 
@@ -230,7 +247,7 @@ export function drawThumbnail(ctx: C2D, comp: Composition, style: ThumbStyle, W 
     case "rings": ctx.strokeStyle = hexA(p.accent2, 0.5); ctx.lineWidth = 6; for (let r = 40; r < 900; r += 70) { ctx.beginPath(); ctx.arc(W * 0.8, H * 0.5, r, 0, Math.PI * 2); ctx.stroke(); } break;
     case "noise": ctx.fillStyle = hexA(p.fg, 0.08); for (let i = 0; i < 3000; i++) ctx.fillRect(rng.next() * W, rng.next() * H, 3, 3); break;
   }
-  if (drawReferenceThumbnail(ctx, comp, p, W, H)) { ctx.restore(); return; }
+  if (drawReferenceThumbnail(ctx, comp, p, W, H, Math.round(style.hueShift / 120) % 3)) { ctx.restore(); return; }
 
   // decoration
   switch (style.deco) {
