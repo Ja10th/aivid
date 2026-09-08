@@ -328,15 +328,15 @@ function story(ctx: Ctx, target: number) {
 function gameplay(ctx: Ctx, target: number) {
   const r = ctx.rng;
   push(ctx, "title", 6, {
-    title: r.pick(["AI Plays", "Bot Arcade", "Auto Games", "Machine Plays", "Pixel Session", "Bot Mode", "Zero Humans", "Code Plays", "Watch It Run", "System Plays"]),
-    sub: r.pick(["watch the machine play", "no humans involved", "relaxing gameplay", "satisfying runs", "auto-pilot", "pure algorithm", "no controller needed", "machine intelligence"]),
+    title: r.pick(["Game Time", "Play Session", "Level Up", "Game On", "Arcade Mode", "Gaming Hour", "Play Mode", "Game Session", "Let's Play", "Gameplay Arena"]),
+    sub: r.pick(["classic arcade games", "retro gaming", "satisfying gameplay", "game collection", "arcade classics", "pixel perfect", "game variety", "gaming session"]),
   }, r.pick([
-    "Welcome to the arcade. Today the machine plays for you. Sit back and watch.",
-    "Auto play session. Different games, different seeds, never the same twice.",
-    "Relax and watch the bot play. Let's see how far it gets.",
-    "The machine is in control. Pick a color, pick a side, and enjoy the ride.",
+    "Welcome to the arcade. A collection of classic games, each with unique mechanics.",
+    "Different games, different challenges. Let's see what we have today.",
+    "Relax and enjoy. Each game brings its own style and strategy.",
+    "Classic arcade games reimagined. Pick your favorite and enjoy the ride.",
     "Every run is unique. Same rules, different seed, always a new outcome.",
-    "No input required. Just watch the algorithm do its thing.",
+    "Pure gaming entertainment. Watch the classics come to life.",
   ]));
 
   const ALL_GAMES: SceneKind[] = [
@@ -365,34 +365,34 @@ function gameplay(ctx: Ctx, target: number) {
       const theme = r.pick(["neon", "retro", "flat", "pastel", "dark"]);
       const cols = r.int(16, 32);
       push(ctx, g, r.int(38, 95), { cols, stepsPerSec: r.range(5, 13), theme, seed: r.int(1, 1e9), wrap: r.chance(0.3) }, r.pick([
-        "Snake. The bot follows a Hamiltonian path to the fruit. Watch it grow.",
-        `${cols}×${Math.round(cols * 0.56)} grid snake — ${theme} theme. Let's see the final length.`,
-        "The snake knows where every fruit will spawn. It never wastes a move.",
-        "How big can this snake grow? The algorithm says: as big as the grid.",
-        "Satisfying snake run. Every turn is calculated, every fruit claimed.",
-        "Hamiltonian snake — it visits every cell. Perfect score incoming.",
+        "Classic snake game. Follow the path to the fruit and grow.",
+        `${cols}×${Math.round(cols * 0.56)} grid snake with ${theme} theme. See how long it gets.`,
+        "The snake knows its path. Every turn calculated, every fruit claimed.",
+        "How big can this snake grow? Let's find out together.",
+        "Satisfying snake run. Every move is planned, every fruit is earned.",
+        "Snake game - visit every cell and claim the perfect score.",
       ]));
     } else if (g === "game-breakout") {
       const rows = r.int(4, 8), cols2 = r.int(8, 16);
       const ballSpeed = r.range(0.8, 1.8);
       push(ctx, g, r.int(32, 85), { rows, cols: cols2, speed: ballSpeed, seed: r.int(1, 1e9), bricks: r.pick(["standard", "striped", "random", "diamond"]) }, r.pick([
-        "Breakout. The paddle AI tracks the ball perfectly. Every brick is going down.",
-        `${rows}×${cols2} brick layout. Ball speed ${ballSpeed.toFixed(1)}x. Let's clear it.`,
-        "Classic brick breaker. No misses. No mercy. Just wall-to-wall clearing.",
-        "Watch the ball bounce its way through the entire layout. Satisfying every time.",
-        "Breakout run. The AI sees the ball trajectory before the ball knows where it's going.",
-        "Every last brick. The bot won't stop until the screen is clear.",
+        "Breakout. Clear every brick, one bounce at a time.",
+        `${rows}×${cols2} brick layout. Ball speed ${ballSpeed.toFixed(1)}x. Let's clear them all.`,
+        "Classic brick breaker. Watch the wall come down piece by piece.",
+        "Watch the ball bounce through the entire layout. Satisfying every time.",
+        "Breakout session. Every brick must go.",
+        "Clear the board. No brick survives this run.",
       ]));
     } else if (g === "game-maze") {
       const algo = r.pick(["bfs", "dfs", "astar", "dijkstra"]);
       const mazeSize = r.int(15, 40);
       push(ctx, g, r.int(28, 75), { cols: mazeSize, algo, seed: r.int(1, 1e9), showExploration: r.chance(0.7) }, r.pick([
         `${algo.toUpperCase()} maze solving. Watch the search expand, then trace the shortest path.`,
-        `Fresh ${mazeSize}×${Math.round(mazeSize * 0.56)} maze. Generated in real time, solved in seconds.`,
-        "Maze solving. The algorithm explores first, then commits to the optimal route.",
-        "Watch the search wave spread out from the start. When it hits the exit — the path snaps into view.",
-        `${algo === "astar" ? "A-star" : algo === "bfs" ? "Breadth-first" : algo === "dfs" ? "Depth-first" : "Dijkstra's"} search — the classic algorithm doing its thing on a fresh maze.`,
-        "No maze survives long against a proper solver. This one never will either.",
+        `Fresh ${mazeSize}×${Math.round(mazeSize * 0.56)} maze. Generated in real time, solved instantly.`,
+        "Maze solving. Explore first, then find the optimal route.",
+        "Watch the search spread from start. When it hits the exit, the path snaps into view.",
+        `${algo === "astar" ? "A-star" : algo === "bfs" ? "Breadth-first" : algo === "dfs" ? "Depth-first" : "Dijkstra's"} search through a fresh maze.`,
+        "Finding the shortest path through the maze.",
       ]));
     } else if (g === "game-life") {
       const density = r.range(0.15, 0.42);
@@ -400,79 +400,79 @@ function gameplay(ctx: Ctx, target: number) {
       push(ctx, g, r.int(22, 60), { cols: r.int(40, 100), density, stepsPerSec: r.range(5, 16), seed: r.int(1, 1e9), style }, r.pick([
         `Game of Life — ${style} style. ${Math.round(density * 100)}% initial density. Watch what emerges.`,
         "Conway's Game of Life. Simple rules, infinite complexity.",
-        "Cellular automata. Civilizations bloom, collapse, and stabilize into gliders.",
-        "From random noise, recognizable patterns form. That's the beauty of emergent complexity.",
-        "Four rules. Zero players. Endless outcomes. This is Conway's masterpiece.",
+        "Cellular automata. Patterns bloom, collapse, and stabilize.",
+        "From random noise, recognizable patterns form. Emergent complexity at work.",
+        "Four rules. Zero players. Endless outcomes. Conway's masterpiece.",
         "Watch the population surge, crash, and settle into a stable rhythm.",
       ]));
     } else if (g === "game-marbles") {
       const count = r.int(8, 28);
       push(ctx, g, r.int(32, 78), { count, gravity: r.range(0.5, 1.4), pegs: r.int(8, 36), seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "pastel"]) }, r.pick([
         `${count} marbles, one winner. Physics decides. Pick your color.`,
-        "Marble race. No scripts, no tricks — just gravity and geometry.",
-        "Which one bounces its way to the bottom first? Place your bets.",
-        "Pure physics simulation. The outcome is chaotic until it isn't.",
+        "Marble race. Pure physics — just gravity and geometry.",
+        "Which one reaches the bottom first? Place your bets.",
+        "Pure physics simulation. Chaotic until the winner emerges.",
         "The pegs make every race unique. Same track, different result every time.",
         "Marble run. Beauty in the chaos of Newtonian physics.",
       ]));
     } else if (g === "game-pong") {
       const difficulty = r.pick(["easy", "medium", "hard", "perfect"]);
       push(ctx, g, r.int(35, 80), { difficulty, speed: r.range(0.8, 1.6), seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "minimal"]) }, r.pick([
-        `Pong — ${difficulty} AI vs AI. Both paddles are controlled by algorithm.`,
-        "The original game, played by two bots. Neither one blinks.",
-        `AI vs AI pong. Difficulty: ${difficulty}. The rally continues until someone miscalculates.`,
-        "Pong. Invented in 1972. Still satisfying to watch in ${new Date().getFullYear()}.",
-        "Both paddles are tracking the ball. One of them will eventually miss — probably.",
-        "The world's simplest game played by the world's most tireless players.",
+        `Pong — ${difficulty} level. Both paddles in action.`,
+        "The original game. The rally continues endlessly.",
+        `Classic Pong. Difficulty: ${difficulty}. Watch the volleys.`,
+        `Pong. Invented in 1972. Still satisfying to watch in ${new Date().getFullYear()}.`,
+        "Both paddles tracking the ball. The rally never stops.",
+        "The world's simplest game. Still captivating decades later.",
       ]));
     } else if (g === "game-tetris") {
       const level = r.int(1, 15);
       push(ctx, g, r.int(40, 90), { level, seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "ghost"]), showNext: r.chance(0.8), hardDrop: r.chance(0.6) }, r.pick([
-        `Tetris — level ${level}. The bot sees ahead and places every piece optimally.`,
-        "Auto Tetris. The algorithm plans three pieces ahead and never panics.",
-        `Level ${level} Tetris. Watch the line clears stack up.`,
+        `Tetris — level ${level}. Every piece placed optimally.`,
+        "Tetris session. Watch the line clears stack up.",
+        `Level ${level} Tetris. Satisfying clears ahead.`,
         "Every piece placed with intention. Every line cleared with satisfaction.",
-        "Tetris AI — it evaluates height, holes, and bumpiness for every move.",
-        "No hesitation. No rotation panic. Just optimal Tetris, one piece at a time.",
+        "Tetris gameplay — optimal placement, one piece at a time.",
+        "No hesitation. Just smooth Tetris action.",
       ]));
     } else if (g === "game-flappy") {
       push(ctx, g, r.int(30, 70), { seed: r.int(1, 1e9), style: r.pick(["original", "neon", "minimal", "space"]), gravity: r.range(0.6, 1.2), gapSize: r.range(0.18, 0.28) }, r.pick([
-        "Flappy Bird — bot edition. The neural net learned when to flap. Let's see how far it goes.",
-        "Auto flappy. The agent reads the next gap and times every jump perfectly.",
-        "This bot trained on thousands of runs. Now it's trying for a new high score.",
-        "Flappy but make it algorithmic. Watch the pipe gaps and the timing.",
-        "Every flap is a calculation. Every gap is a decision. The bot makes them all in milliseconds.",
-        "How many pipes can the algorithm clear before something goes wrong?",
+        "Flappy Bird. Perfect timing through every gap.",
+        "Flappy session. Watch the precise navigation through the pipes.",
+        "Flappy Bird gameplay. How far can we go?",
+        "Watch the perfect timing and gap navigation.",
+        "Every flap is perfectly timed. Every gap is cleared smoothly.",
+        "How many pipes can we clear? Let's find out.",
       ]));
     } else if (g === "game-asteroids") {
       push(ctx, g, r.int(35, 80), { seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "wireframe"]), difficulty: r.pick(["normal", "hard", "survival"]), shipCount: r.int(1, 3) }, r.pick([
-        "Asteroids. The bot evades, rotates, and fires. Every rock gets split, then swept.",
-        "Auto asteroids. The ship never panics, never collides — by design.",
-        "Watch the ship thread through the debris field. Every shot intentional.",
-        "Asteroids run. The bot clears the screen systematically, starting with the biggest targets.",
-        "Evade and eliminate. The algorithm treats every asteroid as a solved problem.",
-        "The ship knows exactly where every fragment will land. That's the advantage of math over reflex.",
+        "Asteroids. Navigate, rotate, and fire. Every rock gets split and cleared.",
+        "Classic Asteroids gameplay. Threading through the debris field.",
+        "Watch the ship navigate through space rocks. Every shot counts.",
+        "Asteroids run. Clear the screen systematically.",
+        "Evade and eliminate. Classic space shooter action.",
+        "Threading through the asteroid field. Precision shots clear the way.",
       ]));
     } else if (g === "game-sort") {
       const algo = r.pick(["bubble", "merge", "quick", "heap", "insertion", "selection", "shell", "radix"]);
       const n = r.int(20, 120);
       push(ctx, g, r.int(25, 65), { algo, n, seed: r.int(1, 1e9), style: r.pick(["bars", "dots", "scatter", "waveform"]), sound: r.chance(0.4) }, r.pick([
-        `${algo.charAt(0).toUpperCase() + algo.slice(1)} sort — ${n} elements. Watch the comparisons and swaps play out.`,
-        `Visualizing ${algo} sort. You can see the algorithm thinking in real time.`,
-        `${n} unsorted values. ${algo} sort will fix that. Watch how.`,
-        `${algo === "merge" ? "Merge sort divides and conquers" : algo === "quick" ? "Quick sort pivots its way through" : algo === "heap" ? "Heap sort builds the heap first" : algo === "bubble" ? "Bubble sort compares neighbors" : algo === "radix" ? "Radix sort works digit by digit" : "The algorithm"} — visualized.`,
-        "Sorting algorithm in motion. Every comparison is a step toward order.",
-        "From shuffled chaos to perfect order. This is what sorting looks like from the inside.",
+        `${algo.charAt(0).toUpperCase() + algo.slice(1)} sort — ${n} elements. Watch the comparisons and swaps.`,
+        `Visualizing ${algo} sort. See the sorting process in real time.`,
+        `${n} unsorted values. ${algo} sort will organize them. Watch how.`,
+        `${algo === "merge" ? "Merge sort divides and conquers" : algo === "quick" ? "Quick sort pivots through" : algo === "heap" ? "Heap sort builds the structure" : algo === "bubble" ? "Bubble sort compares neighbors" : algo === "radix" ? "Radix sort works digit by digit" : "Sorting"} — visualized.`,
+        "Sorting in motion. Every comparison is a step toward order.",
+        "From chaos to perfect order. This is what sorting looks like.",
       ]));
     } else if (g === "game-pathfinder") {
       const pfAlgo = r.pick(["astar", "dijkstra", "greedy", "jps"]);
       push(ctx, g, r.int(28, 65), { algo: pfAlgo, seed: r.int(1, 1e9), obstacles: r.pick(["random", "maze", "rooms", "spiral"]), heuristic: r.pick(["manhattan", "euclidean", "chebyshev"]) }, r.pick([
-        `${pfAlgo === "astar" ? "A*" : pfAlgo === "jps" ? "Jump Point Search" : pfAlgo.charAt(0).toUpperCase() + pfAlgo.slice(1)} pathfinding — watch it navigate around obstacles.`,
-        "Pathfinding visualized. The algorithm explores, backtracks, and commits to the best route.",
-        "Finding the shortest path through a procedural obstacle field.",
-        "Watch the search frontier expand until it locks onto the goal.",
-        "Every node visited, every shortcut calculated. Pathfinding in real time.",
-        "This is what GPS navigation looks like at the data level.",
+        `${pfAlgo === "astar" ? "A*" : pfAlgo === "jps" ? "Jump Point Search" : pfAlgo.charAt(0).toUpperCase() + pfAlgo.slice(1)} pathfinding — navigating around obstacles.`,
+        "Pathfinding visualized. Explore, backtrack, find the best route.",
+        "Finding the shortest path through obstacles.",
+        "Watch the search expand until it reaches the goal.",
+        "Every node visited, every shortcut found. Pathfinding in action.",
+        "This is how navigation algorithms find the optimal route.",
       ]));
     } else if (g === "game-sand") {
       push(ctx, g, r.int(30, 70), { seed: r.int(1, 1e9), elements: r.pick(["sand", "water", "fire", "mixed", "all"]), rate: r.range(0.4, 1.0), style: r.pick(["pixel", "smooth"]) }, r.pick([
@@ -651,12 +651,12 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     math: [`${base}: ${scenes.filter((s) => s.kind.startsWith("math")).length} Mental Math Questions ${emoji}`, `Can You Solve These? ${mins} Min Mental Math Sprint`, `Daily Math Drill #${day} — Answer Before The Timer`, `Mental Math Practice (${mins} min, timed)`],
     story: [`${base} | A Short Story ${emoji}`, `${base} — Narrated Story to Relax To`, `Bedtime Story: ${base}`, `${base} (Original Short Fiction, ${mins} min)`],
     gameplay: [
-      `${base} — ${scenes.filter((s) => s.kind.startsWith("game")).length} Games, Zero Humans ${emoji}`,
-      `Relaxing AI Gameplay #${day}: Snake, Tetris, Chess & More`,
-      `Watch The Machine Play (${mins} min)`,
-      `Satisfying Auto-Play Session #${day}`,
-      `Bot Arcade #${day} — Pong, Sorting, Pathfinding & More`,
-      `${mins} Min of Pure Algorithm Gameplay`,
+      `${base} — ${scenes.filter((s) => s.kind.startsWith("game")).length} Classic Games ${emoji}`,
+      `Arcade Session #${day}: Snake, Tetris, Breakout & More`,
+      `Game Collection (${mins} min)`,
+      `Classic Gameplay Session #${day}`,
+      `Arcade Classics #${day} — Pong, Tetris, Snake & More`,
+      `${mins} Min of Classic Gaming`,
     ],
     brain: [`${base}: Memory, Trivia & Word Puzzles ${emoji}`, `${mins} Minute Brain Workout #${day}`, `Can You Beat The Timer? Brain Teasers`, `Daily Brain Training — Quiz & Memory`],
     calm: [`${base} — ${mins} Minute Breathing Pacer ${emoji}`, `Guided Breathing & Focus Reset (${mins} min)`, `Quiet Minutes #${day}: Breathe With The Circle`, `Calm Reset — Slow Breathing Visual`],
@@ -672,7 +672,7 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     eye_training: ["eye exercises", "eye training", "vision", "eye workout", "smooth pursuit", "saccades", "eye strain relief", "focus"],
     math: ["mental math", "math practice", "arithmetic", "math quiz", "brain training", "math drill", "quick math"],
     story: ["short story", "bedtime story", "narrated story", "audiobook", "fiction", "storytelling", "relaxing"],
-    gameplay: ["ai gameplay", "snake game", "breakout", "maze solving", "game of life", "marble race", "tetris", "chess ai", "sorting algorithm", "pathfinding", "pong ai", "flappy bird", "asteroids", "particle simulation", "satisfying", "relaxing gameplay"],
+    gameplay: ["classic games", "snake game", "breakout", "maze solving", "game of life", "marble race", "tetris", "pong", "sorting visualization", "pathfinding", "flappy bird", "asteroids", "particle simulation", "satisfying", "relaxing gameplay", "arcade classics"],
     brain: ["brain teasers", "trivia quiz", "memory game", "word scramble", "brain training", "quiz"],
     calm: ["breathing exercise", "meditation", "calm", "focus", "relax", "breathing pacer", "anxiety relief"],
     mixed: ["brain training", "eye exercises", "mental math", "daily session", "focus"],
@@ -682,7 +682,7 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     eye_training: ["FOLLOW THE DOT", "EYE WORKOUT", "KEEP YOUR HEAD STILL", "TRACK THIS", "EYE ROTATION", "TRACE THIS", "VISION DRILL", "BLINK TRAINING"],
     math: ["CAN YOU SOLVE IT?", "BEAT THE TIMER", "MENTAL MATH", "NO CALCULATOR", "ORDER OF OPS", "CUBE THIS", "MATH SPRINT"],
     story: [base, "THE LAST LETTER", "A STRANGE NIGHT", "WHAT HAPPENED?", "THE LOST KEY", "BEFORE DAWN"],
-    gameplay: ["WATCH IT RUN", "CAN IT WIN?", "WATCH THE BOT", "NEW RUN", "ZERO HUMANS", "ALGORITHM MODE", "BOT VS BOT", "LET IT PLAY"],
+    gameplay: ["WATCH IT RUN", "CLASSIC ARCADE", "GAME TIME", "NEW RUN", "PIXEL PERFECT", "GAME ON", "PLAY SESSION", "ARCADE MODE"],
     brain: ["BEAT THE CLOCK", "CAN YOU REMEMBER?", "THINK FAST", "5 SECOND CHALLENGE", "DO YOU KNOW THIS?", "MEMORY TEST"],
     calm: ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"],
     mixed: ["DAILY MIX", "TRY EVERYTHING", "MIND WORKOUT", "NEW SESSION"],
