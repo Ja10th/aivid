@@ -22,6 +22,11 @@ async function readResponse(response: Response) {
   }
 }
 
+function thumbnailPreviewUrl(path: string, fingerprint: string) {
+  if (path.startsWith("https://res.cloudinary.com/")) return `${path}${path.includes("?") ? "&" : "?"}v=${encodeURIComponent(fingerprint)}`;
+  return `/api/media?f=${encodeURIComponent(path)}&v=${encodeURIComponent(fingerprint)}`;
+}
+
 export default function VideoActions({ video, channels }: { video: V; channels: { id: number; title: string }[] }) {
   const router = useRouter();
   const [title, setTitle] = useState(video.title);
@@ -105,7 +110,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
           <div className="t-vt text-oxblood mb-2">choose a thumbnail</div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {variants.map((variant) => <button key={variant.fingerprint} onClick={() => chooseThumb(variant.index)} disabled={!!busy} className="text-left group">
-              <img src={`/api/media?f=${encodeURIComponent(variant.path)}&v=${encodeURIComponent(variant.fingerprint)}`} alt={`Thumbnail option ${variant.index + 1}`} className="thumb-frame w-full group-hover:scale-[1.03] transition-transform" />
+              <img src={thumbnailPreviewUrl(variant.path, variant.fingerprint)} alt={`Thumbnail option ${variant.index + 1}`} className="thumb-frame w-full group-hover:scale-[1.03] transition-transform" />
               <span className="t-vt block mt-1">option {variant.index + 1} · use this</span>
             </button>)}
           </div>
