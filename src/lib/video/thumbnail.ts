@@ -10,6 +10,10 @@ import {
   drawCalmThumbnail,
   drawRiddlesThumbnail,
   drawTriviaThumbnail,
+  drawMemoryThumbnail,
+  drawLanguageThumbnail,
+  drawScienceThumbnail,
+  drawHistoryThumbnail,
 } from "./thumbnail-categories";
 
 export const THUMB_LAYOUTS = ["left-stack", "center-burst", "diagonal-band", "corner-box", "split-vertical", "bottom-bar", "circle-badge", "scatter"] as const;
@@ -30,7 +34,7 @@ export interface ThumbStyle {
   themeVariant?: number; // 0-4: distinct visual composition theme
 }
 
-type ThumbnailCategory = "eye_training" | "math" | "story" | "gameplay" | "brain" | "calm" | "riddles" | "trivia" | "mixed";
+type ThumbnailCategory = "eye_training" | "math" | "story" | "gameplay" | "brain" | "calm" | "riddles" | "trivia" | "memory" | "language" | "science" | "history" | "mixed";
 
 const CATEGORY_THUMBNAILS: Record<ThumbnailCategory, Partial<ThumbStyle>> = {
   eye_training: { layout: "bottom-bar", paletteIdx: 4, deco: "rings", fx: "outline", pattern: "gradient" },
@@ -41,6 +45,10 @@ const CATEGORY_THUMBNAILS: Record<ThumbnailCategory, Partial<ThumbStyle>> = {
   calm: { layout: "center-burst", paletteIdx: 3, deco: "rings", fx: "shadow", pattern: "gradient" },
   riddles: { layout: "corner-box", paletteIdx: 8, deco: "halftone", fx: "shadow", pattern: "rays" },
   trivia: { layout: "diagonal-band", paletteIdx: 6, deco: "halftone", fx: "outline", pattern: "grid" },
+  memory: { layout: "split-vertical", paletteIdx: 7, deco: "rings", fx: "outline", pattern: "grid" },
+  language: { layout: "corner-box", paletteIdx: 10, deco: "frame", fx: "shadow", pattern: "gradient" },
+  science: { layout: "center-burst", paletteIdx: 1, deco: "sparks", fx: "outline", pattern: "rays" },
+  history: { layout: "left-stack", paletteIdx: 12, deco: "frame", fx: "shadow", pattern: "gradient" },
   mixed: { layout: "diagonal-band", paletteIdx: 0, deco: "sparks", fx: "outline", pattern: "rays" },
 };
 
@@ -53,6 +61,10 @@ const CATEGORY_LAYOUTS: Record<ThumbnailCategory, ThumbStyle["layout"][]> = {
   calm: ["center-burst", "circle-badge", "left-stack"],
   riddles: ["corner-box", "diagonal-band", "center-burst"],
   trivia: ["diagonal-band", "bottom-bar", "corner-box"],
+  memory: ["split-vertical", "bottom-bar", "corner-box"],
+  language: ["corner-box", "left-stack", "center-burst"],
+  science: ["center-burst", "diagonal-band", "bottom-bar"],
+  history: ["left-stack", "corner-box", "diagonal-band"],
   mixed: ["diagonal-band", "center-burst", "split-vertical"],
 };
 
@@ -196,6 +208,26 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
 
   if (cat === "trivia") {
     drawTriviaThumbnail(ctx, W, H, themeVariant, rng, hook);
+    return true;
+  }
+
+  if (cat === "memory") {
+    drawMemoryThumbnail(ctx, W, H, themeVariant, rng, hook);
+    return true;
+  }
+
+  if (cat === "language") {
+    drawLanguageThumbnail(ctx, W, H, themeVariant, rng, hook);
+    return true;
+  }
+
+  if (cat === "science") {
+    drawScienceThumbnail(ctx, W, H, themeVariant, rng, hook);
+    return true;
+  }
+
+  if (cat === "history") {
+    drawHistoryThumbnail(ctx, W, H, themeVariant, rng, hook);
     return true;
   }
 

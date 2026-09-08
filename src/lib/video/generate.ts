@@ -13,7 +13,7 @@ import {
   Palette,
   Mood,
 } from "./core";
-import { RIDDLES, TRIVIA } from "./content-data";
+import { RIDDLES, TRIVIA, MEMORY_CHALLENGES, LANGUAGE_PUZZLES, SCIENCE_FACTS, HISTORY_MYSTERIES } from "./content-data";
 
 const TRANSITIONS: Scene["transition"][] = ["cut", "fade", "wipe", "zoom", "slide", "iris"];
 const BGS: BgStyle[] = ["solid", "gradient", "grid", "dots", "noise", "rays", "diagonal", "blobs", "rings"];
@@ -721,6 +721,176 @@ function trivia(ctx: Ctx, target: number) {
   push(ctx, "outro", 10, { text: r.pick(["How'd you do?", "Nice job", "Thanks for playing"]) }, r.pick(["Count up your score. How many did you get right?", "That's the end of the quiz. Come back for more trivia next time."]));
 }
 
+// ---------------- MEMORY CHALLENGES ----------------
+function memory(ctx: Ctx, target: number) {
+  const r = ctx.rng;
+  push(ctx, "title", 6, {
+    title: r.pick(["Memory Challenge", "Recall Test", "Brain Memory", "Remember This", "Memory Master"]),
+    sub: r.pick(["sequence recall", "pattern matching", "visual memory", "memory training"]),
+  }, r.pick([
+    "Memory training time. Watch carefully, remember the patterns, and test your recall.",
+    "Let's test your memory. Pay attention to the sequences and see how much you can remember.",
+    "Memory challenges ahead. Focus, observe, and recall.",
+  ]));
+
+  const shuffled = r.shuffle([...MEMORY_CHALLENGES]);
+  let memIndex = 0;
+  
+  while (ctx.t < target - 12) {
+    const memData = shuffled[memIndex % shuffled.length];
+    memIndex++;
+    
+    if (memData.type === "sequence") {
+      const data = memData.data as { length: number; grid: string };
+      const seq = Array.from({ length: data.length }, () => r.int(0, 3));
+      const showDur = data.length * 0.9 + 1.5;
+      const recall = memData.difficulty === "easy" ? r.int(6, 8) : memData.difficulty === "medium" ? r.int(5, 7) : r.int(4, 6);
+      
+      push(ctx, "memory-challenge", showDur + recall + 4, {
+        seq,
+        showDur,
+        recall,
+        grid: data.grid,
+        difficulty: memData.difficulty,
+        phase: "show"
+      }, r.pick([
+        "Memorize this sequence.",
+        "Watch carefully and remember the order.",
+        "Pay attention to the pattern.",
+      ]));
+    }
+  }
+  
+  push(ctx, "outro", 10, { text: r.pick(["Great recall!", "Well remembered", "Nice work"]) }, r.pick(["How many did you get? Memory improves with practice.", "That's it for today. Come back tomorrow to train your memory again."]));
+}
+
+// ---------------- LANGUAGE PUZZLES ----------------
+function language(ctx: Ctx, target: number) {
+  const r = ctx.rng;
+  push(ctx, "title", 6, {
+    title: r.pick(["Word Play", "Language Puzzles", "Word Master", "Scramble Challenge", "Wordsmith"]),
+    sub: r.pick(["word scrambles", "anagrams", "vocabulary", "language skills"]),
+  }, r.pick([
+    "Time for word puzzles. Unscramble the letters and find the hidden words.",
+    "Language challenge. Can you figure out these scrambled words?",
+    "Word games ahead. Rearrange the letters and solve the puzzles.",
+  ]));
+
+  const shuffled = r.shuffle([...LANGUAGE_PUZZLES]);
+  let langIndex = 0;
+  
+  while (ctx.t < target - 12) {
+    const langData = shuffled[langIndex % shuffled.length];
+    langIndex++;
+    
+    const scrambled = r.shuffle(langData.word.split("")).join("");
+    const thinkTime = langData.difficulty === "easy" ? r.int(8, 12) : langData.difficulty === "medium" ? r.int(10, 14) : r.int(12, 16);
+    const revealTime = r.int(4, 6);
+    
+    // Question
+    push(ctx, "language-puzzle", thinkTime, {
+      word: langData.word,
+      scrambled,
+      hint: langData.hint,
+      difficulty: langData.difficulty,
+      phase: "question"
+    }, r.pick([
+      `Unscramble this ${langData.difficulty} word.`,
+      langData.hint ? `Hint: ${langData.hint}. Now unscramble it.` : "Figure out the word.",
+      "Rearrange these letters.",
+    ]));
+    
+    // Reveal
+    push(ctx, "language-puzzle", revealTime, {
+      word: langData.word,
+      scrambled,
+      hint: langData.hint,
+      difficulty: langData.difficulty,
+      phase: "answer"
+    }, r.pick([
+      `The word is ${langData.word}.`,
+      `It's ${langData.word}. ${r.pick(["Got it?", "Did you get it?", "Easy one!"])}`,
+      langData.word,
+    ]));
+  }
+  
+  push(ctx, "outro", 10, { text: r.pick(["Word master!", "Nice solving", "Well done"]) }, r.pick(["How many words did you get? Keep practicing your vocabulary.", "That's all the puzzles for today. More word games tomorrow."]));
+}
+
+// ---------------- SCIENCE FACTS ----------------
+function science(ctx: Ctx, target: number) {
+  const r = ctx.rng;
+  push(ctx, "title", 6, {
+    title: r.pick(["Science Facts", "Mind-Blowing Science", "Science Today", "Did You Know?", "Science Lab"]),
+    sub: r.pick(["amazing discoveries", "quick science", "fun facts", "fascinating phenomena"]),
+  }, r.pick([
+    "Welcome to science facts. Quick demonstrations and mind-blowing discoveries from physics, chemistry, and biology.",
+    "Time for science. Get ready to learn something fascinating.",
+    "Science facts ahead. Prepare to have your mind blown.",
+  ]));
+
+  const shuffled = r.shuffle([...SCIENCE_FACTS]);
+  let sciIndex = 0;
+  
+  while (ctx.t < target - 12) {
+    const sciData = shuffled[sciIndex % shuffled.length];
+    sciIndex++;
+    
+    const duration = r.int(10, 16);
+    
+    push(ctx, "science-fact", duration, {
+      fact: sciData.fact,
+      explanation: sciData.explanation,
+      category: sciData.category,
+      visualType: sciData.visualType,
+    }, r.pick([
+      `${sciData.fact}. ${sciData.explanation}`,
+      `Did you know? ${sciData.fact}. ${sciData.explanation}`,
+      `Here's a cool fact: ${sciData.fact}. ${sciData.explanation}`,
+    ]));
+  }
+  
+  push(ctx, "outro", 10, { text: r.pick(["Science is amazing", "Keep learning", "Stay curious"]) }, r.pick(["That's today's science session. Subscribe for more amazing facts.", "Science is everywhere. Come back tomorrow for more discoveries."]));
+}
+
+// ---------------- HISTORY MYSTERIES ----------------
+function history(ctx: Ctx, target: number) {
+  const r = ctx.rng;
+  push(ctx, "title", 6, {
+    title: r.pick(["History Mysteries", "Unsolved History", "Ancient Secrets", "Historical Enigmas", "Time Travel"]),
+    sub: r.pick(["unsolved mysteries", "ancient civilizations", "historical what-ifs", "fascinating events"]),
+  }, r.pick([
+    "Welcome to history mysteries. Fascinating events, unsolved enigmas, and questions that still puzzle historians today.",
+    "Journey through time. These historical mysteries continue to intrigue us.",
+    "History is full of mysteries. Let's explore some of the most fascinating.",
+  ]));
+
+  const shuffled = r.shuffle([...HISTORY_MYSTERIES]);
+  let histIndex = 0;
+  
+  while (ctx.t < target - 12) {
+    const histData = shuffled[histIndex % shuffled.length];
+    histIndex++;
+    
+    const duration = r.int(12, 18);
+    
+    push(ctx, "history-mystery", duration, {
+      title: histData.title,
+      event: histData.event,
+      year: histData.year,
+      mystery: histData.mystery,
+      category: histData.category,
+      visualType: histData.visualType,
+    }, r.pick([
+      `${histData.title}. ${histData.event} in ${histData.year}. ${histData.mystery}`,
+      `The mystery of ${histData.title}. ${histData.event}. ${histData.mystery}`,
+      `${histData.year}: ${histData.event}. ${histData.mystery}`,
+    ]));
+  }
+  
+  push(ctx, "outro", 10, { text: r.pick(["History endures", "Mysteries remain", "Keep wondering"]) }, r.pick(["Which mystery intrigued you most? Let us know in the comments.", "That's our journey through history. More mysteries await tomorrow."]));
+}
+
 function mixed(ctx: Ctx, target: number) {
   const r = ctx.rng;
   const parts = r.shuffle(["eye", "math", "brain", "game", "calm"]).slice(0, r.int(3, 4));
@@ -771,6 +941,10 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     calm: [`${base} — ${mins} Minute Breathing Pacer ${emoji}`, `Guided Breathing & Focus Reset (${mins} min)`, `Quiet Minutes #${day}: Breathe With The Circle`, `Calm Reset — Slow Breathing Visual`],
     riddles: [`${base} — Can You Solve Them All? ${emoji}`, `${mins} Min Riddle Challenge #${day}`, `Brain Bending Riddles (${mins} min)`, `Classic Riddles & Lateral Thinking Puzzles`],
     trivia: [`${base}: ${scenes.filter((s) => s.kind === "trivia-quiz").length / 2} Questions ${emoji}`, `Trivia Quiz #${day} — Test Your Knowledge`, `${mins} Min General Knowledge Quiz`, `How Many Can You Get Right?`],
+    memory: [`${base} — Memory Challenge #${day} ${emoji}`, `${mins} Min Recall Test`, `Can You Remember? Memory Training`, `Memory Master Challenge (${mins} min)`],
+    language: [`${base} — Word Puzzles ${emoji}`, `${mins} Min Language Challenge`, `Scramble & Solve #${day}`, `Wordsmith Training (${mins} min)`],
+    science: [`${base} — Mind-Blowing Science ${emoji}`, `${mins} Min of Amazing Facts`, `Science Discovery #${day}`, `Did You Know? Science Edition`],
+    history: [`${base} — Historical Mystery ${emoji}`, `${mins} Min History Enigmas`, `Unsolved History #${day}`, `Ancient Secrets & Mysteries`],
     mixed: [`${base} #${day} — Eyes, Brain & Breath ${emoji}`, `${mins} Minute Mixed Mind Session`, `Daily Variety Session #${day}`],
   };
   const title = r.pick(tmpl[category] || tmpl.mixed);
@@ -788,6 +962,10 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     calm: ["breathing exercise", "meditation", "calm", "focus", "relax", "breathing pacer", "anxiety relief"],
     riddles: ["riddles", "brain teasers", "lateral thinking", "logic puzzles", "classic riddles", "wordplay", "mystery", "puzzle solving"],
     trivia: ["trivia quiz", "general knowledge", "quiz", "trivia questions", "test your knowledge", "multiple choice", "quiz challenge", "brain training"],
+    memory: ["memory challenge", "recall test", "pattern matching", "sequence memory", "visual memory", "brain training", "memory game"],
+    language: ["word puzzles", "anagrams", "word scramble", "vocabulary", "language skills", "wordplay", "spelling", "brain training"],
+    science: ["science facts", "amazing science", "physics", "chemistry", "biology", "astronomy", "science experiments", "fun facts", "educational"],
+    history: ["history mysteries", "ancient history", "unsolved mysteries", "historical events", "ancient civilizations", "fascinating history", "historical enigmas"],
     mixed: ["brain training", "eye exercises", "mental math", "daily session", "focus"],
   };
   const tags = [...(tagBank[category] || []), "daily", orientation === "portrait" ? "shorts" : "generated"];
@@ -800,6 +978,10 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     calm: ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"],
     riddles: ["CAN YOU SOLVE IT?", "THINK ABOUT IT", "MYSTERY TIME", "BRAIN BENDER", "WHAT AM I?", "RIDDLE THIS", "GOT THE ANSWER?"],
     trivia: ["DO YOU KNOW?", "QUIZ TIME", "TEST YOUR KNOWLEDGE", "TRUE OR FALSE?", "THINK FAST", "TRIVIA CHALLENGE", "HOW MANY CAN YOU GET?"],
+    memory: ["REMEMBER THIS", "CAN YOU RECALL?", "MEMORY TEST", "PATTERN CHALLENGE", "SEQUENCE RECALL", "FOCUS NOW", "WATCH CAREFULLY"],
+    language: ["UNSCRAMBLE IT", "WORD PUZZLE", "CAN YOU SOLVE?", "LANGUAGE MASTER", "SPELLING CHALLENGE", "FIND THE WORD", "LETTERS ONLY"],
+    science: ["DID YOU KNOW?", "SCIENCE FACT", "MIND BLOWN", "AMAZING DISCOVERY", "SCIENCE TIME", "FUN FACT", "LEARN THIS"],
+    history: ["MYSTERY TIME", "UNSOLVED", "ANCIENT SECRET", "WHAT HAPPENED?", "HISTORY ENIGMA", "TIME TRAVEL", "FASCINATING"],
     mixed: ["DAILY MIX", "TRY EVERYTHING", "MIND WORKOUT", "NEW SESSION"],
   };
   const thumbText = r.pick(thumbHooks[category] ?? [base.toUpperCase(), `${mins} MIN`, base, `DAY ${day}`]);
@@ -870,6 +1052,10 @@ export function generateComposition(opts: GenerateOptions): Composition {
     case "calm": calm(ctx, target); break;
     case "riddles": riddles(ctx, target); break;
     case "trivia": trivia(ctx, target); break;
+    case "memory": memory(ctx, target); break;
+    case "language": language(ctx, target); break;
+    case "science": science(ctx, target); break;
+    case "history": history(ctx, target); break;
     default: mixed(ctx, target);
   }
   // Portrait (shorts): cap scene lengths and total under 60s

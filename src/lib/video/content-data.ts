@@ -95,3 +95,137 @@ export const TRIVIA: TriviaData[] = [
   { question: "What is the hardest natural substance on Earth?", options: ["Diamond", "Graphene", "Tungsten", "Titanium"], answer: 0, difficulty: "hard", category: "science" },
   { question: "How many keys does a standard piano have?", options: ["76", "80", "88", "92"], answer: 2, difficulty: "hard", category: "general" },
 ];
+
+
+// ==========================================
+// MEMORY CHALLENGES DATABASE
+// ==========================================
+export interface MemoryData {
+  type: "sequence" | "pairs" | "pattern" | "spot-difference";
+  difficulty: "easy" | "medium" | "hard";
+  data: unknown;
+}
+
+export const MEMORY_CHALLENGES: MemoryData[] = [
+  { type: "sequence", difficulty: "easy", data: { length: 4, grid: "2x2" } },
+  { type: "sequence", difficulty: "easy", data: { length: 5, grid: "4x1" } },
+  { type: "sequence", difficulty: "medium", data: { length: 6, grid: "2x2" } },
+  { type: "sequence", difficulty: "medium", data: { length: 7, grid: "diamond" } },
+  { type: "sequence", difficulty: "hard", data: { length: 8, grid: "2x2" } },
+  { type: "sequence", difficulty: "hard", data: { length: 9, grid: "diamond" } },
+];
+
+// ==========================================
+// LANGUAGE PUZZLES DATABASE
+// ==========================================
+export interface LanguageData {
+  word: string;
+  scrambled?: string;
+  hint?: string;
+  difficulty: "easy" | "medium" | "hard";
+  type: "scramble" | "anagram" | "missing";
+}
+
+export const LANGUAGE_PUZZLES: LanguageData[] = [
+  // Easy (5-6 letters)
+  { word: "PLANET", difficulty: "easy", type: "scramble", hint: "In space" },
+  { word: "GARDEN", difficulty: "easy", type: "scramble", hint: "Plants grow here" },
+  { word: "CASTLE", difficulty: "easy", type: "scramble", hint: "Medieval building" },
+  { word: "BRIDGE", difficulty: "easy", type: "scramble", hint: "Crosses water" },
+  { word: "FOREST", difficulty: "easy", type: "scramble", hint: "Many trees" },
+  { word: "WINDOW", difficulty: "easy", type: "scramble", hint: "See through it" },
+  { word: "PENCIL", difficulty: "easy", type: "scramble", hint: "Writing tool" },
+  { word: "CANDLE", difficulty: "easy", type: "scramble", hint: "Makes light" },
+  { word: "MIRROR", difficulty: "easy", type: "scramble", hint: "Reflects you" },
+  { word: "PUZZLE", difficulty: "easy", type: "scramble", hint: "Brain game" },
+  
+  // Medium (7-8 letters)
+  { word: "MOUNTAIN", difficulty: "medium", type: "scramble", hint: "Very tall" },
+  { word: "UMBRELLA", difficulty: "medium", type: "scramble", hint: "For rain" },
+  { word: "COMPUTER", difficulty: "medium", type: "scramble", hint: "You're using one" },
+  { word: "ELEPHANT", difficulty: "medium", type: "scramble", hint: "Large animal" },
+  { word: "TRIANGLE", difficulty: "medium", type: "scramble", hint: "3 sides" },
+  { word: "CALENDAR", difficulty: "medium", type: "scramble", hint: "Shows dates" },
+  { word: "KEYBOARD", difficulty: "medium", type: "scramble", hint: "For typing" },
+  { word: "FOUNTAIN", difficulty: "medium", type: "scramble", hint: "Water feature" },
+  { word: "HOSPITAL", difficulty: "medium", type: "scramble", hint: "Medical care" },
+  { word: "SANDWICH", difficulty: "medium", type: "scramble", hint: "Food item" },
+  
+  // Hard (9+ letters)
+  { word: "BUTTERFLY", difficulty: "hard", type: "scramble", hint: "Insect with wings" },
+  { word: "CHOCOLATE", difficulty: "hard", type: "scramble", hint: "Sweet treat" },
+  { word: "TELEPHONE", difficulty: "hard", type: "scramble", hint: "For calling" },
+  { word: "ADVENTURE", difficulty: "hard", type: "scramble", hint: "Exciting journey" },
+  { word: "NEWSPAPER", difficulty: "hard", type: "scramble", hint: "Daily publication" },
+  { word: "LIGHTNING", difficulty: "hard", type: "scramble", hint: "In a storm" },
+  { word: "CROCODILE", difficulty: "hard", type: "scramble", hint: "Reptile" },
+  { word: "SUBMARINE", difficulty: "hard", type: "scramble", hint: "Underwater vessel" },
+];
+
+// ==========================================
+// SCIENCE FACTS DATABASE
+// ==========================================
+export interface ScienceData {
+  fact: string;
+  explanation: string;
+  category: "physics" | "chemistry" | "biology" | "astronomy" | "earth";
+  visualType: "diagram" | "animation" | "comparison";
+}
+
+export const SCIENCE_FACTS: ScienceData[] = [
+  { fact: "Light travels at 299,792 kilometers per second", explanation: "That's fast enough to circle Earth 7.5 times in one second", category: "physics", visualType: "animation" },
+  { fact: "Water expands when it freezes", explanation: "Most substances contract when frozen, but water expands by about 9%", category: "chemistry", visualType: "diagram" },
+  { fact: "Your heart beats 100,000 times per day", explanation: "That's about 3 billion beats in an average lifetime", category: "biology", visualType: "animation" },
+  { fact: "Jupiter is more than twice as massive as all other planets combined", explanation: "It could fit 1,300 Earths inside it", category: "astronomy", visualType: "comparison" },
+  { fact: "Honey never spoils", explanation: "Archaeologists have found 3,000-year-old honey in Egyptian tombs that's still edible", category: "biology", visualType: "diagram" },
+  { fact: "Sound travels 4 times faster in water than in air", explanation: "In air: 343 m/s, in water: 1,480 m/s", category: "physics", visualType: "comparison" },
+  { fact: "Bananas are radioactive", explanation: "They contain potassium-40, a naturally occurring radioactive isotope", category: "chemistry", visualType: "diagram" },
+  { fact: "Your brain uses 20% of your body's energy", explanation: "Despite being only 2% of your body weight", category: "biology", visualType: "diagram" },
+  { fact: "A day on Venus is longer than its year", explanation: "Venus takes 243 Earth days to rotate, but only 225 to orbit the Sun", category: "astronomy", visualType: "comparison" },
+  { fact: "Octopuses have three hearts", explanation: "Two pump blood to the gills, one pumps to the rest of the body", category: "biology", visualType: "diagram" },
+  { fact: "Lightning is 5 times hotter than the Sun's surface", explanation: "Lightning: 30,000°C, Sun's surface: 5,500°C", category: "physics", visualType: "comparison" },
+  { fact: "DNA is 2 meters long but fits in a cell nucleus", explanation: "It's coiled and folded extremely tightly", category: "biology", visualType: "diagram" },
+  { fact: "Diamonds can be made from peanut butter", explanation: "Under extreme pressure and temperature, the carbon in peanut butter can crystallize", category: "chemistry", visualType: "animation" },
+  { fact: "Neutron stars are incredibly dense", explanation: "A teaspoon of neutron star material weighs 6 billion tons", category: "astronomy", visualType: "comparison" },
+  { fact: "Water can boil and freeze at the same time", explanation: "At the triple point (0.01°C and 611.657 Pa), water exists as solid, liquid, and gas", category: "physics", visualType: "diagram" },
+  { fact: "You lose about 50-100 hairs per day", explanation: "But you have about 100,000 hair follicles, so it's perfectly normal", category: "biology", visualType: "animation" },
+  { fact: "The Moon is slowly drifting away from Earth", explanation: "At a rate of about 3.8 centimeters per year", category: "astronomy", visualType: "animation" },
+  { fact: "Hot water freezes faster than cold water", explanation: "Known as the Mpemba effect, though scientists still debate why", category: "physics", visualType: "diagram" },
+  { fact: "Stomach acid is strong enough to dissolve metal", explanation: "Your stomach produces hydrochloric acid with a pH of 1-2", category: "biology", visualType: "animation" },
+  { fact: "There are more stars than grains of sand on Earth", explanation: "Estimated 100-400 billion billion stars vs 7.5 quintillion grains of sand", category: "astronomy", visualType: "comparison" },
+];
+
+// ==========================================
+// HISTORY MYSTERIES DATABASE
+// ==========================================
+export interface HistoryData {
+  title: string;
+  event: string;
+  year: string | number;
+  mystery: string;
+  category: "ancient" | "medieval" | "modern" | "mystery";
+  visualType: "timeline" | "map" | "portrait" | "artifact";
+}
+
+export const HISTORY_MYSTERIES: HistoryData[] = [
+  { title: "The Library of Alexandria", event: "One of the largest libraries of the ancient world mysteriously burned down", year: "48 BC", mystery: "Was it Caesar's fire, religious zealots, or gradual decline?", category: "ancient", visualType: "artifact" },
+  { title: "Cleopatra's Death", event: "The last pharaoh of Egypt died mysteriously at age 39", year: "30 BC", mystery: "Snake bite, poison, or assisted suicide?", category: "ancient", visualType: "portrait" },
+  { title: "The Nazca Lines", event: "Massive geoglyphs drawn in the Peruvian desert", year: "500 AD", mystery: "Who made them and why? Only visible from the sky", category: "ancient", visualType: "map" },
+  { title: "The Lost Colony of Roanoke", event: "117 English settlers vanished without a trace", year: "1590", mystery: "Only the word 'CROATOAN' carved on a post remained", category: "mystery", visualType: "map" },
+  { title: "Shakespeare's Identity", event: "Questions about whether William Shakespeare wrote his plays", year: "1564-1616", mystery: "Was he one person or multiple authors?", category: "mystery", visualType: "portrait" },
+  { title: "The Voynich Manuscript", event: "A 600-year-old book written in an unknown language", year: "1400s", mystery: "No one has ever deciphered it", category: "medieval", visualType: "artifact" },
+  { title: "Tutankhamun's Curse", event: "Several people died after opening King Tut's tomb", year: "1922", mystery: "Curse, coincidence, or ancient bacteria?", category: "ancient", visualType: "artifact" },
+  { title: "Amelia Earhart's Disappearance", event: "Famous aviator vanished over the Pacific Ocean", year: "1937", mystery: "Crashed at sea, captured, or landed on a remote island?", category: "modern", visualType: "portrait" },
+  { title: "The Dyatlov Pass Incident", event: "Nine Russian hikers died mysteriously in the mountains", year: "1959", mystery: "Their tent was cut from the inside, bodies showed strange injuries", category: "mystery", visualType: "map" },
+  { title: "Stonehenge's Purpose", event: "Massive stone circle in England", year: "3000 BC", mystery: "Calendar, healing temple, or astronomical observatory?", category: "ancient", visualType: "artifact" },
+  { title: "The Bermuda Triangle", event: "Ships and planes mysteriously disappear in this area", year: "1900s-present", mystery: "Natural phenomena or something supernatural?", category: "mystery", visualType: "map" },
+  { title: "The Terracotta Army", event: "8,000 life-sized soldiers buried with China's first emperor", year: "210 BC", mystery: "Why were they made? What else is buried there?", category: "ancient", visualType: "artifact" },
+  { title: "The Dancing Plague of 1518", event: "Hundreds of people danced uncontrollably for days", year: "1518", mystery: "Mass hysteria, ergot poisoning, or something else?", category: "medieval", visualType: "timeline" },
+  { title: "Oak Island Money Pit", event: "A mysterious pit believed to contain treasure", year: "1795-present", mystery: "Pirates, Templars, or natural sinkhole?", category: "mystery", visualType: "map" },
+  { title: "The Antikythera Mechanism", event: "Ancient Greek analog computer found in a shipwreck", year: "100 BC", mystery: "How did they build such advanced technology?", category: "ancient", visualType: "artifact" },
+  { title: "The Shroud of Turin", event: "Cloth bearing the image of a man", year: "1300s", mystery: "Is it the burial cloth of Jesus or a medieval forgery?", category: "medieval", visualType: "artifact" },
+  { title: "D.B. Cooper's Hijacking", event: "Man hijacked a plane, got ransom, and parachuted away", year: "1971", mystery: "Never found despite massive manhunt", category: "modern", visualType: "portrait" },
+  { title: "The Mary Celeste", event: "Ship found abandoned with cargo intact", year: "1872", mystery: "Why did the crew abandon a seaworthy vessel?", category: "mystery", visualType: "artifact" },
+  { title: "The Lost City of Atlantis", event: "Advanced civilization described by Plato", year: "Ancient", mystery: "Real place or philosophical allegory?", category: "ancient", visualType: "map" },
+  { title: "The Princes in the Tower", event: "Two young English princes disappeared from the Tower of London", year: "1483", mystery: "Murdered by their uncle? Bodies found but never confirmed", category: "medieval", visualType: "portrait" },
+];

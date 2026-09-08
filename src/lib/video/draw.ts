@@ -1492,6 +1492,272 @@ const sceneTriviaQuiz: SceneFn = (ctx, comp, s, lt) => {
   progressBar(ctx, comp, s, lt, p.accent2);
 };
 
+const sceneMemoryChallenge: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const seq = s.data.seq as number[];
+  const showDur = Number(s.data.showDur);
+  const recall = Number(s.data.recall);
+  const grid = String(s.data.grid);
+  const difficulty = String(s.data.difficulty);
+  const showing = lt < showDur;
+  
+  // Difficulty badge
+  const badgeColor = difficulty === "easy" ? "#10b981" : difficulty === "medium" ? "#f59e0b" : "#ef4444";
+  ctx.fillStyle = badgeColor;
+  rrect(ctx, W * 0.05, H * 0.05, land ? 120 : 100, land ? 40 : 35, 8);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  font(ctx, land ? 20 : 18, th.fontMono, "bold");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(difficulty.toUpperCase(), W * 0.05 + (land ? 60 : 50), H * 0.05 + (land ? 20 : 17.5));
+  
+  // Grid layout
+  const boxSize = land ? 140 : 110;
+  const gap = 20;
+  let positions: { x: number; y: number }[] = [];
+  
+  if (grid === "2x2") {
+    positions = [
+      { x: W / 2 - boxSize - gap / 2, y: H / 2 - boxSize - gap / 2 },
+      { x: W / 2 + gap / 2, y: H / 2 - boxSize - gap / 2 },
+      { x: W / 2 - boxSize - gap / 2, y: H / 2 + gap / 2 },
+      { x: W / 2 + gap / 2, y: H / 2 + gap / 2 },
+    ];
+  } else if (grid === "4x1") {
+    positions = [
+      { x: W / 2 - boxSize * 2 - gap * 1.5, y: H / 2 - boxSize / 2 },
+      { x: W / 2 - boxSize / 2 - gap / 2, y: H / 2 - boxSize / 2 },
+      { x: W / 2 + gap / 2, y: H / 2 - boxSize / 2 },
+      { x: W / 2 + boxSize + gap * 1.5, y: H / 2 - boxSize / 2 },
+    ];
+  }
+  
+  // Draw sequence
+  seq.forEach((val, idx) => {
+    if (idx >= positions.length) return;
+    const pos = positions[val];
+    const elapsed = lt - idx * 0.8;
+    const highlight = showing && elapsed > 0 && elapsed < 0.8;
+    
+    ctx.fillStyle = highlight ? p.accent : p.bg2;
+    rrect(ctx, pos.x, pos.y, boxSize, boxSize, 12);
+    ctx.fill();
+    
+    ctx.strokeStyle = p.fg;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    if (highlight) {
+      ctx.shadowColor = p.accent;
+      ctx.shadowBlur = 30;
+      ctx.fillStyle = p.accent;
+      rrect(ctx, pos.x, pos.y, boxSize, boxSize, 12);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  });
+  
+  if (!showing) {
+    ctx.fillStyle = p.fg;
+    font(ctx, land ? 36 : 30, th.fontBody);
+    ctx.textAlign = "center";
+    ctx.fillText("What was the sequence?", W / 2, H * 0.15);
+  }
+  
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneLanguagePuzzle: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const phase = String(s.data.phase);
+  const word = String(s.data.word);
+  const scrambled = String(s.data.scrambled);
+  const hint = s.data.hint ? String(s.data.hint) : null;
+  const difficulty = String(s.data.difficulty);
+  
+  // Difficulty badge
+  const badgeColor = difficulty === "easy" ? "#10b981" : difficulty === "medium" ? "#f59e0b" : "#ef4444";
+  ctx.fillStyle = badgeColor;
+  rrect(ctx, W * 0.05, H * 0.05, land ? 120 : 100, land ? 40 : 35, 8);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  font(ctx, land ? 20 : 18, th.fontMono, "bold");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(difficulty.toUpperCase(), W * 0.05 + (land ? 60 : 50), H * 0.05 + (land ? 20 : 17.5));
+  
+  const shown = phase === "question" ? scrambled : word;
+  const tile = Math.min(land ? 110 : 80, (W * 0.9) / shown.length);
+  
+  // Instruction
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 36 : 30, th.fontBody);
+  ctx.fillText(phase === "question" ? "Unscramble this word:" : "The word is:", W / 2, H * 0.2);
+  
+  // Hint
+  if (hint && phase === "question") {
+    ctx.fillStyle = hexA(p.fg, 0.6);
+    font(ctx, land ? 24 : 20, th.fontMono);
+    ctx.fillText(`Hint: ${hint}`, W / 2, H * 0.3);
+  }
+  
+  // Letter tiles
+  for (let i = 0; i < shown.length; i++) {
+    const x = W / 2 + (i - (shown.length - 1) / 2) * tile;
+    const wob = phase === "question" ? Math.sin(lt * 3 + i) * 0.08 : 0;
+    const pop = easeOutBack(clamp((lt - i * 0.08) / 0.5, 0, 1));
+    
+    ctx.save();
+    ctx.translate(x, H / 2);
+    ctx.rotate(wob);
+    ctx.scale(pop, pop);
+    
+    ctx.fillStyle = phase === "answer" ? p.accent : p.fg;
+    rrect(ctx, -tile * 0.42, -tile * 0.42, tile * 0.84, tile * 0.84, 10);
+    ctx.fill();
+    
+    ctx.fillStyle = p.bg;
+    font(ctx, tile * 0.55, th.fontDisplay);
+    ctx.fillText(shown[i], 0, 3);
+    
+    ctx.restore();
+  }
+  
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneScienceFact: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const fact = String(s.data.fact);
+  const explanation = String(s.data.explanation);
+  const category = String(s.data.category).toUpperCase();
+  
+  // Category badge
+  const categoryColors: Record<string, string> = {
+    PHYSICS: "#3b82f6",
+    CHEMISTRY: "#10b981",
+    BIOLOGY: "#f59e0b",
+    ASTRONOMY: "#8b5cf6",
+    EARTH: "#06b6d4",
+  };
+  const badgeColor = categoryColors[category] || "#6b7280";
+  
+  ctx.fillStyle = badgeColor;
+  rrect(ctx, W * 0.05, H * 0.05, land ? 160 : 140, land ? 40 : 35, 8);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  font(ctx, land ? 18 : 16, th.fontMono, "bold");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(category, W * 0.05 + (land ? 80 : 70), H * 0.05 + (land ? 20 : 17.5));
+  
+  // Animated icon based on category
+  const iconSize = land ? 120 : 90;
+  const iconX = W * 0.85;
+  const iconY = H * 0.25;
+  const spin = lt * 2;
+  
+  ctx.save();
+  ctx.translate(iconX, iconY);
+  ctx.rotate(spin);
+  ctx.strokeStyle = hexA(p.accent, 0.3);
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(0, 0, iconSize / 2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  
+  // Fact text
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 40 : 34, th.fontBody, "bold");
+  ctx.textAlign = "center";
+  const factLines = wrap(ctx, fact, W * 0.75);
+  factLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.35 + i * (land ? 48 : 42)));
+  
+  // Explanation
+  ctx.fillStyle = hexA(p.fg, 0.7);
+  font(ctx, land ? 28 : 24, th.fontBody);
+  const expLines = wrap(ctx, explanation, W * 0.8);
+  expLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.6 + i * (land ? 36 : 32)));
+  
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneHistoryMystery: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const title = String(s.data.title);
+  const event = String(s.data.event);
+  const year = String(s.data.year);
+  const mystery = String(s.data.mystery);
+  const category = String(s.data.category).toUpperCase();
+  
+  // Category badge
+  const categoryColors: Record<string, string> = {
+    ANCIENT: "#8b5cf6",
+    MEDIEVAL: "#f59e0b",
+    MODERN: "#3b82f6",
+    MYSTERY: "#ef4444",
+  };
+  const badgeColor = categoryColors[category] || "#6b7280";
+  
+  ctx.fillStyle = badgeColor;
+  rrect(ctx, W * 0.05, H * 0.05, land ? 140 : 120, land ? 40 : 35, 8);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  font(ctx, land ? 18 : 16, th.fontMono, "bold");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(category, W * 0.05 + (land ? 70 : 60), H * 0.05 + (land ? 20 : 17.5));
+  
+  // Year badge
+  ctx.fillStyle = hexA(p.accent, 0.8);
+  rrect(ctx, W * 0.88 - (land ? 80 : 70), H * 0.05, land ? 160 : 140, land ? 40 : 35, 8);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  font(ctx, land ? 20 : 18, th.fontMono, "bold");
+  ctx.fillText(year, W * 0.88, H * 0.05 + (land ? 20 : 17.5));
+  
+  // Title
+  ctx.fillStyle = p.accent;
+  font(ctx, land ? 44 : 36, th.fontDisplay, "bold");
+  ctx.textAlign = "center";
+  const titleLines = wrap(ctx, title, W * 0.85);
+  titleLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.22 + i * (land ? 52 : 44)));
+  
+  // Event
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 30 : 26, th.fontBody);
+  const eventLines = wrap(ctx, event, W * 0.82);
+  eventLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.42 + i * (land ? 38 : 34)));
+  
+  // Mystery question
+  ctx.fillStyle = hexA(p.accent, 0.8);
+  font(ctx, land ? 32 : 28, th.fontBody, "bold");
+  const mysteryLines = wrap(ctx, mystery, W * 0.8);
+  mysteryLines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.68 + i * (land ? 40 : 36)));
+  
+  // Decorative question mark
+  const alpha = (Math.sin(lt * 2) + 1) / 2;
+  ctx.fillStyle = hexA(p.accent, 0.2 + alpha * 0.2);
+  font(ctx, land ? 160 : 120, th.fontDisplay);
+  ctx.fillText("?", W * 0.15, H * 0.7);
+  
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
 const RENDERERS: Record<string, SceneFn> = {
   title: sceneTitle, outro: sceneOutro, interlude: sceneInterlude,
   "eye-follow": sceneEyeFollow, "eye-saccade": sceneEyeSaccade, "eye-focus": sceneEyeFocus, "eye-peripheral": sceneEyePeripheral, "eye-palming": sceneEyePalming,
@@ -1502,6 +1768,8 @@ const RENDERERS: Record<string, SceneFn> = {
   "game-sort": sceneSort, "game-pathfinder": scenePathfinder, "game-sand": sceneSand, "game-chess": sceneChess,
   "memory-sequence": sceneMemory, trivia: sceneTrivia, "word-scramble": sceneWord,
   riddle: sceneRiddle, "trivia-quiz": sceneTriviaQuiz,
+  "memory-challenge": sceneMemoryChallenge, "language-puzzle": sceneLanguagePuzzle,
+  "science-fact": sceneScienceFact, "history-mystery": sceneHistoryMystery,
 };
 
 export function sceneAt(comp: Composition, t: number) {
