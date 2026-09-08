@@ -23,10 +23,37 @@ let fontsLoaded = false;
 export function ensureFonts() {
   if (fontsLoaded) return;
   const dir = path.join(process.cwd(), "public", "fonts");
-  for (const [family, file] of Object.entries(FONT_FILES)) {
-    const fp = path.join(dir, file);
-    if (fs.existsSync(fp)) {
-      try { GlobalFonts.registerFromPath(fp, family); } catch { /* ignore */ }
+  if (fs.existsSync(dir)) {
+    for (const [family, file] of Object.entries(FONT_FILES)) {
+      const fp = path.join(dir, file);
+      if (fs.existsSync(fp)) {
+        try { GlobalFonts.registerFromPath(fp, family); } catch { /* ignore */ }
+      }
+    }
+    // Register aliases so canvas never renders blank glyphs if a specific name is requested
+    const anton = path.join(dir, "Anton-Regular.ttf");
+    if (fs.existsSync(anton)) {
+      try {
+        GlobalFonts.registerFromPath(anton, "Anton");
+        GlobalFonts.registerFromPath(anton, "Arial Black");
+        GlobalFonts.registerFromPath(anton, "sans-serif");
+        GlobalFonts.registerFromPath(anton, "DejaVu Sans");
+      } catch { /* ignore */ }
+    }
+    const playfair = path.join(dir, "PlayfairDisplay.ttf");
+    if (fs.existsSync(playfair)) {
+      try {
+        GlobalFonts.registerFromPath(playfair, "Playfair Display");
+        GlobalFonts.registerFromPath(playfair, "Georgia");
+        GlobalFonts.registerFromPath(playfair, "serif");
+      } catch { /* ignore */ }
+    }
+    const poppins = path.join(dir, "Poppins-Bold.ttf");
+    if (fs.existsSync(poppins)) {
+      try {
+        GlobalFonts.registerFromPath(poppins, "Poppins");
+        GlobalFonts.registerFromPath(poppins, "Arial");
+      } catch { /* ignore */ }
     }
   }
   fontsLoaded = true;

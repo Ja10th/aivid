@@ -154,8 +154,8 @@ function drawBadge(ctx: C2D, text: string, cx: number, cy: number, bg: string, f
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate((rotateDeg * Math.PI) / 180);
-  ctx.font = `800 ${fontSize}px "Anton", "Arial Black", sans-serif`;
-  const tw = ctx.measureText(text).width;
+  ctx.font = `800 ${fontSize}px "Anton", "Arial Black", "DejaVu Sans", sans-serif`;
+  const tw = Math.max(ctx.measureText(text).width, fontSize * 1.5);
   const ph = fontSize * 1.3;
   const pw = tw + fontSize * 1.2;
   // shadow
@@ -204,7 +204,7 @@ const EYE_THEMES = [
   { bg1: "#12021a", bg2: "#3b0764", iris: "#e879f9", dot: "#fbbf24", glow: "rgba(232,121,249,0.3)", accent: "#e879f9", dotGlow: "rgba(251,191,36,0.65)", hook: "VISION\nDRILL" },
 ];
 
-function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG) {
+function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
   const th = EYE_THEMES[themeVariant % EYE_THEMES.length];
 
   // Background — radial gradient
@@ -361,18 +361,24 @@ function drawEyeTrainingThumbnail(ctx: C2D, W: number, H: number, themeVariant: 
   drawBadge(ctx, "TRACK IT →", W * 0.83, H * 0.1, th.accent, "#000", 28, -5);
 
   // -------- Headline bottom center --------
-  const hookLines = th.hook.split("\n");
+  const chosenHook = hookOverride && hookOverride.length > 2 ? hookOverride : th.hook;
+  let hookLines: string[];
+  if (chosenHook.includes("\n")) {
+    hookLines = chosenHook.split("\n");
+  } else if (chosenHook.length > 13) {
+    const words = chosenHook.split(" ");
+    const mid = Math.ceil(words.length / 2);
+    hookLines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+  } else {
+    hookLines = [chosenHook];
+  }
   const headlineY = H * 0.81;
-  ctx.font = `900 104px "Anton", "Arial Black", sans-serif`;
   ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
   hookLines.forEach((line, i) => {
-    const y = headlineY + (i - (hookLines.length - 1) / 2) * 108;
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = "#000";
-    ctx.strokeText(line, W / 2, y);
-    ctx.fillStyle = i === 1 ? th.accent : "#ffffff";
-    ctx.fillText(line, W / 2, y);
+    const y = headlineY + (i - (hookLines.length - 1) / 2) * 104;
+    fitOutlinedText(ctx, line, W / 2, y, W * 0.86, 100, i === 1 ? th.accent : "#ffffff", "#000");
   });
 }
 
@@ -385,7 +391,7 @@ const MATH_THEMES = [
   { bg1: "#001a0a", bg2: "#003321", numColor: "#34d399", opColor: "#d1fae5", qmarkColor: "#f87171", strokeColor: "#000", headlineFill: "#ffffff", headlineStroke: "#059669", hook: "MENTAL\nMATH" },
 ];
 
-function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, equation: string) {
+function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, equation: string, hookOverride?: string) {
   const th = MATH_THEMES[themeVariant % MATH_THEMES.length];
 
   // Background
@@ -453,17 +459,23 @@ function drawMathThumbnail(ctx: C2D, W: number, H: number, themeVariant: number,
   drawTimerRing(ctx, W * 0.84, H * 0.72, 72, "10", 0.72, th.qmarkColor, "#ffffff");
 
   // Headline bottom
-  const hookLines = th.hook.split("\n");
-  ctx.font = `900 88px "Anton", "Arial Black", sans-serif`;
+  const chosenHook = hookOverride && hookOverride.length > 2 ? hookOverride : th.hook;
+  let hookLines: string[];
+  if (chosenHook.includes("\n")) {
+    hookLines = chosenHook.split("\n");
+  } else if (chosenHook.length > 13) {
+    const words = chosenHook.split(" ");
+    const mid = Math.ceil(words.length / 2);
+    hookLines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+  } else {
+    hookLines = [chosenHook];
+  }
   ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   ctx.lineJoin = "round";
   hookLines.forEach((line, i) => {
-    const y = H * 0.84 + (i - (hookLines.length - 1) / 2) * 94;
-    ctx.lineWidth = 8;
-    ctx.strokeStyle = th.headlineStroke;
-    ctx.strokeText(line, W / 2, y);
-    ctx.fillStyle = th.headlineFill;
-    ctx.fillText(line, W / 2, y);
+    const y = H * 0.84 + (i - (hookLines.length - 1) / 2) * 90;
+    fitOutlinedText(ctx, line, W / 2, y, W * 0.86, 86, th.headlineFill, th.headlineStroke);
   });
 
   void rng;
@@ -610,7 +622,7 @@ const GAME_THEMES = [
   { bg: ["#0ea5e9", "#6366f1", "#0f172a"], boardBg: "rgba(0,0,0,0.28)", gemColors: ["#38bdf8", "#818cf8", "#6ee7b7", "#fbbf24", "#fb7185"], glowColor: "#38bdf8", comboColor: "#38bdf8", hook: "NEW RUN" },
 ];
 
-function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG) {
+function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
   const th = GAME_THEMES[themeVariant % GAME_THEMES.length];
 
   // Background gradient
@@ -771,7 +783,8 @@ function drawGameplayThumbnail(ctx: C2D, W: number, H: number, themeVariant: num
   ctx.restore();
 
   // Headline
-  outlinedText(ctx, th.hook, W / 2, H * 0.9, 82, "#ffffff", "#000");
+  const hookText = hookOverride && hookOverride.length > 2 ? hookOverride : th.hook;
+  fitOutlinedText(ctx, hookText, W / 2, H * 0.9, W * 0.86, 82, "#ffffff", "#000");
 }
 
 // ----- BRAIN -----
@@ -826,7 +839,7 @@ function drawPuzzlePiece(ctx: C2D, x: number, y: number, w: number, h: number, c
   ctx.restore();
 }
 
-function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG) {
+function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
   const th = BRAIN_THEMES[themeVariant % BRAIN_THEMES.length];
 
   // Background
@@ -873,16 +886,17 @@ function drawBrainThumbnail(ctx: C2D, W: number, H: number, themeVariant: number
   drawBadge(ctx, th.badge, W * 0.78, H * 0.56, th.badgeBg, th.badgeFg, 28, 5);
 
   // Headline bottom
-  outlinedText(ctx, th.hook, W / 2, H * 0.88, 92, th.headlineColor, "#000");
+  const hookText = hookOverride && hookOverride.length > 2 ? hookOverride : th.hook;
+  fitOutlinedText(ctx, hookText, W / 2, H * 0.88, W * 0.86, 92, th.headlineColor, "#000");
 
   void rng;
 }
 
 // ----- CALM -----
-function drawCalmThumbnail(ctx: C2D, comp: Composition, p: Palette, W: number, H: number, variant: number) {
+function drawCalmThumbnail(ctx: C2D, comp: Composition, p: Palette, W: number, H: number, variant: number, hookOverride?: string) {
   ctx.fillStyle = p.bg;
   ctx.fillRect(0, 0, W, H);
-  const hook = ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"][variant % 5];
+  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"][variant % 5];
   for (let radius = 250; radius > 40; radius -= 36) {
     ctx.fillStyle = hexA(p.accent, 0.08);
     ctx.beginPath();
@@ -912,36 +926,37 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
   const cat = comp.category;
   const themeVariant = style.themeVariant ?? 0;
   const rng = new RNG(styleFingerprint(style) + comp.seed);
+  const hook = comp.meta?.thumbText || comp.meta?.title || "";
 
   if (cat === "eye_training") {
-    drawEyeTrainingThumbnail(ctx, W, H, themeVariant, rng);
+    drawEyeTrainingThumbnail(ctx, W, H, themeVariant, rng, hook);
     return true;
   }
 
   if (cat === "math") {
-    const equation = String((comp.scenes.find((s) => s.kind === "math-question")?.data as { q?: string } | undefined)?.q ?? "7×8+15=?");
-    drawMathThumbnail(ctx, W, H, themeVariant, rng, equation);
+    const equation = String((comp.scenes?.find((s) => s.kind === "math-question")?.data as { q?: string } | undefined)?.q ?? "7×8+15=?");
+    drawMathThumbnail(ctx, W, H, themeVariant, rng, equation, hook);
     return true;
   }
 
   if (cat === "story") {
-    const hook = comp.meta.thumbText || comp.meta.title || "The Last Letter";
-    drawStoryThumbnail(ctx, W, H, themeVariant, hook);
+    const storyTitle = comp.meta?.thumbText || comp.meta?.title || "The Last Letter";
+    drawStoryThumbnail(ctx, W, H, themeVariant, storyTitle);
     return true;
   }
 
   if (cat === "gameplay") {
-    drawGameplayThumbnail(ctx, W, H, themeVariant, rng);
+    drawGameplayThumbnail(ctx, W, H, themeVariant, rng, hook);
     return true;
   }
 
   if (cat === "brain") {
-    drawBrainThumbnail(ctx, W, H, themeVariant, rng);
+    drawBrainThumbnail(ctx, W, H, themeVariant, rng, hook);
     return true;
   }
 
   if (cat === "calm") {
-    drawCalmThumbnail(ctx, comp, p, W, H, themeVariant);
+    drawCalmThumbnail(ctx, comp, p, W, H, themeVariant, hook);
     return true;
   }
 

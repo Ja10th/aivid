@@ -23,12 +23,22 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     // Ensure each candidate has a distinct themeVariant (0-4)
     candidates.forEach((c, i) => { c.themeVariant = i % 5; });
 
+    const comp: Composition = {
+      ...(video.composition as Composition),
+      category: (video.composition as Composition)?.category || video.category,
+      seed: (video.composition as Composition)?.seed || video.seed,
+      meta: {
+        ...((video.composition as Composition)?.meta ?? {}),
+        title: video.title || (video.composition as Composition)?.meta?.title || "",
+      },
+    };
+
     if (body.action !== "select") {
       const variants = [];
       for (let index = 0; index < candidates.length; index++) {
         const style = candidates[index];
         const fingerprint = styleFingerprint(style);
-        const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style, `${video.id}-variant-${index}-${fingerprint}`);
+        const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
         const path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
         variants.push({ index, path, fingerprint, style });
       }
@@ -38,15 +48,15 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const index = Number(body.index);
     if (!Number.isInteger(index) || index < 0 || index >= candidates.length) return bad("invalid thumbnail option", 400);
     const style = body.style ?? candidates[index];
-    const localThumbPath = await renderThumbnail(video.id, video.composition as Composition, style);
-    const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}.png`, "image/png");
+    const fingerprint = styleFingerprint(style);
+    const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`);
+    const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}-${fingerprint}.png`, "image/png");
     if (video.youtubeVideoId) {
       if (!video.channelId) throw new Error("posted video has no connected YouTube channel");
       const [channel] = await db.select().from(channels).where(eq(channels.id, video.channelId));
       if (!channel) throw new Error("connected YouTube channel not found");
       await updateVideoThumbnail(channel, video.youtubeVideoId, localThumbPath);
     }
-    const fingerprint = styleFingerprint(style);
     await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id }).onConflictDoNothing();
     const [updated] = await db.update(videos).set({ thumbnailStyle: style, thumbnailFingerprint: fingerprint, thumbPath }).where(eq(videos.id, video.id)).returning();
     return Response.json({ video: updated, variants: [] });
