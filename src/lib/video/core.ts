@@ -10,6 +10,8 @@ export type SceneKind =
   | "eye-focus"
   | "eye-peripheral"
   | "eye-palming"
+  | "eye-rotation"
+  | "eye-tracing"
   | "math-question"
   | "math-sequence"
   | "story-panel"
@@ -18,6 +20,14 @@ export type SceneKind =
   | "game-maze"
   | "game-life"
   | "game-marbles"
+  | "game-pong"
+  | "game-tetris"
+  | "game-flappy"
+  | "game-asteroids"
+  | "game-sort"
+  | "game-pathfinder"
+  | "game-sand"
+  | "game-chess"
   | "memory-sequence"
   | "trivia"
   | "word-scramble"
@@ -224,10 +234,10 @@ export const MOODS = ["calm", "focus", "playful", "chiptune", "cinematic", "myst
 export type Mood = (typeof MOODS)[number];
 
 export const CATEGORIES: { id: string; label: string; blurb: string; moods: Mood[] }[] = [
-  { id: "eye_training", label: "Eye Training", blurb: "Smooth pursuit, saccades, focus shifts, peripheral drills — narrated.", moods: ["calm", "focus"] },
+  { id: "eye_training", label: "Eye Training", blurb: "Smooth pursuit, saccades, focus shifts, rotation, tracing, and convergence drills — narrated.", moods: ["calm", "focus"] },
   { id: "math", label: "Math Exercises", blurb: "Timed arithmetic, sequences and mental math with reveals.", moods: ["focus", "playful", "chiptune"] },
   { id: "story", label: "Stories", blurb: "Procedurally written short fiction, narrated, with illustrated panels.", moods: ["cinematic", "calm", "mystery"] },
-  { id: "gameplay", label: "Game Plays", blurb: "AI plays snake, breakout, mazes, marble races and cellular automata.", moods: ["chiptune", "energetic", "playful"] },
+  { id: "gameplay", label: "Game Plays", blurb: "AI plays snake, breakout, mazes, pong, tetris, flappy, asteroids, sorting, chess, sand, and marble races.", moods: ["chiptune", "energetic", "playful"] },
   { id: "brain", label: "Brain Teasers", blurb: "Memory sequences, trivia and word scrambles against the clock.", moods: ["playful", "focus", "mystery"] },
   { id: "calm", label: "Calm & Breathing", blurb: "Breathing pacers and slow visual drift for focus resets.", moods: ["calm"] },
   { id: "mixed", label: "Everything Mixed", blurb: "A different blend of all engines every time.", moods: ["playful", "focus", "cinematic"] },

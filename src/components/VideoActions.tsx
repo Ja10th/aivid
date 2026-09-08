@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Reveal } from "./Anim";
 import type { ThumbStyle } from "@/lib/video/thumbnail";
@@ -37,6 +37,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [variants, setVariants] = useState<ThumbnailVariant[]>([]);
+  const thumbsRef = useRef<HTMLDivElement>(null);
 
   const call = async (label: string, fn: () => Promise<Response>) => {
     setBusy(label); setMsg(null);
@@ -57,7 +58,10 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const regen = async () => { const j = await call("regenerate", () => fetch(`/api/videos/${video.id}/regenerate`, { method: "POST" })); if (j?.id) router.push(`/videos/${j.id}`); };
   const regenThumb = async () => {
     const j = await call("thumbnail options", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST" }));
-    if (Array.isArray(j?.variants)) setVariants(j.variants as ThumbnailVariant[]);
+    if (Array.isArray(j?.variants)) {
+      setVariants(j.variants as ThumbnailVariant[]);
+      setTimeout(() => thumbsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    }
   };
   const chooseThumb = async (index: number) => {
     const variant = variants.find((item) => item.index === index);
@@ -106,13 +110,18 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
           <button onClick={del} disabled={!!busy} className="btn btn-danger">Delete</button>
         </div>
         {msg && <div className="t-vt mt-3 ml-4 text-oxblood">{msg}</div>}
-        {variants.length > 0 && <div className="mt-6 ml-4">
-          <div className="t-vt text-oxblood mb-2">choose a thumbnail</div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {variants.map((variant) => <button key={variant.fingerprint} onClick={() => chooseThumb(variant.index)} disabled={!!busy} className="text-left group">
-              <img src={thumbnailPreviewUrl(variant.path, variant.fingerprint)} alt={`Thumbnail option ${variant.index + 1}`} className="thumb-frame w-full group-hover:scale-[1.03] transition-transform" />
-              <span className="t-vt block mt-1">option {variant.index + 1} · use this</span>
-            </button>)}
+        {variants.length > 0 && <div ref={thumbsRef} className="mt-6 ml-4">
+          <div className="t-vt text-oxblood mb-3">choose a thumbnail <span className="opacity-50">— click to use it</span></div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {variants.map((variant) => (
+              <button key={variant.fingerprint} onClick={() => chooseThumb(variant.index)} disabled={!!busy} className="text-left group relative">
+                <div className="relative overflow-hidden rounded-sm">
+                  <img src={thumbnailPreviewUrl(variant.path, variant.fingerprint)} alt={`Thumbnail option ${variant.index + 1}`} className="w-full group-hover:scale-[1.04] transition-transform duration-200" />
+                  <div className="absolute inset-0 border-2 border-transparent group-hover:border-acid transition-colors rounded-sm pointer-events-none" />
+                </div>
+                <span className="t-vt block mt-1 text-xs opacity-60 group-hover:opacity-100 transition-opacity">variation {variant.index + 1} · tap to use</span>
+              </button>
+            ))}
           </div>
         </div>}
       </Reveal>

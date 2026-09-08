@@ -50,63 +50,162 @@ function push(ctx: Ctx, kind: SceneKind, duration: number, data: Record<string, 
 // ---------------- EYE TRAINING ----------------
 const EYE_INTROS = [
   "Welcome to today's eye training session. Sit comfortably, keep your head still, and let only your eyes move.",
-  "This is a guided eye workout. Relax your shoulders, breathe slowly, and follow the shapes with your eyes only.",
+  "This is a guided eye workout. Relax your shoulders, breathe naturally, and follow the shapes with your eyes only.",
   "Let's give your eyes a gentle workout. Keep your head steady and stay about an arm's length from the screen.",
   "Time to train your eyes. Blink naturally, keep your neck relaxed, and follow every movement smoothly.",
+  "Ready to strengthen your vision? Stay an arm's length from the screen. Head still, only your eyes move from here.",
+  "Eye training session starting now. Soft gaze, relaxed forehead, and remember — move only your eyes, not your head.",
+  "Seven minutes of deliberate eye movement. It will reduce strain and sharpen your focus over time.",
+  "Your eyes have muscles — and like any muscle, they benefit from regular training. Let's begin.",
 ];
-const FOLLOW_PATHS = ["circle", "figure8", "lissajous", "zigzag", "spiral", "wave", "square", "random"] as const;
+const FOLLOW_PATHS = ["circle", "figure8", "lissajous", "zigzag", "spiral", "wave", "square", "random", "diagonal", "bowtie", "triangle"] as const;
 const FOLLOW_LINES: Record<string, string[]> = {
-  circle: ["Follow the dot as it travels in a circle. Keep the motion smooth, no jumping ahead.", "Trace the circle with your eyes. Smooth and steady."],
-  figure8: ["Now a figure eight. Let your eyes glide through the crossing point without stopping.", "Follow the infinity loop. Relax your brow as you track it."],
-  lissajous: ["This path is a little unpredictable. Stay locked onto the dot and let your eyes flow.", "A weaving pattern now. Keep breathing while you track it."],
-  zigzag: ["Sharp zigzags. Change direction quickly but keep your head perfectly still.", "Follow the zigzag. Fast turns, smooth tracking."],
-  spiral: ["A spiral, outward then inward. Notice how far your eyes can comfortably reach.", "Track the spiral to the edge and back to center."],
-  wave: ["A slow horizontal wave. This trains smooth pursuit from side to side.", "Ride the wave with your eyes, left to right and back."],
-  square: ["Now a square path. Hold each corner briefly, then move along the edge.", "Trace the square. Corners are pauses, edges are smooth."],
-  random: ["The dot will wander randomly. Stay with it, and don't anticipate.", "Free roaming dot. React, don't predict."],
+  circle: ["Follow the dot as it travels in a circle. Keep the motion smooth, no jumping ahead.", "Trace the circle with your eyes. Smooth and steady.", "A full circle now. Exhale slowly as you complete each loop.", "Round and round. Your eyes should glide, not jump."],
+  figure8: ["Now a figure eight. Let your eyes glide through the crossing point without stopping.", "Follow the infinity loop. Relax your brow as you track it.", "The infinity path. Smooth through the center, no pausing.", "Infinity shape — a classic tracking exercise. Stay fluid through every curve."],
+  lissajous: ["This path is a little unpredictable. Stay locked onto the dot and let your eyes flow.", "A weaving pattern now. Keep relaxed while you track it.", "Complex curve ahead. Don't rush — stay with the dot wherever it leads.", "Lissajous curve. Let your eyes adapt to the rhythm of the shape."],
+  zigzag: ["Sharp zigzags. Change direction quickly but keep your head perfectly still.", "Follow the zigzag. Fast turns, smooth tracking.", "Zigzag pattern. React with your eyes only — your head stays locked.", "Rapid direction changes now. This is reflex training for your eye muscles."],
+  spiral: ["A spiral, outward then inward. Notice how far your eyes can comfortably reach.", "Track the spiral to the edge and back to center.", "Expanding and contracting spiral. Feel the range of your vision.", "Spiral path — let your eyes ride the curve all the way out and all the way back."],
+  wave: ["A slow horizontal wave. This trains smooth pursuit from side to side.", "Ride the wave with your eyes, left to right and back.", "Horizontal wave. Let your eyes surf across the screen without snapping.", "Side-to-side wave. This is one of the most natural motions for your eyes."],
+  square: ["Now a square path. Hold each corner briefly, then move along the edge.", "Trace the square. Corners are pauses, edges are smooth.", "Square tracking. Crisp at the corners, smooth on the straights.", "Four sides, four corners. Let your gaze be deliberate and controlled."],
+  random: ["The dot will wander randomly. Stay with it, and don't anticipate.", "Free roaming dot. React, don't predict.", "Random movement ahead. Stay alert — no guessing where it goes next.", "Unpredictable path. This tests reactive tracking — the hardest kind."],
+  diagonal: ["A diagonal sweep now. Let your eyes slide from corner to corner, relaxed and controlled.", "Diagonal path — top left to bottom right and back. Feel the full extent of your visual field.", "Diagonal sweep. This covers the full diagonal range of your field of view."],
+  bowtie: ["Bowtie shape — two triangles meeting at a point. Stay smooth through the center.", "This bowtie path crosses the midpoint twice per loop. Keep the crossing clean."],
+  triangle: ["A triangle path. Three sharp turns. Hold each vertex for a beat, then move.", "Triangle tracking. Precise corners, even sides. Let your eyes be methodical."],
 };
 
 function eyeTraining(ctx: Ctx, target: number) {
   const r = ctx.rng;
-  push(ctx, "title", 6, { title: r.pick(["Eye Workout", "Eye Training", "Vision Drills", "Eye Gym", "Focus & Track"]), sub: r.pick(["Guided session", "Follow with your eyes only", "Keep your head still", "Daily routine"]) }, r.pick(EYE_INTROS));
+  push(ctx, "title", 6, {
+    title: r.pick(["Eye Workout", "Eye Training", "Vision Drills", "Eye Gym", "Focus & Track", "Daily Eye Care", "Eye Mobility", "Eye Strength", "Visual Training"]),
+    sub: r.pick(["Guided session", "Follow with your eyes only", "Keep your head still", "Daily routine", "No equipment needed", "Reduce screen fatigue", "Strengthen your focus", "5–10 minutes a day"]),
+  }, r.pick(EYE_INTROS));
   let round = 0;
   while (ctx.t < target - 12) {
-    const drill = r.pick(["follow", "follow", "saccade", "focus", "peripheral", "palming", "breathing"]);
+    const drill = r.pick([
+      "follow", "follow", "follow", "follow",
+      "saccade", "saccade",
+      "focus", "focus",
+      "peripheral",
+      "palming",
+      "convergence",
+      "blink-count",
+      "rotation",
+      "tracing",
+    ]);
     round++;
     if (drill === "follow") {
       const path = r.pick(FOLLOW_PATHS);
-      const dur = r.int(22, 48);
-      push(ctx, "eye-follow", dur, { path, speed: r.range(0.5, 1.4), size: r.int(14, 34), shape: r.pick(["dot", "ring", "star", "square", "diamond"]), trail: r.chance(0.5), rotateDir: r.chance(0.5) ? 1 : -1 }, r.pick(FOLLOW_LINES[path]));
+      const dur = r.int(20, 52);
+      const shape = r.pick(["dot", "ring", "star", "square", "diamond", "cross", "arrow"]);
+      push(ctx, "eye-follow", dur, { path, speed: r.range(0.45, 1.5), size: r.int(12, 36), shape, trail: r.chance(0.4), color: r.pick(["red", "cyan", "white", "green", "yellow"]), rotateDir: r.chance(0.5) ? 1 : -1 }, r.pick(FOLLOW_LINES[path] ?? FOLLOW_LINES.circle));
     } else if (drill === "saccade") {
-      const dur = r.int(20, 40);
-      push(ctx, "eye-saccade", dur, { interval: r.range(0.7, 1.6), positions: r.int(2, 6), style: r.pick(["horizontal", "vertical", "diagonal", "corners", "random"]), size: r.int(18, 40) }, r.pick(["Now quick jumps. When the target appears, snap your eyes to it as fast as you can.", "Saccade drill. Jump to each new target immediately, then hold until the next one.", "Rapid targets now. Land your eyes precisely on each one."]));
+      const dur = r.int(18, 42);
+      const style = r.pick(["horizontal", "vertical", "diagonal", "corners", "random", "cross", "star-pattern"]);
+      push(ctx, "eye-saccade", dur, { interval: r.range(0.6, 1.8), positions: r.int(2, 8), style, size: r.int(16, 44), shape: r.pick(["dot", "ring", "x", "plus"]) }, r.pick([
+        "Now quick jumps. When the target appears, snap your eyes to it as fast as you can.",
+        "Saccade drill. Jump to each new target immediately, then hold until the next one.",
+        "Rapid targets now. Land your eyes precisely on each one.",
+        "Snap tracking. The moment a target appears, your eyes should already be moving.",
+        "Fast targets. Snap, hold, snap again. Precision and speed.",
+        `${style} saccades. Keep your head locked and react with only your eyes.`,
+      ]));
     } else if (drill === "focus") {
-      const dur = r.int(18, 36);
-      push(ctx, "eye-focus", dur, { period: r.range(3, 6), shape: r.pick(["ring", "hex", "letter"]), letter: r.pick(["E", "A", "K", "8", "Z"]) }, r.pick(["Focus shift. As the shape grows, imagine it coming close. As it shrinks, let your focus relax into the distance.", "Near and far. Keep the shape crisp as it changes size.", "This drill relaxes your focusing muscles. Follow the size change and blink when you need to."]));
+      const dur = r.int(16, 38);
+      const shape = r.pick(["ring", "hex", "letter", "cross", "spiral"]);
+      push(ctx, "eye-focus", dur, { period: r.range(2.5, 6), shape, letter: r.pick(["E", "A", "K", "8", "Z", "F", "T", "O", "C", "X"]) }, r.pick([
+        "Focus shift. As the shape grows, imagine it coming close. As it shrinks, let your focus relax into the distance.",
+        "Near and far. Keep the shape crisp as it changes size.",
+        "This drill relaxes your focusing muscles. Follow the size change and blink when you need to.",
+        "Accommodation training. Let your lens adjust naturally with each size change.",
+        "The shape is pulsing between near and far. Ride that shift without straining.",
+        "Focus in as it grows, defocus as it shrinks. It's a workout for your ciliary muscle.",
+      ]));
     } else if (drill === "peripheral") {
-      const dur = r.int(20, 38);
-      push(ctx, "eye-peripheral", dur, { flashEvery: r.range(0.9, 1.8), count: r.int(1, 3), spread: r.range(0.3, 0.46) }, r.pick(["Peripheral vision. Keep your eyes fixed on the center mark and simply notice the shapes appearing at the edges. Do not look at them.", "Stare only at the center. Count the shapes that flash around it using your side vision.", "Fix your gaze on the middle. Everything else is noticed, never chased."]));
+      const dur = r.int(18, 40);
+      push(ctx, "eye-peripheral", dur, { flashEvery: r.range(0.8, 2.0), count: r.int(1, 4), spread: r.range(0.28, 0.48), shape: r.pick(["dot", "triangle", "letter"]) }, r.pick([
+        "Peripheral vision. Keep your eyes fixed on the center mark and simply notice the shapes appearing at the edges. Do not look at them.",
+        "Stare only at the center. Count the shapes that flash around it using your side vision.",
+        "Fix your gaze on the middle. Everything else is noticed, never chased.",
+        "Peripheral awareness. Your center is locked. Your awareness is wide.",
+        "Eyes forward. The targets are not for chasing — only for noticing.",
+        "Anchor your gaze at the dot. Let the edges of your vision do the work.",
+      ]));
+    } else if (drill === "convergence") {
+      const dur = r.int(22, 44);
+      push(ctx, "eye-follow", dur, { path: "circle", speed: r.range(0.25, 0.65), size: r.int(8, 20), shape: "dot", trail: false, rotateDir: 1, convergence: true, color: r.pick(["red", "cyan", "white"]) }, r.pick([
+        "Convergence drill. Watch the two targets as they approach each other. Keep both in focus.",
+        "Both targets together now. Let your eyes converge as they meet in the center.",
+        "Cross-eye training. Follow the targets toward each other without losing either one.",
+        "Convergence. This exercise strengthens the muscles that pull your eyes inward to read and focus up close.",
+      ]));
+    } else if (drill === "blink-count") {
+      const dur = r.int(16, 30);
+      push(ctx, "eye-follow", dur, { path: "wave", speed: 0.4, size: 22, shape: "ring", trail: false, rotateDir: 1, blinkCued: true, color: "cyan" }, r.pick([
+        "Blink training. Each time the ring pulses, do one full, slow blink. This resets your tear film.",
+        "Deliberate blinking now. When the pulse happens, blink fully and slowly. Don't squint.",
+        "Blink with the rhythm. Full blinks help rehydrate your eyes — especially after screen time.",
+        "Structured blink drill. One full blink per pulse. This counters the reduced blinking that happens when we stare at screens.",
+      ]));
+    } else if (drill === "rotation") {
+      // Clockwise / counterclockwise slow rotation drill
+      const dur = r.int(20, 36);
+      const dir = r.chance(0.5) ? "clockwise" : "counterclockwise";
+      push(ctx, "eye-rotation", dur, { direction: dir, speed: r.range(0.3, 0.7), reps: r.int(2, 5) }, r.pick([
+        `Slow eye rotation, ${dir}. Let your eyes travel the full circle — top, right, bottom, left. Keep the arc smooth.`,
+        `Eye circles ${dir}. This stretches the extraocular muscles and increases their range of motion.`,
+        `Rolling your eyes ${dir} deliberately is a real exercise. Nice and slow, all the way around.`,
+        `${dir.charAt(0).toUpperCase() + dir.slice(1)} rotation now. If you feel a slight tension, that's the muscle working.`,
+      ]));
+    } else if (drill === "tracing") {
+      // Trace a fixed shape on the screen without a moving dot
+      const shape = r.pick(["H", "star", "diamond", "infinity", "clock"]);
+      const dur = r.int(18, 34);
+      push(ctx, "eye-tracing", dur, { shape, speed: r.range(0.4, 0.9), reps: r.int(2, 4) }, r.pick([
+        `Trace the ${shape} shape with your eyes, slowly and precisely. No dot to follow — just the outline.`,
+        `Eye tracing — ${shape}. Go around the edges deliberately. This trains controlled, intentional eye movement.`,
+        `Slowly trace the ${shape} without moving your head. Precision over speed.`,
+        `The ${shape} is your guide. Trace every edge calmly and without rushing.`,
+      ]));
     } else if (drill === "palming") {
-      push(ctx, "eye-palming", r.int(12, 20), {}, r.pick(["Rest time. Rub your palms together until warm, then cup them gently over your closed eyes. Breathe.", "Close your eyes and cover them with warm palms. Let the darkness relax everything.", "Palming break. Eyes closed, palms cupped, slow breaths."]));
-    } else {
-      push(ctx, "breathing", r.int(16, 28), { inhale: r.int(3, 5), hold: r.int(1, 3), exhale: r.int(4, 6) }, r.pick(["A short breathing reset. Follow the circle, in as it grows, out as it shrinks.", "Breathe with the circle. Slow in, slow out."]));
+      push(ctx, "eye-palming", r.int(12, 22), { warm: r.chance(0.6) }, r.pick([
+        "Rest time. Rub your palms together until warm, then cup them gently over your closed eyes. Breathe.",
+        "Close your eyes and cover them with warm palms. Let the darkness relax everything.",
+        "Palming break. Eyes closed, palms cupped, slow breaths.",
+        "Palm your eyes now. The warmth and darkness are deeply restoring.",
+        "Cup your warm palms over your closed eyes. Imagine complete darkness. Let your eye muscles go limp.",
+        "Palming — the oldest eye rest technique. Warm hands, closed eyes, full darkness. Rest here.",
+      ]));
     }
-    if (round % 3 === 0 && r.chance(0.6)) push(ctx, "interlude", r.int(4, 7), { text: r.pick(["Blink a few times", "Relax your jaw", "Shoulders down", "Halfway there", "Keep your head still", "You're doing great"]) });
+    if (round % 3 === 0 && r.chance(0.55)) push(ctx, "interlude", r.int(4, 8), { text: r.pick(["Blink a few times", "Relax your jaw", "Shoulders down", "Halfway there", "Keep your head still", "You're doing great", "Unclench your forehead", "Look away for a moment", "Roll your neck gently", "Good work so far"]) });
   }
-  push(ctx, "outro", 9, { text: r.pick(["Session complete", "Well done", "See you tomorrow", "Eyes refreshed"]) }, r.pick(["That's the end of the session. Blink a few times, look at something far away, and enjoy the rest of your day.", "Great work. Do this once a day and your eyes will thank you. Subscribe for a new routine tomorrow.", "Session complete. Remember to rest your eyes every twenty minutes when working on screens."]));
+  push(ctx, "outro", 9, { text: r.pick(["Session complete", "Well done", "See you tomorrow", "Eyes refreshed", "Good work", "Great session"]) }, r.pick([
+    "That's the end of the session. Blink a few times, look at something far away, and enjoy the rest of your day.",
+    "Great work. Do this once a day and your eyes will thank you. Subscribe for a new routine tomorrow.",
+    "Session complete. Remember to rest your eyes every twenty minutes when working on screens.",
+    "Nice session. Your eyes have been trained, stretched and rested. Come back tomorrow for a new routine.",
+    "Done. Your eyes have earned a rest. Look out the window at something distant before going back to your screen.",
+    "That's it. Blink ten times slowly, then let your eyes fall closed for a few seconds before continuing your day.",
+  ]));
 }
 
 // ---------------- MATH ----------------
 function mathProblem(r: RNG, level: number): { q: string; a: string; speak: string } {
-  const kind = r.pick(level < 2 ? ["add", "sub", "mul"] : level < 4 ? ["add", "sub", "mul", "div", "square", "percent"] : ["mul", "div", "square", "percent", "mixed", "root"]);
+  const kindPool = level < 2
+    ? ["add", "sub", "mul"]
+    : level < 4
+    ? ["add", "sub", "mul", "div", "square", "percent", "order"]
+    : ["mul", "div", "square", "percent", "mixed", "root", "order", "cube"];
+  const kind = r.pick(kindPool);
   switch (kind) {
     case "add": { const a = r.int(10, 60 + level * 60), b = r.int(10, 60 + level * 60); return { q: `${a} + ${b}`, a: `${a + b}`, speak: `${a} plus ${b}` }; }
     case "sub": { let a = r.int(20, 80 + level * 60), b = r.int(5, 60 + level * 40); if (b > a) [a, b] = [b, a]; return { q: `${a} − ${b}`, a: `${a - b}`, speak: `${a} minus ${b}` }; }
     case "mul": { const a = r.int(3, 9 + level * 3), b = r.int(3, 12 + level * 2); return { q: `${a} × ${b}`, a: `${a * b}`, speak: `${a} times ${b}` }; }
     case "div": { const b = r.int(2, 9 + level * 2), c = r.int(2, 12 + level * 2); return { q: `${b * c} ÷ ${b}`, a: `${c}`, speak: `${b * c} divided by ${b}` }; }
     case "square": { const a = r.int(4, 12 + level * 4); return { q: `${a}²`, a: `${a * a}`, speak: `${a} squared` }; }
+    case "cube": { const a = r.int(2, 6 + level); return { q: `${a}³`, a: `${a * a * a}`, speak: `${a} cubed` }; }
     case "root": { const a = r.int(4, 20); return { q: `√${a * a}`, a: `${a}`, speak: `the square root of ${a * a}` }; }
     case "percent": { const p = r.pick([10, 20, 25, 50, 5, 15, 75]), n = r.int(2, 40) * 20; return { q: `${p}% of ${n}`, a: `${(p * n) / 100}`, speak: `${p} percent of ${n}` }; }
+    case "order": { const a = r.int(1, 20), b = r.int(2, 8), c = r.int(2, 9); return { q: `${a} + ${b} × ${c}`, a: `${a + b * c}`, speak: `${a} plus ${b} times ${c}` }; }
     default: { const a = r.int(2, 12), b = r.int(2, 12), c = r.int(1, 30); return { q: `${a} × ${b} + ${c}`, a: `${a * b + c}`, speak: `${a} times ${b}, plus ${c}` }; }
   }
 }
@@ -127,7 +226,16 @@ function math(ctx: Ctx, target: number) {
   const r = ctx.rng;
   const level = r.int(1, 5);
   const levelName = ["", "Easy", "Medium", "Tricky", "Hard", "Expert"][level];
-  push(ctx, "title", 6, { title: r.pick(["Mental Math", "Math Sprint", "Quick Math", "Brain Math", "Number Drill"]), sub: `${levelName} · ${r.pick(["answer before the timer", "no calculator", "how many can you get?"])}` }, r.pick([`Welcome to a ${levelName.toLowerCase()} mental math session. Each question has a timer. Say your answer out loud before it runs out.`, `Time for a math sprint. ${levelName} level today. Solve each problem in your head before the reveal.`, `Let's warm up your brain with some ${levelName.toLowerCase()} arithmetic. Ready?`]));
+  push(ctx, "title", 6, {
+    title: r.pick(["Mental Math", "Math Sprint", "Quick Math", "Brain Math", "Number Drill", "Math Blitz", "Speed Math"]),
+    sub: `${levelName} · ${r.pick(["answer before the timer", "no calculator", "how many can you get?", "beat the clock"])}`,
+
+  }, r.pick([
+    `Welcome to a ${levelName.toLowerCase()} mental math session. Each question has a timer. Say your answer out loud before it runs out.`,
+    `Time for a math sprint. ${levelName} level today. Solve each problem in your head before the reveal.`,
+    `Let's warm up your brain with some ${levelName.toLowerCase()} arithmetic. Ready?`,
+    `${levelName} math challenge. No calculator, no pen — just your brain. Let's go.`,
+  ]));
   let n = 0;
   let correctTally = 0;
   while (ctx.t < target - 14) {
@@ -142,10 +250,15 @@ function math(ctx: Ctx, target: number) {
       push(ctx, "math-question", think + 3.5, { q: p.q, a: p.a, think, index: n, layout: r.pick(["center", "left", "big", "card", "split"]) }, r.chance(0.7) ? `${p.speak}.` : undefined, { narrationAt: 0.5 });
     }
     correctTally++;
-    if (n % 8 === 0) push(ctx, "interlude", r.int(4, 6), { text: r.pick(["Keep going", "Nice streak", "Shake it out", "Halfway", "Stay sharp"]) }, r.pick(["Nice. Keep the pace.", "Good. Next set.", undefined]));
+    if (n % 8 === 0) push(ctx, "interlude", r.int(4, 6), { text: r.pick(["Keep going", "Nice streak", "Shake it out", "Halfway", "Stay sharp", "You've got this"]) }, r.pick(["Nice. Keep the pace.", "Good. Next set.", undefined]));
   }
-  push(ctx, "outro", 10, { text: `${correctTally} problems done` }, r.pick([`That's ${correctTally} problems. How many did you get? Tell us in the comments and come back tomorrow for a new set.`, `Session over. ${correctTally} problems solved. Subscribe for a fresh set every day.`]));
+  push(ctx, "outro", 10, { text: `${correctTally} problems done` }, r.pick([
+    `That's ${correctTally} problems. How many did you get? Tell us in the comments and come back tomorrow for a new set.`,
+    `Session over. ${correctTally} problems solved. Subscribe for a fresh set every day.`,
+    `${correctTally} questions done. Challenge a friend and see who scores higher. New session drops tomorrow.`,
+  ]));
 }
+
 
 // ---------------- STORY ----------------
 const NAMES = ["Mira", "Tobias", "June", "Elias", "Noor", "Wren", "Kaito", "Ada", "Felix", "Sana", "Oren", "Lila", "Bram", "Ines", "Theo", "Zadie"];
@@ -214,21 +327,189 @@ function story(ctx: Ctx, target: number) {
 // ---------------- GAMEPLAY ----------------
 function gameplay(ctx: Ctx, target: number) {
   const r = ctx.rng;
-  push(ctx, "title", 6, { title: r.pick(["AI Plays", "Bot Arcade", "Auto Games", "Machine Plays", "Pixel Session"]), sub: r.pick(["watch the machine play", "no humans involved", "relaxing gameplay", "satisfying runs"]) }, r.pick(["Welcome to the arcade. Today the machine plays for you. Sit back and watch.", "Auto play session. Different games, different seeds, never the same twice.", "Relax and watch the bot play. Let's see how far it gets."]));
-  const games: SceneKind[] = ["game-snake", "game-breakout", "game-maze", "game-life", "game-marbles"];
+  push(ctx, "title", 6, {
+    title: r.pick(["AI Plays", "Bot Arcade", "Auto Games", "Machine Plays", "Pixel Session", "Bot Mode", "Zero Humans", "Code Plays", "Watch It Run", "System Plays"]),
+    sub: r.pick(["watch the machine play", "no humans involved", "relaxing gameplay", "satisfying runs", "auto-pilot", "pure algorithm", "no controller needed", "machine intelligence"]),
+  }, r.pick([
+    "Welcome to the arcade. Today the machine plays for you. Sit back and watch.",
+    "Auto play session. Different games, different seeds, never the same twice.",
+    "Relax and watch the bot play. Let's see how far it gets.",
+    "The machine is in control. Pick a color, pick a side, and enjoy the ride.",
+    "Every run is unique. Same rules, different seed, always a new outcome.",
+    "No input required. Just watch the algorithm do its thing.",
+  ]));
+
+  const ALL_GAMES: SceneKind[] = [
+    "game-snake", "game-snake",
+    "game-breakout", "game-breakout",
+    "game-maze", "game-maze",
+    "game-life", "game-life",
+    "game-marbles",
+    "game-pong",
+    "game-tetris",
+    "game-flappy",
+    "game-asteroids",
+    "game-sort",
+    "game-pathfinder",
+    "game-sand",
+    "game-chess",
+  ];
+  const games = r.shuffle(ALL_GAMES);
   let i = 0;
+
   while (ctx.t < target - 12) {
-    const g = r.pick(games);
+    const g = games[i % games.length];
     i++;
-    if (g === "game-snake") push(ctx, g, r.int(40, 90), { cols: r.int(16, 28), stepsPerSec: r.range(6, 11), theme: r.pick(["neon", "retro", "flat"]), seed: r.int(1, 1e9) }, r.pick(["Snake. The bot follows a path to the fruit and tries not to trap itself.", "Let's see how long this snake gets.", "Snake time. Watch the greedy pathfinder work."]));
-    else if (g === "game-breakout") push(ctx, g, r.int(35, 80), { rows: r.int(4, 7), cols: r.int(8, 14), speed: r.range(0.9, 1.5), seed: r.int(1, 1e9) }, r.pick(["Breakout. The paddle tracks the ball, the bricks don't stand a chance.", "Brick breaker run. Satisfying, hopefully.", "Breakout. Let's clear the wall."]));
-    else if (g === "game-maze") push(ctx, g, r.int(30, 70), { cols: r.int(15, 35), algo: r.pick(["bfs", "dfs"]), seed: r.int(1, 1e9) }, r.pick(["A fresh maze. Watch the search spread out and then trace the shortest path.", "Maze solving. Generated seconds ago, never seen before.", "Let's carve and solve a new maze."]));
-    else if (g === "game-life") push(ctx, g, r.int(25, 55), { cols: r.int(40, 90), density: r.range(0.18, 0.4), stepsPerSec: r.range(6, 14), seed: r.int(1, 1e9), style: r.pick(["squares", "dots", "glow"]) }, r.pick(["Game of Life. Simple rules, endless patterns.", "Cellular automata. Watch civilizations bloom and collapse.", "Conway's Game of Life with a random start."]));
-    else push(ctx, g, r.int(35, 75), { count: r.int(8, 24), gravity: r.range(0.6, 1.3), pegs: r.int(10, 30), seed: r.int(1, 1e9) }, r.pick(["Marble race. Pick a color and cheer for it.", "Which marble wins? Place your bets.", "Marble run. Physics decides."]));
-    if (i % 2 === 0 && r.chance(0.5)) push(ctx, "interlude", r.int(3, 6), { text: r.pick(["Next game", "Loading...", "Round " + (i + 1), "Insert coin"]) });
+
+    if (g === "game-snake") {
+      const theme = r.pick(["neon", "retro", "flat", "pastel", "dark"]);
+      const cols = r.int(16, 32);
+      push(ctx, g, r.int(38, 95), { cols, stepsPerSec: r.range(5, 13), theme, seed: r.int(1, 1e9), wrap: r.chance(0.3) }, r.pick([
+        "Snake. The bot follows a Hamiltonian path to the fruit. Watch it grow.",
+        `${cols}×${Math.round(cols * 0.56)} grid snake — ${theme} theme. Let's see the final length.`,
+        "The snake knows where every fruit will spawn. It never wastes a move.",
+        "How big can this snake grow? The algorithm says: as big as the grid.",
+        "Satisfying snake run. Every turn is calculated, every fruit claimed.",
+        "Hamiltonian snake — it visits every cell. Perfect score incoming.",
+      ]));
+    } else if (g === "game-breakout") {
+      const rows = r.int(4, 8), cols2 = r.int(8, 16);
+      const ballSpeed = r.range(0.8, 1.8);
+      push(ctx, g, r.int(32, 85), { rows, cols: cols2, speed: ballSpeed, seed: r.int(1, 1e9), bricks: r.pick(["standard", "striped", "random", "diamond"]) }, r.pick([
+        "Breakout. The paddle AI tracks the ball perfectly. Every brick is going down.",
+        `${rows}×${cols2} brick layout. Ball speed ${ballSpeed.toFixed(1)}x. Let's clear it.`,
+        "Classic brick breaker. No misses. No mercy. Just wall-to-wall clearing.",
+        "Watch the ball bounce its way through the entire layout. Satisfying every time.",
+        "Breakout run. The AI sees the ball trajectory before the ball knows where it's going.",
+        "Every last brick. The bot won't stop until the screen is clear.",
+      ]));
+    } else if (g === "game-maze") {
+      const algo = r.pick(["bfs", "dfs", "astar", "dijkstra"]);
+      const mazeSize = r.int(15, 40);
+      push(ctx, g, r.int(28, 75), { cols: mazeSize, algo, seed: r.int(1, 1e9), showExploration: r.chance(0.7) }, r.pick([
+        `${algo.toUpperCase()} maze solving. Watch the search expand, then trace the shortest path.`,
+        `Fresh ${mazeSize}×${Math.round(mazeSize * 0.56)} maze. Generated in real time, solved in seconds.`,
+        "Maze solving. The algorithm explores first, then commits to the optimal route.",
+        "Watch the search wave spread out from the start. When it hits the exit — the path snaps into view.",
+        `${algo === "astar" ? "A-star" : algo === "bfs" ? "Breadth-first" : algo === "dfs" ? "Depth-first" : "Dijkstra's"} search — the classic algorithm doing its thing on a fresh maze.`,
+        "No maze survives long against a proper solver. This one never will either.",
+      ]));
+    } else if (g === "game-life") {
+      const density = r.range(0.15, 0.42);
+      const style = r.pick(["squares", "dots", "glow", "hex", "circles"]);
+      push(ctx, g, r.int(22, 60), { cols: r.int(40, 100), density, stepsPerSec: r.range(5, 16), seed: r.int(1, 1e9), style }, r.pick([
+        `Game of Life — ${style} style. ${Math.round(density * 100)}% initial density. Watch what emerges.`,
+        "Conway's Game of Life. Simple rules, infinite complexity.",
+        "Cellular automata. Civilizations bloom, collapse, and stabilize into gliders.",
+        "From random noise, recognizable patterns form. That's the beauty of emergent complexity.",
+        "Four rules. Zero players. Endless outcomes. This is Conway's masterpiece.",
+        "Watch the population surge, crash, and settle into a stable rhythm.",
+      ]));
+    } else if (g === "game-marbles") {
+      const count = r.int(8, 28);
+      push(ctx, g, r.int(32, 78), { count, gravity: r.range(0.5, 1.4), pegs: r.int(8, 36), seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "pastel"]) }, r.pick([
+        `${count} marbles, one winner. Physics decides. Pick your color.`,
+        "Marble race. No scripts, no tricks — just gravity and geometry.",
+        "Which one bounces its way to the bottom first? Place your bets.",
+        "Pure physics simulation. The outcome is chaotic until it isn't.",
+        "The pegs make every race unique. Same track, different result every time.",
+        "Marble run. Beauty in the chaos of Newtonian physics.",
+      ]));
+    } else if (g === "game-pong") {
+      const difficulty = r.pick(["easy", "medium", "hard", "perfect"]);
+      push(ctx, g, r.int(35, 80), { difficulty, speed: r.range(0.8, 1.6), seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "minimal"]) }, r.pick([
+        `Pong — ${difficulty} AI vs AI. Both paddles are controlled by algorithm.`,
+        "The original game, played by two bots. Neither one blinks.",
+        `AI vs AI pong. Difficulty: ${difficulty}. The rally continues until someone miscalculates.`,
+        "Pong. Invented in 1972. Still satisfying to watch in ${new Date().getFullYear()}.",
+        "Both paddles are tracking the ball. One of them will eventually miss — probably.",
+        "The world's simplest game played by the world's most tireless players.",
+      ]));
+    } else if (g === "game-tetris") {
+      const level = r.int(1, 15);
+      push(ctx, g, r.int(40, 90), { level, seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "ghost"]), showNext: r.chance(0.8), hardDrop: r.chance(0.6) }, r.pick([
+        `Tetris — level ${level}. The bot sees ahead and places every piece optimally.`,
+        "Auto Tetris. The algorithm plans three pieces ahead and never panics.",
+        `Level ${level} Tetris. Watch the line clears stack up.`,
+        "Every piece placed with intention. Every line cleared with satisfaction.",
+        "Tetris AI — it evaluates height, holes, and bumpiness for every move.",
+        "No hesitation. No rotation panic. Just optimal Tetris, one piece at a time.",
+      ]));
+    } else if (g === "game-flappy") {
+      push(ctx, g, r.int(30, 70), { seed: r.int(1, 1e9), style: r.pick(["original", "neon", "minimal", "space"]), gravity: r.range(0.6, 1.2), gapSize: r.range(0.18, 0.28) }, r.pick([
+        "Flappy Bird — bot edition. The neural net learned when to flap. Let's see how far it goes.",
+        "Auto flappy. The agent reads the next gap and times every jump perfectly.",
+        "This bot trained on thousands of runs. Now it's trying for a new high score.",
+        "Flappy but make it algorithmic. Watch the pipe gaps and the timing.",
+        "Every flap is a calculation. Every gap is a decision. The bot makes them all in milliseconds.",
+        "How many pipes can the algorithm clear before something goes wrong?",
+      ]));
+    } else if (g === "game-asteroids") {
+      push(ctx, g, r.int(35, 80), { seed: r.int(1, 1e9), style: r.pick(["classic", "neon", "wireframe"]), difficulty: r.pick(["normal", "hard", "survival"]), shipCount: r.int(1, 3) }, r.pick([
+        "Asteroids. The bot evades, rotates, and fires. Every rock gets split, then swept.",
+        "Auto asteroids. The ship never panics, never collides — by design.",
+        "Watch the ship thread through the debris field. Every shot intentional.",
+        "Asteroids run. The bot clears the screen systematically, starting with the biggest targets.",
+        "Evade and eliminate. The algorithm treats every asteroid as a solved problem.",
+        "The ship knows exactly where every fragment will land. That's the advantage of math over reflex.",
+      ]));
+    } else if (g === "game-sort") {
+      const algo = r.pick(["bubble", "merge", "quick", "heap", "insertion", "selection", "shell", "radix"]);
+      const n = r.int(20, 120);
+      push(ctx, g, r.int(25, 65), { algo, n, seed: r.int(1, 1e9), style: r.pick(["bars", "dots", "scatter", "waveform"]), sound: r.chance(0.4) }, r.pick([
+        `${algo.charAt(0).toUpperCase() + algo.slice(1)} sort — ${n} elements. Watch the comparisons and swaps play out.`,
+        `Visualizing ${algo} sort. You can see the algorithm thinking in real time.`,
+        `${n} unsorted values. ${algo} sort will fix that. Watch how.`,
+        `${algo === "merge" ? "Merge sort divides and conquers" : algo === "quick" ? "Quick sort pivots its way through" : algo === "heap" ? "Heap sort builds the heap first" : algo === "bubble" ? "Bubble sort compares neighbors" : algo === "radix" ? "Radix sort works digit by digit" : "The algorithm"} — visualized.`,
+        "Sorting algorithm in motion. Every comparison is a step toward order.",
+        "From shuffled chaos to perfect order. This is what sorting looks like from the inside.",
+      ]));
+    } else if (g === "game-pathfinder") {
+      const pfAlgo = r.pick(["astar", "dijkstra", "greedy", "jps"]);
+      push(ctx, g, r.int(28, 65), { algo: pfAlgo, seed: r.int(1, 1e9), obstacles: r.pick(["random", "maze", "rooms", "spiral"]), heuristic: r.pick(["manhattan", "euclidean", "chebyshev"]) }, r.pick([
+        `${pfAlgo === "astar" ? "A*" : pfAlgo === "jps" ? "Jump Point Search" : pfAlgo.charAt(0).toUpperCase() + pfAlgo.slice(1)} pathfinding — watch it navigate around obstacles.`,
+        "Pathfinding visualized. The algorithm explores, backtracks, and commits to the best route.",
+        "Finding the shortest path through a procedural obstacle field.",
+        "Watch the search frontier expand until it locks onto the goal.",
+        "Every node visited, every shortcut calculated. Pathfinding in real time.",
+        "This is what GPS navigation looks like at the data level.",
+      ]));
+    } else if (g === "game-sand") {
+      push(ctx, g, r.int(30, 70), { seed: r.int(1, 1e9), elements: r.pick(["sand", "water", "fire", "mixed", "all"]), rate: r.range(0.4, 1.0), style: r.pick(["pixel", "smooth"]) }, r.pick([
+        "Falling sand simulation. Particles flow, pile, and interact with each other.",
+        "Sand physics. Each grain falls, slides, and settles according to simple rules.",
+        "Watch water fill the gaps and fire spread upward. It's a tiny physics world.",
+        "Falling sand — the meditative simulation. No goal, no score, just particle physics.",
+        "Every particle follows two rules: fall down, slide to a free space. The result is strangely beautiful.",
+        "Particle simulation running. Sand, water, fire — watch them interact.",
+      ]));
+    } else if (g === "game-chess") {
+      const depth = r.int(2, 5);
+      push(ctx, g, r.int(45, 100), { depth, seed: r.int(1, 1e9), style: r.pick(["classic", "minimal", "neon"]), showEval: r.chance(0.5), opening: r.pick(["random", "sicilian", "kings-indian", "london", "ruy-lopez"]) }, r.pick([
+        `Chess — depth ${depth} engine vs depth ${depth} engine. ${r.pick(["Sicilian", "King's Indian", "London", "Random"])} opening.`,
+        "Two chess engines playing each other. No emotions, no fatigue — just evaluation.",
+        `Depth-${depth} minimax chess. Every move is evaluated ${Math.pow(depth, 2)} positions ahead.`,
+        "Watch the bot choose its opening, develop its pieces, and build toward the endgame.",
+        "Chess at machine speed. The evaluation score shifts with every move.",
+        "Two algorithms playing the world's most studied game. Let's see who resigns first.",
+      ]));
+    }
+
+    if (i % 2 === 0 && r.chance(0.5)) {
+      push(ctx, "interlude", r.int(3, 6), { text: r.pick(["Next game", "Loading...", `Round ${i + 1}`, "Insert coin", "Switching games", "New seed", "Initializing...", `Game ${i + 1}`]) });
+    }
   }
-  push(ctx, "outro", 9, { text: r.pick(["Game Over", "Thanks for watching", "Continue?"]) }, r.pick(["That's the session. New games and new seeds tomorrow.", "Game over. Subscribe for daily auto play.", "Thanks for watching the machine play."]));
+
+  push(ctx, "outro", 9, { text: r.pick(["Game Over", "Thanks for watching", "Continue?", "See you tomorrow", "End of session", "Run complete"]) }, r.pick([
+    "That's the session. New games and new seeds tomorrow.",
+    "Game over. Subscribe for daily auto play.",
+    "Thanks for watching the machine play.",
+    "New session drops tomorrow. Same time, different seeds.",
+    "Every session is generated fresh. Come back tomorrow for a different run.",
+    "Session ended. The algorithms will be back with new configurations tomorrow.",
+  ]));
 }
+
 
 // ---------------- BRAIN ----------------
 const TRIVIA = [
@@ -256,17 +537,43 @@ const TRIVIA = [
   { q: "How many players are on a soccer team on the field?", opts: ["9", "10", "11", "12"], a: 2 },
   { q: "The Great Barrier Reef is off the coast of which country?", opts: ["Brazil", "Australia", "Indonesia", "Mexico"], a: 1 },
   { q: "Which is the fastest land animal?", opts: ["Lion", "Cheetah", "Pronghorn", "Greyhound"], a: 1 },
+  // Extended set
+  { q: "How many chambers does a human heart have?", opts: ["2", "3", "4", "5"], a: 2 },
+  { q: "Which planet is closest to the Sun?", opts: ["Venus", "Mars", "Mercury", "Earth"], a: 2 },
+  { q: "What is the chemical symbol for gold?", opts: ["Gd", "Go", "Au", "Ag"], a: 2 },
+  { q: "How many continents are there?", opts: ["5", "6", "7", "8"], a: 2 },
+  { q: "Which country invented the internet?", opts: ["Japan", "UK", "USA", "Germany"], a: 2 },
+  { q: "How many teeth does an adult human have?", opts: ["28", "30", "32", "34"], a: 2 },
+  { q: "What is the tallest mountain on Earth?", opts: ["K2", "Kangchenjunga", "Everest", "Lhotse"], a: 2 },
+  { q: "Which gas makes up most of Earth's atmosphere?", opts: ["Oxygen", "Carbon dioxide", "Nitrogen", "Argon"], a: 2 },
+  { q: "How many legs does a spider have?", opts: ["6", "7", "8", "10"], a: 2 },
+  { q: "Who painted the Mona Lisa?", opts: ["Michelangelo", "Raphael", "Da Vinci", "Botticelli"], a: 2 },
+  { q: "What is the capital of Japan?", opts: ["Osaka", "Kyoto", "Hiroshima", "Tokyo"], a: 3 },
+  { q: "How many days are in a leap year?", opts: ["364", "365", "366", "367"], a: 2 },
+  { q: "Which organ filters blood in the human body?", opts: ["Liver", "Spleen", "Kidney", "Pancreas"], a: 2 },
+  { q: "What is the speed of sound in air (approx)?", opts: ["300 m/s", "343 m/s", "400 m/s", "500 m/s"], a: 1 },
+  { q: "How many keys does a standard piano have?", opts: ["76", "80", "88", "92"], a: 2 },
+  { q: "Which country has the most natural lakes?", opts: ["Russia", "USA", "Brazil", "Canada"], a: 3 },
 ];
-const WORDS = ["planet", "guitar", "window", "silver", "forest", "rocket", "camera", "bridge", "jungle", "pencil", "candle", "island", "garden", "mirror", "puzzle", "violin", "orange", "dragon", "ladder", "castle", "tunnel", "meadow", "anchor", "basket", "wizard", "helmet", "marble", "engine", "falcon", "harbor"];
+const WORDS = ["planet", "guitar", "window", "silver", "forest", "rocket", "camera", "bridge", "jungle", "pencil", "candle", "island", "garden", "mirror", "puzzle", "violin", "orange", "dragon", "ladder", "castle", "tunnel", "meadow", "anchor", "basket", "wizard", "helmet", "marble", "engine", "falcon", "harbor", "blanket", "captain", "crystal", "diamond", "eclipse", "feather", "glacier", "horizon", "lantern", "leopard", "monsoon", "phantom", "quantum", "raven", "safari", "sphinx", "thunder", "voyage", "walrus", "zenith"];
 
 function brain(ctx: Ctx, target: number) {
   const r = ctx.rng;
-  push(ctx, "title", 6, { title: r.pick(["Brain Teasers", "Mind Gym", "Quick Quiz", "Memory & Logic", "Think Fast"]), sub: r.pick(["memory · trivia · words", "beat the timer", "train your brain daily"]) }, r.pick(["Welcome to brain training. Memory, trivia and words. Answer out loud before the reveal.", "Let's exercise your brain. Watch closely, remember, and answer fast.", "Brain teasers today. No pressure, just play."]));
+  push(ctx, "title", 6, {
+    title: r.pick(["Brain Teasers", "Mind Gym", "Quick Quiz", "Memory & Logic", "Think Fast", "Brain Blast", "Mind Sprint"]),
+    sub: r.pick(["memory · trivia · words", "beat the timer", "train your brain daily", "no peeking"]),
+
+  }, r.pick([
+    "Welcome to brain training. Memory, trivia and words. Answer out loud before the reveal.",
+    "Let's exercise your brain. Watch closely, remember, and answer fast.",
+    "Brain teasers today. No pressure, just play.",
+    "Memory, trivia, word scrambles — let's find out how sharp you are.",
+  ]));
   const trivia = r.shuffle(TRIVIA);
   const words = r.shuffle(WORDS);
   let ti = 0, wi = 0, n = 0;
   while (ctx.t < target - 12) {
-    const kind = r.pick(["memory", "trivia", "trivia", "word"]);
+    const kind = r.pick(["memory", "trivia", "trivia", "word", "trivia"]);
     n++;
     if (kind === "memory") {
       const len = r.int(3, 7);
@@ -277,6 +584,7 @@ function brain(ctx: Ctx, target: number) {
       const t = trivia[ti++];
       const think = r.int(6, 10);
       push(ctx, "trivia", think + 5, { ...t, think, layout: r.pick(["stack", "grid", "row"]) }, t.q, { narrationAt: 0.5 });
+
     } else if (wi < words.length) {
       const w = words[wi++];
       const scr = r.shuffle(w.split("")).join("");
@@ -285,7 +593,7 @@ function brain(ctx: Ctx, target: number) {
     }
     if (n % 6 === 0) push(ctx, "interlude", r.int(3, 6), { text: r.pick(["Nice", "Keep going", "Round " + (n / 6 + 1), "Focus"]) });
   }
-  push(ctx, "outro", 9, { text: "Well played" }, r.pick(["That's all for today. How did you score? New puzzles tomorrow.", "Brain workout done. Come back tomorrow for a fresh set."]));
+  push(ctx, "outro", 9, { text: r.pick(["Well played", "Nice work", "Sharp mind"]) }, r.pick(["That's all for today. How did you score? New puzzles tomorrow.", "Brain workout done. Come back tomorrow for a fresh set.", "That's the session. Subscribe to keep your brain sharp every day."]));
 }
 
 // ---------------- CALM ----------------
@@ -342,7 +650,14 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     eye_training: [`${base} — ${mins} Minute Guided Eye Exercise ${emoji}`, `${mins} Min Eye Training | Follow, Focus, Relax`, `Daily Eye Workout #${day}: Smooth Pursuit & Saccades`, `Rest Your Eyes: ${mins}-Minute Guided Routine`],
     math: [`${base}: ${scenes.filter((s) => s.kind.startsWith("math")).length} Mental Math Questions ${emoji}`, `Can You Solve These? ${mins} Min Mental Math Sprint`, `Daily Math Drill #${day} — Answer Before The Timer`, `Mental Math Practice (${mins} min, timed)`],
     story: [`${base} | A Short Story ${emoji}`, `${base} — Narrated Story to Relax To`, `Bedtime Story: ${base}`, `${base} (Original Short Fiction, ${mins} min)`],
-    gameplay: [`${base} — ${scenes.filter((s) => s.kind.startsWith("game")).length} Games, Zero Humans ${emoji}`, `Relaxing AI Gameplay #${day}: Snake, Breakout, Mazes`, `Watch The Machine Play (${mins} min)`, `Satisfying Auto-Play Session #${day}`],
+    gameplay: [
+      `${base} — ${scenes.filter((s) => s.kind.startsWith("game")).length} Games, Zero Humans ${emoji}`,
+      `Relaxing AI Gameplay #${day}: Snake, Tetris, Chess & More`,
+      `Watch The Machine Play (${mins} min)`,
+      `Satisfying Auto-Play Session #${day}`,
+      `Bot Arcade #${day} — Pong, Sorting, Pathfinding & More`,
+      `${mins} Min of Pure Algorithm Gameplay`,
+    ],
     brain: [`${base}: Memory, Trivia & Word Puzzles ${emoji}`, `${mins} Minute Brain Workout #${day}`, `Can You Beat The Timer? Brain Teasers`, `Daily Brain Training — Quiz & Memory`],
     calm: [`${base} — ${mins} Minute Breathing Pacer ${emoji}`, `Guided Breathing & Focus Reset (${mins} min)`, `Quiet Minutes #${day}: Breathe With The Circle`, `Calm Reset — Slow Breathing Visual`],
     mixed: [`${base} #${day} — Eyes, Brain & Breath ${emoji}`, `${mins} Minute Mixed Mind Session`, `Daily Variety Session #${day}`],
@@ -357,19 +672,19 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     eye_training: ["eye exercises", "eye training", "vision", "eye workout", "smooth pursuit", "saccades", "eye strain relief", "focus"],
     math: ["mental math", "math practice", "arithmetic", "math quiz", "brain training", "math drill", "quick math"],
     story: ["short story", "bedtime story", "narrated story", "audiobook", "fiction", "storytelling", "relaxing"],
-    gameplay: ["ai gameplay", "snake game", "breakout", "maze solving", "game of life", "marble race", "satisfying", "relaxing gameplay"],
+    gameplay: ["ai gameplay", "snake game", "breakout", "maze solving", "game of life", "marble race", "tetris", "chess ai", "sorting algorithm", "pathfinding", "pong ai", "flappy bird", "asteroids", "particle simulation", "satisfying", "relaxing gameplay"],
     brain: ["brain teasers", "trivia quiz", "memory game", "word scramble", "brain training", "quiz"],
     calm: ["breathing exercise", "meditation", "calm", "focus", "relax", "breathing pacer", "anxiety relief"],
     mixed: ["brain training", "eye exercises", "mental math", "daily session", "focus"],
   };
   const tags = [...(tagBank[category] || []), "daily", orientation === "portrait" ? "shorts" : "generated"];
   const thumbHooks: Record<string, string[]> = {
-    eye_training: ["FOLLOW THE DOT", "EYE WORKOUT", "KEEP YOUR HEAD STILL", "TRACK THIS"],
-    math: ["CAN YOU SOLVE IT?", "BEAT THE TIMER", "MENTAL MATH", "NO CALCULATOR"],
-    story: [base, "THE LAST LETTER", "A STRANGE NIGHT", "WHAT HAPPENED?"],
-    gameplay: ["LEVEL UP", "CAN IT WIN?", "WATCH THE BOT", "NEW RUN"],
-    brain: ["BEAT THE CLOCK", "CAN YOU REMEMBER?", "THINK FAST", "5 SECOND CHALLENGE"],
-    calm: ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES"],
+    eye_training: ["FOLLOW THE DOT", "EYE WORKOUT", "KEEP YOUR HEAD STILL", "TRACK THIS", "EYE ROTATION", "TRACE THIS", "VISION DRILL", "BLINK TRAINING"],
+    math: ["CAN YOU SOLVE IT?", "BEAT THE TIMER", "MENTAL MATH", "NO CALCULATOR", "ORDER OF OPS", "CUBE THIS", "MATH SPRINT"],
+    story: [base, "THE LAST LETTER", "A STRANGE NIGHT", "WHAT HAPPENED?", "THE LOST KEY", "BEFORE DAWN"],
+    gameplay: ["WATCH IT RUN", "CAN IT WIN?", "WATCH THE BOT", "NEW RUN", "ZERO HUMANS", "ALGORITHM MODE", "BOT VS BOT", "LET IT PLAY"],
+    brain: ["BEAT THE CLOCK", "CAN YOU REMEMBER?", "THINK FAST", "5 SECOND CHALLENGE", "DO YOU KNOW THIS?", "MEMORY TEST"],
+    calm: ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"],
     mixed: ["DAILY MIX", "TRY EVERYTHING", "MIND WORKOUT", "NEW SESSION"],
   };
   const thumbText = r.pick(thumbHooks[category] ?? [base.toUpperCase(), `${mins} MIN`, base, `DAY ${day}`]);
@@ -382,19 +697,29 @@ function chapterName(s: Scene): string {
   switch (s.kind) {
     case "title": return String(d.title);
     case "outro": return "Outro";
-    case "eye-follow": return `Follow: ${d.path}`;
-    case "eye-saccade": return "Saccades";
+    case "eye-follow": return d.convergence ? "Convergence" : d.blinkCued ? "Blink drill" : `Follow: ${d.path}`;
+    case "eye-saccade": return `Saccades: ${d.style}`;
     case "eye-focus": return "Focus shift";
     case "eye-peripheral": return "Peripheral";
     case "eye-palming": return "Palming rest";
+    case "eye-rotation": return `Eye rotation: ${d.direction}`;
+    case "eye-tracing": return `Tracing: ${d.shape}`;
     case "math-question": return `Question ${d.index}`;
     case "math-sequence": return `Sequence ${d.index}`;
     case "story-panel": return `Part ${(d.panel as number) + 1}`;
-    case "game-snake": return "Snake";
+    case "game-snake": return `Snake (${d.theme})`;
     case "game-breakout": return "Breakout";
-    case "game-maze": return "Maze";
+    case "game-maze": return `Maze (${d.algo})`;
     case "game-life": return "Game of Life";
     case "game-marbles": return "Marble race";
+    case "game-pong": return `Pong (${d.difficulty})`;
+    case "game-tetris": return `Tetris level ${d.level}`;
+    case "game-flappy": return "Flappy Bird";
+    case "game-asteroids": return "Asteroids";
+    case "game-sort": return `${String(d.algo).charAt(0).toUpperCase() + String(d.algo).slice(1)} sort`;
+    case "game-pathfinder": return `Pathfinding (${d.algo})`;
+    case "game-sand": return `Sand sim (${d.elements})`;
+    case "game-chess": return `Chess depth-${d.depth}`;
     case "memory-sequence": return "Memory";
     case "trivia": return "Trivia";
     case "word-scramble": return "Word scramble";

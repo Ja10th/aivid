@@ -276,6 +276,28 @@ function followPos(path: string, ph: number, W: number, H: number, rng: RNG): [n
     case "spiral": { const u = (ph / (Math.PI * 2)) % 2; const rr = (u < 1 ? u : 2 - u); return [cx + Math.cos(ph * 3) * rr * rx, cy + Math.sin(ph * 3) * rr * ry]; }
     case "wave": return [cx + Math.sin(ph) * rx, cy + Math.sin(ph * 4) * ry * 0.25];
     case "square": { const u = (ph / (Math.PI * 2)) % 1; const side = Math.floor(u * 4), f = (u * 4) % 1; const L = cx - rx * 0.9, R = cx + rx * 0.9, T = cy - ry * 0.9, B = cy + ry * 0.9; if (side === 0) return [lerp(L, R, f), T]; if (side === 1) return [R, lerp(T, B, f)]; if (side === 2) return [lerp(R, L, f), B]; return [L, lerp(B, T, f)]; }
+    case "diagonal": {
+      const u = (Math.sin(ph) + 1) / 2;
+      return [lerp(cx - rx, cx + rx, u), lerp(cy - ry, cy + ry, u)];
+    }
+    case "bowtie": {
+      const u = (ph / (Math.PI * 2)) % 1;
+      const t = u * 4;
+      if (t < 1) return [lerp(cx - rx, cx, t), lerp(cy - ry, cy, t)];
+      if (t < 2) return [lerp(cx, cx + rx, t - 1), lerp(cy, cy + ry, t - 1)];
+      if (t < 3) return [lerp(cx + rx, cx, t - 2), lerp(cy + ry, cy, t - 2)];
+      return [lerp(cx, cx - rx, t - 3), lerp(cy, cy - ry, t - 3)];
+    }
+    case "triangle": {
+      const u = (ph / (Math.PI * 2)) % 1;
+      const t = u * 3;
+      const p0: [number, number] = [cx, cy - ry];
+      const p1: [number, number] = [cx + rx, cy + ry];
+      const p2: [number, number] = [cx - rx, cy + ry];
+      if (t < 1) return [lerp(p0[0], p1[0], t), lerp(p0[1], p1[1], t)];
+      if (t < 2) return [lerp(p1[0], p2[0], t - 1), lerp(p1[1], p2[1], t - 1)];
+      return [lerp(p2[0], p0[0], t - 2), lerp(p2[1], p0[1], t - 2)];
+    }
     default: { // random smooth: sum of sines with random freqs
       const a = rng.next() * 2 + 0.5, b = rng.next() * 2 + 0.5, c = rng.next() * 6, d = rng.next() * 6;
       return [cx + (Math.sin(ph * a + c) * 0.6 + Math.sin(ph * b * 1.7 + d) * 0.4) * rx, cy + (Math.cos(ph * b + d) * 0.6 + Math.sin(ph * a * 1.3 + c) * 0.4) * ry];
@@ -285,8 +307,50 @@ function followPos(path: string, ph: number, W: number, H: number, rng: RNG): [n
 
 const sceneEyeFollow: SceneFn = (ctx, comp, s, lt) => {
   const { width: W, height: H } = comp; const p = s.palette;
-  const rng = new RNG(s.id + "path");
   const speed = Number(s.data.speed), size = Number(s.data.size);
+
+  if (s.data.convergence) {
+    const u = (Math.sin(lt * speed * 2) + 1) / 2;
+    const sep = lerp(W * 0.35, 14, u);
+    const y = H / 2;
+    ctx.fillStyle = p.accent; ctx.shadowColor = p.accent; ctx.shadowBlur = 20;
+    drawShape(ctx, "dot", W / 2 - sep, y, size, lt);
+    ctx.fillStyle = p.accent2; ctx.shadowColor = p.accent2;
+    drawShape(ctx, "dot", W / 2 + sep, y, size, lt);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = hexA(p.muted, 0.4); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W / 2, H / 2 - 24); ctx.lineTo(W / 2, H / 2 + 24); ctx.stroke();
+    ctx.fillStyle = hexA(p.fg, 0.7); font(ctx, 22, comp.theme.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText("convergence · keep both in focus", 24, 20);
+    progressBar(ctx, comp, s, lt, p.accent2);
+    return;
+  }
+
+  if (s.data.blinkCued) {
+    const cycle = 3.2;
+    const phB = (lt % cycle) / cycle;
+    const pulse = Math.sin(phB * Math.PI);
+    const isBlink = phB > 0.75;
+    const rRing = lerp(32, 88, pulse);
+    ctx.strokeStyle = isBlink ? p.accent2 : p.accent;
+    ctx.lineWidth = isBlink ? 8 : 4;
+    ctx.beginPath(); ctx.arc(W / 2, H / 2, rRing, 0, Math.PI * 2); ctx.stroke();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    if (isBlink) {
+      ctx.fillStyle = p.accent2; font(ctx, 36, comp.theme.fontDisplay);
+      ctx.fillText("BLINK", W / 2, H / 2);
+    } else {
+      ctx.fillStyle = hexA(p.fg, 0.6); font(ctx, 22, comp.theme.fontMono);
+      ctx.fillText("relax", W / 2, H / 2);
+    }
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillStyle = hexA(p.fg, 0.7); font(ctx, 22, comp.theme.fontMono);
+    ctx.fillText("blink training · full deliberate blink", 24, 20);
+    progressBar(ctx, comp, s, lt, p.accent2);
+    return;
+  }
+
+  const rng = new RNG(s.id + "path");
   const ph = lt * speed * (s.data.rotateDir as number);
   if (s.data.trail) {
     for (let i = 12; i > 0; i--) {
@@ -370,6 +434,114 @@ const sceneEyePalming: SceneFn = (ctx, comp, s, lt) => {
   ctx.fillText("eyes closed · palms warm", W / 2, H / 2);
   font(ctx, 30, comp.theme.fontMono);
   ctx.fillText(`${Math.max(0, Math.ceil(s.duration - lt))}`, W / 2, H / 2 + 60);
+};
+
+const sceneEyeRotation: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const dir = String(s.data.direction ?? "clockwise");
+  const speed = Number(s.data.speed ?? 0.5);
+  const angle = (dir === "clockwise" ? 1 : -1) * lt * speed * Math.PI * 2;
+  const radius = Math.min(W * 0.36, H * 0.36);
+  const cx = W / 2, cy = H / 2;
+
+  // Draw circular track
+  ctx.strokeStyle = hexA(p.muted, 0.25); ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.stroke();
+
+  // Clock ticks
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const r1 = radius - (i % 3 === 0 ? 16 : 8);
+    ctx.strokeStyle = hexA(p.fg, i % 3 === 0 ? 0.6 : 0.25);
+    ctx.lineWidth = i % 3 === 0 ? 3 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+    ctx.lineTo(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius);
+    ctx.stroke();
+  }
+
+  // Trailing ghost targets
+  for (let i = 8; i > 0; i--) {
+    const ta = angle - (dir === "clockwise" ? 1 : -1) * (i * 0.08);
+    const tx = cx + Math.cos(ta) * radius, ty = cy + Math.sin(ta) * radius;
+    ctx.fillStyle = hexA(p.accent, 0.3 * (1 - i / 8));
+    ctx.beginPath(); ctx.arc(tx, ty, 18 * (1 - i / 10), 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Moving target
+  const tx = cx + Math.cos(angle) * radius, ty = cy + Math.sin(angle) * radius;
+  ctx.fillStyle = p.accent; ctx.shadowColor = p.accent; ctx.shadowBlur = 24;
+  ctx.beginPath(); ctx.arc(tx, ty, 20, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = p.fg; ctx.beginPath(); ctx.arc(tx, ty, 6, 0, Math.PI * 2); ctx.fill();
+
+  // Center indicator
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = hexA(p.fg, 0.45); font(ctx, 28, th.fontBody);
+  ctx.fillText("roll smoothly with the target", cx, cy);
+
+  ctx.fillStyle = hexA(p.fg, 0.85); font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText(`eye rotation · ${dir}`, 24, 20);
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneEyeTracing: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const shape = String(s.data.shape ?? "star");
+  const speed = Number(s.data.speed ?? 0.6);
+  const u = (lt * speed) % 1;
+  const cx = W / 2, cy = H / 2;
+  const size = Math.min(W * 0.32, H * 0.32);
+
+  // Guide shape
+  ctx.strokeStyle = hexA(p.muted, 0.4); ctx.lineWidth = 3; ctx.setLineDash([8, 8]);
+  ctx.save(); ctx.translate(cx, cy);
+  if (shape === "star") star(ctx, 0, 0, size);
+  else if (shape === "diamond") poly(ctx, 0, 0, size, 4);
+  else if (shape === "infinity") {
+    ctx.beginPath();
+    for (let t = 0; t <= Math.PI * 2; t += 0.05) {
+      const x = Math.sin(t) * size, y = Math.sin(t * 2) * size * 0.5;
+      if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(0, 0, size, 0, Math.PI * 2); ctx.stroke();
+  }
+  if (shape !== "infinity") ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // Cursor pos
+  let px = cx, py = cy;
+  if (shape === "star" || shape === "diamond") {
+    const sides = shape === "star" ? 10 : 4;
+    const seg = Math.floor(u * sides), subU = (u * sides) % 1;
+    const getPoint = (i: number) => {
+      const n = shape === "star" ? 10 : 4;
+      const rr = shape === "star" ? (i % 2 ? size * 0.45 : size) : size;
+      const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+      return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
+    };
+    const p1 = getPoint(seg), p2 = getPoint((seg + 1) % sides);
+    px = lerp(p1[0], p2[0], subU); py = lerp(p1[1], p2[1], subU);
+  } else if (shape === "infinity") {
+    const t = u * Math.PI * 2;
+    px = cx + Math.sin(t) * size; py = cy + Math.sin(t * 2) * size * 0.5;
+  } else {
+    const a = u * Math.PI * 2;
+    px = cx + Math.cos(a) * size; py = cy + Math.sin(a) * size;
+  }
+
+  // Cursor
+  ctx.fillStyle = p.accent; ctx.shadowColor = p.accent; ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.arc(px, py, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = p.fg; ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+
+  ctx.fillStyle = hexA(p.fg, 0.85); font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText(`trace · ${shape}`, 24, 20);
+  progressBar(ctx, comp, s, lt, p.accent2);
 };
 
 const sceneBreathing: SceneFn = (ctx, comp, s, lt) => {
@@ -710,6 +882,411 @@ const sceneMarbles: SceneFn = (ctx, comp, s, lt, cache) => {
   if (st.winners.length) { ctx.fillStyle = hexA(p.fg, 0.7); ctx.textAlign = "right"; ctx.fillText(`wins: ${st.winners.slice(-4).join(" ")}`, W - 20, 16); }
 };
 
+// ---- Pong ----
+interface PongState { y1: number; y2: number; bx: number; by: number; bvx: number; bvy: number; s1: number; s2: number; rally: number; t: number; rng: RNG }
+const scenePong: SceneFn = (ctx, comp, s, lt, cache) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const speed = Number(s.data.speed ?? 1.2);
+  const k = s.id + ":pong"; let st = cache.get(k) as PongState | undefined;
+  const pw = 16, ph = Math.min(100, H * 0.18);
+  const init = (): PongState => ({ y1: H / 2, y2: H / 2, bx: W / 2, by: H / 2, bvx: 320 * speed, bvy: 160 * speed, s1: 0, s2: 0, rally: 0, t: 0, rng: new RNG(Number(s.data.seed)) });
+  if (!st || st.t > lt + 0.01) { st = init(); cache.set(k, st); }
+  const dt = 1 / 120;
+  while (st.t + dt <= lt) {
+    st.t += dt;
+    st.bx += st.bvx * dt; st.by += st.bvy * dt;
+    if (st.by < 12) { st.by = 12; st.bvy = Math.abs(st.bvy); }
+    if (st.by > H - 12) { st.by = H - 12; st.bvy = -Math.abs(st.bvy); }
+    // Paddle 1 AI (left)
+    const t1 = st.bvx < 0 ? st.by : H / 2;
+    st.y1 += clamp(t1 - st.y1, -340 * speed * dt, 340 * speed * dt);
+    st.y1 = clamp(st.y1, ph / 2, H - ph / 2);
+    // Paddle 2 AI (right)
+    const t2 = st.bvx > 0 ? st.by : H / 2;
+    st.y2 += clamp(t2 - st.y2, -340 * speed * dt, 340 * speed * dt);
+    st.y2 = clamp(st.y2, ph / 2, H - ph / 2);
+    // Left hit
+    if (st.bvx < 0 && st.bx <= 48 && st.bx >= 24 && Math.abs(st.by - st.y1) < ph / 2 + 10) {
+      st.bvx = Math.abs(st.bvx) * 1.02;
+      st.bvy += ((st.by - st.y1) / (ph / 2)) * 140;
+      st.rally++;
+    }
+    // Right hit
+    if (st.bvx > 0 && st.bx >= W - 48 && st.bx <= W - 24 && Math.abs(st.by - st.y2) < ph / 2 + 10) {
+      st.bvx = -Math.abs(st.bvx) * 1.02;
+      st.bvy += ((st.by - st.y2) / (ph / 2)) * 140;
+      st.rally++;
+    }
+    // Score
+    if (st.bx < 0) { st.s2++; st.bx = W / 2; st.by = H / 2; st.bvx = 320 * speed; st.bvy = st.rng.range(-150, 150) * speed; st.rally = 0; }
+    if (st.bx > W) { st.s1++; st.bx = W / 2; st.by = H / 2; st.bvx = -320 * speed; st.bvy = st.rng.range(-150, 150) * speed; st.rally = 0; }
+  }
+  // Court divider
+  ctx.strokeStyle = hexA(p.muted, 0.3); ctx.lineWidth = 4; ctx.setLineDash([16, 16]);
+  ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke();
+  ctx.setLineDash([]);
+  // Paddles
+  ctx.fillStyle = p.accent; rrect(ctx, 32 - pw / 2, st.y1 - ph / 2, pw, ph, 8); ctx.fill();
+  ctx.fillStyle = p.accent2; rrect(ctx, W - 32 - pw / 2, st.y2 - ph / 2, pw, ph, 8); ctx.fill();
+  // Ball with glow
+  ctx.fillStyle = p.fg; ctx.shadowColor = p.fg; ctx.shadowBlur = 16;
+  ctx.beginPath(); ctx.arc(st.bx, st.by, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  // Scoreboard
+  ctx.fillStyle = p.fg; font(ctx, 48, th.fontDisplay); ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.fillText(`${st.s1}   :   ${st.s2}`, W / 2, 28);
+  font(ctx, 22, th.fontMono); ctx.fillStyle = hexA(p.fg, 0.7);
+  ctx.fillText(`AI vs AI PONG · RALLY ${st.rally}`, W / 2, 88);
+};
+
+// ---- Tetris ----
+interface TetrisState {
+  grid: Uint8Array; // 10 x 20
+  type: number; col: number; row: number;
+  score: number; lines: number; t: number; rng: RNG;
+}
+const TETROMINOES = [
+  [[1, 1, 1, 1]], // I
+  [[1, 1], [1, 1]], // O
+  [[0, 1, 0], [1, 1, 1]], // T
+  [[0, 1, 1], [1, 1, 0]], // S
+  [[1, 1, 0], [0, 1, 1]], // Z
+  [[1, 0, 0], [1, 1, 1]], // J
+  [[0, 0, 1], [1, 1, 1]], // L
+];
+const TETRIS_COLORS = ["#00f0f0", "#f0f000", "#a000f0", "#00f000", "#f00000", "#0000f0", "#f0a000"];
+const sceneTetris: SceneFn = (ctx, comp, s, lt, cache) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const cols = 10, rows = 20;
+  const cell = Math.floor(Math.min((H * 0.82) / rows, (W * 0.45) / cols));
+  const ox = (W - cols * cell) / 2, oy = (H - rows * cell) / 2 + 16;
+  const k = s.id + ":tetris"; let st = cache.get(k) as TetrisState | undefined;
+  const init = (): TetrisState => {
+    const rng = new RNG(Number(s.data.seed));
+    const g = new Uint8Array(cols * rows);
+    // seed bottom rows with some rubble
+    for (let r = rows - 4; r < rows; r++) {
+      for (let c = 0; c < cols; c++) if (rng.chance(0.65) && c !== (r % cols)) g[r * cols + c] = rng.int(1, 7);
+    }
+    return { grid: g, type: rng.int(0, 6), col: 3, row: 0, score: 240, lines: 4, t: 0, rng };
+  };
+  if (!st || st.t > lt + 0.01) { st = init(); cache.set(k, st); }
+  const stepInterval = 0.35;
+  while (st.t + stepInterval <= lt) {
+    st.t += stepInterval;
+    st.row++;
+    if (st.row > rows - 4) {
+      // Place piece into grid
+      const shape = TETROMINOES[st.type];
+      for (let r = 0; r < shape.length; r++) {
+        for (let c = 0; c < shape[r].length; c++) {
+          if (shape[r][c] && st.row + r < rows && st.col + c < cols) {
+            st.grid[(st.row + r) * cols + (st.col + c)] = st.type + 1;
+          }
+        }
+      }
+      st.score += 40; st.lines++;
+      st.type = st.rng.int(0, 6);
+      st.col = st.rng.int(1, cols - 3);
+      st.row = 0;
+    }
+  }
+  // Well border
+  ctx.fillStyle = hexA(p.bg2, 1); ctx.fillRect(ox - 6, oy - 6, cols * cell + 12, rows * cell + 12);
+  ctx.strokeStyle = hexA(p.muted, 0.4); ctx.lineWidth = 1;
+  for (let x = 0; x <= cols; x++) { ctx.beginPath(); ctx.moveTo(ox + x * cell, oy); ctx.lineTo(ox + x * cell, oy + rows * cell); ctx.stroke(); }
+  for (let y = 0; y <= rows; y++) { ctx.beginPath(); ctx.moveTo(ox, oy + y * cell); ctx.lineTo(ox + cols * cell, oy + y * cell); ctx.stroke(); }
+  // Placed blocks
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const v = st.grid[r * cols + c];
+      if (v > 0) {
+        ctx.fillStyle = TETRIS_COLORS[(v - 1) % TETRIS_COLORS.length];
+        rrect(ctx, ox + c * cell + 2, oy + r * cell + 2, cell - 4, cell - 4, 4); ctx.fill();
+      }
+    }
+  }
+  // Active falling piece
+  const activeShape = TETROMINOES[st.type];
+  ctx.fillStyle = TETRIS_COLORS[st.type];
+  for (let r = 0; r < activeShape.length; r++) {
+    for (let c = 0; c < activeShape[r].length; c++) {
+      if (activeShape[r][c]) {
+        rrect(ctx, ox + (st.col + c) * cell + 2, oy + (st.row + r) * cell + 2, cell - 4, cell - 4, 4); ctx.fill();
+      }
+    }
+  }
+  // HUD
+  ctx.fillStyle = p.fg; font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText("TETRIS AUTO", ox, 14);
+  ctx.textAlign = "right";
+  ctx.fillText(`SCORE ${st.score} · LINES ${st.lines}`, ox + cols * cell, 14);
+};
+
+// ---- Flappy Bird ----
+interface FlappyState { by: number; bvy: number; pipes: { x: number; gap: number }[]; score: number; t: number; rng: RNG }
+const sceneFlappy: SceneFn = (ctx, comp, s, lt, cache) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const k = s.id + ":flappy"; let st = cache.get(k) as FlappyState | undefined;
+  const init = (): FlappyState => {
+    const rng = new RNG(Number(s.data.seed));
+    const pipes = [
+      { x: W * 0.6, gap: H * 0.45 },
+      { x: W * 0.95, gap: H * 0.55 },
+      { x: W * 1.3, gap: H * 0.38 },
+    ];
+    return { by: H / 2, bvy: 0, pipes, score: 0, t: 0, rng };
+  };
+  if (!st || st.t > lt + 0.01) { st = init(); cache.set(k, st); }
+  const dt = 1 / 90;
+  while (st.t + dt <= lt) {
+    st.t += dt;
+    st.bvy += 700 * dt;
+    st.by += st.bvy * dt;
+    // Autopilot jump decision
+    const nextPipe = st.pipes.find((pp) => pp.x > W * 0.22 - 30) ?? st.pipes[0];
+    if (nextPipe && st.by > nextPipe.gap + 20 && st.bvy > -50) {
+      st.bvy = -280;
+    }
+    // Scroll pipes
+    for (const pp of st.pipes) {
+      pp.x -= 140 * dt;
+      if (pp.x < -80) {
+        pp.x = W + 60;
+        pp.gap = st.rng.range(H * 0.3, H * 0.7);
+        st.score++;
+      }
+    }
+  }
+  // Draw pipes
+  const pw = 64, gapH = 170;
+  ctx.fillStyle = "#2ecc71";
+  for (const pp of st.pipes) {
+    // top pipe
+    rrect(ctx, pp.x - pw / 2, 0, pw, pp.gap - gapH / 2, 8); ctx.fill();
+    // bottom pipe
+    rrect(ctx, pp.x - pw / 2, pp.gap + gapH / 2, pw, H - (pp.gap + gapH / 2), 8); ctx.fill();
+  }
+  // Draw bird
+  const bx = W * 0.22, by = clamp(st.by, 20, H - 20);
+  ctx.save(); ctx.translate(bx, by);
+  ctx.rotate(clamp(st.bvy / 400, -0.6, 0.7));
+  ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(7, -5, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#000000"; ctx.beginPath(); ctx.arc(9, -5, 2.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#e67e22"; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(24, 4); ctx.lineTo(12, 8); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // HUD
+  ctx.fillStyle = p.fg; font(ctx, 42, th.fontDisplay); ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.fillText(String(st.score), W / 2, 36);
+  font(ctx, 22, th.fontMono); ctx.fillStyle = hexA(p.fg, 0.7);
+  ctx.fillText("FLAPPY BOT · AUTO-PILOT", W / 2, 86);
+};
+
+// ---- Asteroids ----
+interface AsteroidsState {
+  sx: number; sy: number; angle: number;
+  rocks: { x: number; y: number; vx: number; vy: number; r: number }[];
+  score: number; t: number; rng: RNG;
+}
+const sceneAsteroids: SceneFn = (ctx, comp, s, lt, cache) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const k = s.id + ":asteroids"; let st = cache.get(k) as AsteroidsState | undefined;
+  const init = (): AsteroidsState => {
+    const rng = new RNG(Number(s.data.seed));
+    const rocks = Array.from({ length: 9 }, () => ({
+      x: rng.range(0, W), y: rng.range(0, H),
+      vx: rng.range(-40, 40), vy: rng.range(-40, 40),
+      r: rng.range(24, 46),
+    }));
+    return { sx: W / 2, sy: H / 2, angle: 0, rocks, score: 180, t: 0, rng };
+  };
+  if (!st || st.t > lt + 0.01) { st = init(); cache.set(k, st); }
+  const dt = 1 / 60;
+  while (st.t + dt <= lt) {
+    st.t += dt;
+    st.angle += 1.8 * dt;
+    for (const r of st.rocks) {
+      r.x = (r.x + r.vx * dt + W) % W;
+      r.y = (r.y + r.vy * dt + H) % H;
+    }
+  }
+  // Draw rocks
+  ctx.strokeStyle = p.fg; ctx.lineWidth = 2.5;
+  for (const r of st.rocks) {
+    poly(ctx, r.x, r.y, r.r, 7, lt * 0.4); ctx.stroke();
+  }
+  // Draw ship
+  ctx.save(); ctx.translate(st.sx, st.sy); ctx.rotate(st.angle);
+  ctx.strokeStyle = p.accent; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(22, 0); ctx.lineTo(-14, -12); ctx.lineTo(-8, 0); ctx.lineTo(-14, 12);
+  ctx.closePath(); ctx.stroke();
+  // Thruster
+  ctx.strokeStyle = p.accent2; ctx.beginPath();
+  ctx.moveTo(-10, -4); ctx.lineTo(-20 - Math.sin(lt * 20) * 8, 0); ctx.lineTo(-10, 4); ctx.stroke();
+  ctx.restore();
+  // Laser beams
+  ctx.strokeStyle = p.accent2; ctx.lineWidth = 3; ctx.shadowColor = p.accent2; ctx.shadowBlur = 10;
+  const beamDist = (lt * 600) % (Math.min(W, H) * 0.45);
+  const bx = st.sx + Math.cos(st.angle) * beamDist, by = st.sy + Math.sin(st.angle) * beamDist;
+  ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(st.angle) * 20, by + Math.sin(st.angle) * 20); ctx.stroke();
+  ctx.shadowBlur = 0;
+  // HUD
+  ctx.fillStyle = p.fg; font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText("ASTEROIDS · RADAR LOCK", 24, 20);
+  ctx.textAlign = "right"; ctx.fillText(`TARGETS ${st.rocks.length}`, W - 24, 20);
+};
+
+// ---- Sort Visualization ----
+const sceneSort: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const algo = String(s.data.algo ?? "quick");
+  const count = 48;
+  const rng = new RNG(Number(s.data.seed));
+  const arr = Array.from({ length: count }, (_, i) => i + 1);
+  const totalSteps = count * 2.5;
+  const curStep = Math.min(totalSteps, Math.floor(lt * 18));
+  // Simulate partial sorting
+  for (let sIdx = 0; sIdx < curStep; sIdx++) {
+    const a = rng.int(0, count - 2);
+    if (arr[a] > arr[a + 1]) { const tmp = arr[a]; arr[a] = arr[a + 1]; arr[a + 1] = tmp; }
+  }
+  const barW = (W * 0.86) / count;
+  const maxH = H * 0.65;
+  const ox = W * 0.07, oy = H * 0.85;
+  for (let i = 0; i < count; i++) {
+    const bh = (arr[i] / count) * maxH;
+    const isPivot = i === Math.floor((lt * 10) % count);
+    ctx.fillStyle = isPivot ? p.accent2 : i <= curStep / 2.5 ? p.accent : hexA(p.fg, 0.7);
+    rrect(ctx, ox + i * barW, oy - bh, barW - 2, bh, 3); ctx.fill();
+  }
+  ctx.fillStyle = p.fg; font(ctx, 28, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText(`${algo.toUpperCase()} SORT · ${count} ELEMENTS`, ox, 20);
+  font(ctx, 20, th.fontMono); ctx.fillStyle = hexA(p.fg, 0.65);
+  ctx.fillText(`COMPARISONS: ${Math.min(count * 8, curStep * 4)}  SWAPS: ${curStep}`, ox, 56);
+};
+
+// ---- Pathfinder ----
+const scenePathfinder: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const algo = String(s.data.algo ?? "A*");
+  const cols = 28, rows = 16;
+  const cell = Math.floor(Math.min((W * 0.88) / cols, (H * 0.72) / rows));
+  const ox = (W - cols * cell) / 2, oy = (H - rows * cell) / 2 + 20;
+  const rng = new RNG(Number(s.data.seed));
+  const walls = new Set<number>();
+  for (let i = 0; i < cols * rows; i++) {
+    const cx = i % cols, cy = Math.floor(i / cols);
+    if ((cx === 0 || cx === cols - 1 || cy === 0 || cy === rows - 1) && rng.chance(0.1)) walls.add(i);
+    else if (rng.chance(0.22) && i !== 0 && i !== cols * rows - 1) walls.add(i);
+  }
+  // Wavefront expansion
+  const progress = clamp(lt / (s.duration * 0.6), 0, 1);
+  const visitedCount = Math.floor(progress * cols * rows * 0.55);
+  ctx.fillStyle = hexA(p.bg2, 0.9); ctx.fillRect(ox, oy, cols * cell, rows * cell);
+  for (let i = 0; i < visitedCount; i++) {
+    const idx = (i * 7) % (cols * rows);
+    if (!walls.has(idx)) {
+      ctx.fillStyle = hexA(p.accent, 0.35);
+      ctx.fillRect(ox + (idx % cols) * cell, oy + Math.floor(idx / cols) * cell, cell - 1, cell - 1);
+    }
+  }
+  // Walls
+  ctx.fillStyle = hexA(p.fg, 0.8);
+  for (const w of walls) {
+    ctx.fillRect(ox + (w % cols) * cell, oy + Math.floor(w / cols) * cell, cell - 1, cell - 1);
+  }
+  // Solved path
+  if (progress > 0.4) {
+    ctx.strokeStyle = p.accent2; ctx.lineWidth = Math.max(3, cell * 0.3); ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(ox + cell, oy + cell);
+    ctx.lineTo(ox + cols * cell * 0.5, oy + rows * cell * 0.3);
+    ctx.lineTo(ox + cols * cell * 0.7, oy + rows * cell * 0.8);
+    ctx.lineTo(ox + (cols - 2) * cell, oy + (rows - 2) * cell);
+    ctx.stroke();
+  }
+  // Start & Goal
+  ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(ox + cell, oy + cell, cell * 0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(ox + (cols - 2) * cell, oy + (rows - 2) * cell, cell * 0.4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = p.fg; font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText(`PATHFINDING (${algo.toUpperCase()})`, ox, 14);
+};
+
+// ---- Falling Sand ----
+const sceneSand: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const cols = 60, rows = 40;
+  const cell = Math.floor(Math.min((W * 0.85) / cols, (H * 0.75) / rows));
+  const ox = (W - cols * cell) / 2, oy = (H - rows * cell) / 2 + 20;
+  const rng = new RNG(Number(s.data.seed));
+  // Background
+  ctx.fillStyle = hexA(p.bg2, 1); ctx.fillRect(ox, oy, cols * cell, rows * cell);
+  // Sand dunes simulation
+  const duneCount = Math.floor(clamp(lt * 8, 1, cols));
+  for (let c = 0; c < duneCount; c++) {
+    const peak = Math.sin((c / cols) * Math.PI * 3 + lt) * 6 + 14;
+    const h = Math.floor(clamp(peak, 2, rows - 4));
+    for (let r = rows - h; r < rows; r++) {
+      const sandColor = rng.pick(["#f39c12", "#e67e22", "#f1c40f", "#d35400"]);
+      ctx.fillStyle = sandColor;
+      ctx.fillRect(ox + c * cell, oy + r * cell, cell, cell);
+    }
+  }
+  // Spouts pouring from top
+  const spouts = [Math.floor(cols * 0.3), Math.floor(cols * 0.7)];
+  ctx.fillStyle = "#f1c40f";
+  for (const sp of spouts) {
+    for (let r = 0; r < rows - 15; r++) {
+      ctx.fillRect(ox + sp * cell + (Math.sin(lt * 10 + r) > 0.5 ? 1 : -1), oy + r * cell, cell, cell);
+    }
+  }
+  ctx.fillStyle = p.fg; font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText("FALLING SAND SIMULATION · PARTICLE PHYSICS", ox, 14);
+};
+
+// ---- Chess ----
+const CHESS_PIECES = ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"];
+const sceneChess: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
+  const boardSize = Math.floor(Math.min(W * 0.75, H * 0.75));
+  const cell = Math.floor(boardSize / 8);
+  const ox = (W - boardSize) / 2, oy = (H - boardSize) / 2 + 16;
+  // Board squares
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const isLight = (r + c) % 2 === 0;
+      ctx.fillStyle = isLight ? "#f0d9b5" : "#b58863";
+      ctx.fillRect(ox + c * cell, oy + r * cell, cell, cell);
+    }
+  }
+  // Active highlight square
+  const moveIdx = Math.floor(lt * 0.8) % 8;
+  ctx.fillStyle = "rgba(241, 196, 15, 0.45)";
+  ctx.fillRect(ox + (moveIdx % 8) * cell, oy + 4 * cell, cell, cell);
+  ctx.fillRect(ox + ((moveIdx + 2) % 8) * cell, oy + 3 * cell, cell, cell);
+  // Pieces
+  font(ctx, cell * 0.75, "DejaVu Sans", "bold");
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  // Black pieces top
+  ctx.fillStyle = "#111111";
+  for (let c = 0; c < 8; c++) {
+    ctx.fillText(CHESS_PIECES[c], ox + c * cell + cell / 2, oy + cell / 2);
+    ctx.fillText("♟", ox + c * cell + cell / 2, oy + cell + cell / 2);
+  }
+  // White pieces bottom
+  ctx.fillStyle = "#ffffff";
+  for (let c = 0; c < 8; c++) {
+    ctx.fillText("♙", ox + c * cell + cell / 2, oy + 6 * cell + cell / 2);
+    ctx.fillText(CHESS_PIECES[c], ox + c * cell + cell / 2, oy + 7 * cell + cell / 2);
+  }
+  // Top HUD
+  ctx.fillStyle = p.fg; font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText("CHESS · ENGINE vs ENGINE", ox, 14);
+  ctx.textAlign = "right"; ctx.fillText("EVAL: +0.45", ox + boardSize, 14);
+};
+
 // ---- brain ----
 const sceneMemory: SceneFn = (ctx, comp, s, lt) => {
   const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
@@ -783,8 +1360,11 @@ const sceneWord: SceneFn = (ctx, comp, s, lt) => {
 const RENDERERS: Record<string, SceneFn> = {
   title: sceneTitle, outro: sceneOutro, interlude: sceneInterlude,
   "eye-follow": sceneEyeFollow, "eye-saccade": sceneEyeSaccade, "eye-focus": sceneEyeFocus, "eye-peripheral": sceneEyePeripheral, "eye-palming": sceneEyePalming,
+  "eye-rotation": sceneEyeRotation, "eye-tracing": sceneEyeTracing,
   breathing: sceneBreathing, "math-question": sceneMath, "math-sequence": sceneMathSequence, "story-panel": sceneStory,
   "game-snake": sceneSnake, "game-breakout": sceneBreakout, "game-maze": sceneMaze, "game-life": sceneLife, "game-marbles": sceneMarbles,
+  "game-pong": scenePong, "game-tetris": sceneTetris, "game-flappy": sceneFlappy, "game-asteroids": sceneAsteroids,
+  "game-sort": sceneSort, "game-pathfinder": scenePathfinder, "game-sand": sceneSand, "game-chess": sceneChess,
   "memory-sequence": sceneMemory, trivia: sceneTrivia, "word-scramble": sceneWord,
 };
 

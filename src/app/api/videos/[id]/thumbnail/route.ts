@@ -20,6 +20,8 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     if (!video) return bad("not found", 404);
     const body = await _.json().catch(() => ({})) as { action?: string; index?: number; style?: ThumbStyle };
     const candidates = thumbnailCandidates(`${video.seed}-${Date.now()}`, video.category);
+    // Ensure each candidate has a distinct themeVariant (0-4)
+    candidates.forEach((c, i) => { c.themeVariant = i % 5; });
 
     if (body.action !== "select") {
       const variants = [];
