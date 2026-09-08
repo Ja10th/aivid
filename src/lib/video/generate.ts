@@ -13,6 +13,7 @@ import {
   Palette,
   Mood,
 } from "./core";
+import { RIDDLES, TRIVIA } from "./content-data";
 
 const TRANSITIONS: Scene["transition"][] = ["cut", "fade", "wipe", "zoom", "slide", "iris"];
 const BGS: BgStyle[] = ["solid", "gradient", "grid", "dots", "noise", "rays", "diagonal", "blobs", "rings"];
@@ -512,7 +513,7 @@ function gameplay(ctx: Ctx, target: number) {
 
 
 // ---------------- BRAIN ----------------
-const TRIVIA = [
+const BRAIN_TRIVIA = [
   { q: "Which planet has the most moons?", opts: ["Jupiter", "Saturn", "Uranus", "Neptune"], a: 1 },
   { q: "What is the largest organ of the human body?", opts: ["Liver", "Brain", "Skin", "Lungs"], a: 2 },
   { q: "How many bones does an adult human have?", opts: ["186", "206", "226", "246"], a: 1 },
@@ -569,7 +570,7 @@ function brain(ctx: Ctx, target: number) {
     "Brain teasers today. No pressure, just play.",
     "Memory, trivia, word scrambles — let's find out how sharp you are.",
   ]));
-  const trivia = r.shuffle(TRIVIA);
+  const trivia = r.shuffle(BRAIN_TRIVIA);
   const words = r.shuffle(WORDS);
   let ti = 0, wi = 0, n = 0;
   while (ctx.t < target - 12) {
@@ -610,6 +611,114 @@ function calm(ctx: Ctx, target: number) {
     else push(ctx, "interlude", r.int(6, 12), { text: r.pick(["...", "just breathe", "nowhere to be", "notice the quiet", "unclench"]) });
   }
   push(ctx, "outro", 10, { text: r.pick(["Return slowly", "That's enough", "Carry it with you"]) }, r.pick(["Come back slowly. Wiggle your fingers. Carry this calm into your day.", "That's the end. Take one more breath and return whenever you like."]));
+}
+
+// ---------------- RIDDLES ----------------
+function riddles(ctx: Ctx, target: number) {
+  const r = ctx.rng;
+  push(ctx, "title", 6, {
+    title: r.pick(["Riddle Time", "Brain Benders", "Think About It", "Puzzle Hour", "Riddle Challenge"]),
+    sub: r.pick(["can you solve them all?", "classic riddles", "lateral thinking", "brain teasers", "mystery puzzles"]),
+  }, r.pick([
+    "Welcome to riddle time. Listen carefully, think creatively, and see if you can solve them before the reveal.",
+    "Classic riddles and brain teasers. Some are tricky, some are clever. All of them will make you think.",
+    "Let's test your lateral thinking. Each riddle has a surprising answer.",
+    "Think outside the box. The answers are simpler than you think — or are they?",
+  ]));
+
+  const shuffled = r.shuffle([...RIDDLES]);
+  let riddleIndex = 0;
+  
+  while (ctx.t < target - 12) {
+    const riddleData = shuffled[riddleIndex % shuffled.length];
+    riddleIndex++;
+    
+    const thinkTime = riddleData.difficulty === "easy" ? r.int(8, 12) : riddleData.difficulty === "medium" ? r.int(12, 16) : r.int(15, 20);
+    const revealTime = r.int(4, 6);
+    
+    // Question
+    push(ctx, "riddle", thinkTime, { 
+      question: riddleData.question, 
+      answer: riddleData.answer,
+      hints: riddleData.hints,
+      difficulty: riddleData.difficulty,
+      phase: "question"
+    }, r.pick([
+      `Here's a ${riddleData.difficulty} one. ${riddleData.question}`,
+      riddleData.question,
+      `Think about this: ${riddleData.question}`,
+    ]));
+    
+    // Reveal
+    push(ctx, "riddle", revealTime, { 
+      question: riddleData.question, 
+      answer: riddleData.answer,
+      hints: riddleData.hints,
+      difficulty: riddleData.difficulty,
+      phase: "answer"
+    }, r.pick([
+      `The answer is: ${riddleData.answer}.`,
+      `Did you get it? ${riddleData.answer}.`,
+      `${riddleData.answer}. ${r.pick(["Got it?", "Make sense?", "Clever, right?"])}`,
+    ]));
+  }
+  
+  push(ctx, "outro", 10, { text: r.pick(["How many did you get?", "Nice work", "Thanks for playing"]) }, r.pick(["How many did you solve? Let us know in the comments.", "That's all for today. See you next time for more riddles."]));
+}
+
+// ---------------- TRIVIA ----------------
+function trivia(ctx: Ctx, target: number) {
+  const r = ctx.rng;
+  push(ctx, "title", 6, {
+    title: r.pick(["Trivia Time", "Quiz Challenge", "Test Your Knowledge", "Trivia Quiz", "Know It All"]),
+    sub: r.pick(["multiple choice quiz", "test your knowledge", "general knowledge", "quick questions", "brain quiz"]),
+  }, r.pick([
+    "Time to test your knowledge. Multiple choice questions across all categories. Let's see how many you can get right.",
+    "General knowledge quiz. Read carefully, think fast, and choose your answer.",
+    "From history to science to pop culture — how much do you really know?",
+    "Quick trivia challenge. No cheating! Pick your answers before the reveal.",
+  ]));
+
+  const shuffled = r.shuffle([...TRIVIA]);
+  let triviaIndex = 0;
+  
+  while (ctx.t < target - 12) {
+    const triviaData = shuffled[triviaIndex % shuffled.length];
+    triviaIndex++;
+    
+    const thinkTime = triviaData.difficulty === "easy" ? r.int(6, 10) : triviaData.difficulty === "medium" ? r.int(10, 14) : r.int(12, 16);
+    const revealTime = r.int(4, 6);
+    
+    // Question
+    push(ctx, "trivia-quiz", thinkTime, { 
+      question: triviaData.question,
+      options: triviaData.options,
+      answer: triviaData.answer,
+      difficulty: triviaData.difficulty,
+      category: triviaData.category,
+      phase: "question"
+    }, r.pick([
+      `${triviaData.category.replace("_", " ").toUpperCase()}. ${triviaData.question}`,
+      triviaData.question,
+      `Question: ${triviaData.question}`,
+    ]));
+    
+    // Reveal
+    push(ctx, "trivia-quiz", revealTime, { 
+      question: triviaData.question,
+      options: triviaData.options,
+      answer: triviaData.answer,
+      difficulty: triviaData.difficulty,
+      category: triviaData.category,
+      phase: "answer"
+    }, r.pick([
+      `The answer is ${String.fromCharCode(65 + triviaData.answer)}: ${triviaData.options[triviaData.answer]}.`,
+      `Correct answer: ${triviaData.options[triviaData.answer]}.`,
+      `It's ${triviaData.options[triviaData.answer]}. ${r.pick(["Did you get it?", "Knew that one?", "Easy one!"])}`,
+    ]));
+  }
+  
+  push(ctx, "outro", 10, { text: r.pick(["How'd you do?", "Nice job", "Thanks for playing"]) }, r.pick(["Count up your score. How many did you get right?", "That's the end of the quiz. Come back for more trivia next time."]));
 }
 
 function mixed(ctx: Ctx, target: number) {
@@ -660,6 +769,8 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     ],
     brain: [`${base}: Memory, Trivia & Word Puzzles ${emoji}`, `${mins} Minute Brain Workout #${day}`, `Can You Beat The Timer? Brain Teasers`, `Daily Brain Training — Quiz & Memory`],
     calm: [`${base} — ${mins} Minute Breathing Pacer ${emoji}`, `Guided Breathing & Focus Reset (${mins} min)`, `Quiet Minutes #${day}: Breathe With The Circle`, `Calm Reset — Slow Breathing Visual`],
+    riddles: [`${base} — Can You Solve Them All? ${emoji}`, `${mins} Min Riddle Challenge #${day}`, `Brain Bending Riddles (${mins} min)`, `Classic Riddles & Lateral Thinking Puzzles`],
+    trivia: [`${base}: ${scenes.filter((s) => s.kind === "trivia-quiz").length / 2} Questions ${emoji}`, `Trivia Quiz #${day} — Test Your Knowledge`, `${mins} Min General Knowledge Quiz`, `How Many Can You Get Right?`],
     mixed: [`${base} #${day} — Eyes, Brain & Breath ${emoji}`, `${mins} Minute Mixed Mind Session`, `Daily Variety Session #${day}`],
   };
   const title = r.pick(tmpl[category] || tmpl.mixed);
@@ -675,6 +786,8 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     gameplay: ["classic games", "snake game", "breakout", "maze solving", "game of life", "marble race", "tetris", "pong", "sorting visualization", "pathfinding", "flappy bird", "asteroids", "particle simulation", "satisfying", "relaxing gameplay", "arcade classics"],
     brain: ["brain teasers", "trivia quiz", "memory game", "word scramble", "brain training", "quiz"],
     calm: ["breathing exercise", "meditation", "calm", "focus", "relax", "breathing pacer", "anxiety relief"],
+    riddles: ["riddles", "brain teasers", "lateral thinking", "logic puzzles", "classic riddles", "wordplay", "mystery", "puzzle solving"],
+    trivia: ["trivia quiz", "general knowledge", "quiz", "trivia questions", "test your knowledge", "multiple choice", "quiz challenge", "brain training"],
     mixed: ["brain training", "eye exercises", "mental math", "daily session", "focus"],
   };
   const tags = [...(tagBank[category] || []), "daily", orientation === "portrait" ? "shorts" : "generated"];
@@ -685,6 +798,8 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     gameplay: ["WATCH IT RUN", "CLASSIC ARCADE", "GAME TIME", "NEW RUN", "PIXEL PERFECT", "GAME ON", "PLAY SESSION", "ARCADE MODE"],
     brain: ["BEAT THE CLOCK", "CAN YOU REMEMBER?", "THINK FAST", "5 SECOND CHALLENGE", "DO YOU KNOW THIS?", "MEMORY TEST"],
     calm: ["BREATHE", "SLOW DOWN", "RESET YOUR MIND", "QUIET MINUTES", "JUST BREATHE"],
+    riddles: ["CAN YOU SOLVE IT?", "THINK ABOUT IT", "MYSTERY TIME", "BRAIN BENDER", "WHAT AM I?", "RIDDLE THIS", "GOT THE ANSWER?"],
+    trivia: ["DO YOU KNOW?", "QUIZ TIME", "TEST YOUR KNOWLEDGE", "TRUE OR FALSE?", "THINK FAST", "TRIVIA CHALLENGE", "HOW MANY CAN YOU GET?"],
     mixed: ["DAILY MIX", "TRY EVERYTHING", "MIND WORKOUT", "NEW SESSION"],
   };
   const thumbText = r.pick(thumbHooks[category] ?? [base.toUpperCase(), `${mins} MIN`, base, `DAY ${day}`]);
@@ -753,6 +868,8 @@ export function generateComposition(opts: GenerateOptions): Composition {
     case "gameplay": gameplay(ctx, target); break;
     case "brain": brain(ctx, target); break;
     case "calm": calm(ctx, target); break;
+    case "riddles": riddles(ctx, target); break;
+    case "trivia": trivia(ctx, target); break;
     default: mixed(ctx, target);
   }
   // Portrait (shorts): cap scene lengths and total under 60s

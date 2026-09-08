@@ -17,4 +17,18 @@ export function fmtDate(d?: Date | string | null) {
   const dt = typeof d === "string" ? new Date(d) : d;
   return dt.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
-export const CAT_LABEL: Record<string, string> = { eye_training: "Eye Training", math: "Math", story: "Story", gameplay: "Game Play", brain: "Brain", calm: "Calm", mixed: "Mixed" };
+export const CAT_LABEL: Record<string, string> = { 
+  eye_training: "Eye Training", 
+  math: "Math", 
+  story: "Story", 
+  gameplay: "Game Play", 
+  brain: "Brain", 
+  calm: "Calm", 
+  riddles: "Riddles",
+  trivia: "Trivia",
+  memory: "Memory",
+  language: "Language",
+  science: "Science",
+  history: "History",
+  mixed: "Mixed" 
+};

@@ -8,6 +8,8 @@ import {
   drawBrainThumbnail,
   drawStoryThumbnail,
   drawCalmThumbnail,
+  drawRiddlesThumbnail,
+  drawTriviaThumbnail,
 } from "./thumbnail-categories";
 
 export const THUMB_LAYOUTS = ["left-stack", "center-burst", "diagonal-band", "corner-box", "split-vertical", "bottom-bar", "circle-badge", "scatter"] as const;
@@ -28,7 +30,7 @@ export interface ThumbStyle {
   themeVariant?: number; // 0-4: distinct visual composition theme
 }
 
-type ThumbnailCategory = "eye_training" | "math" | "story" | "gameplay" | "brain" | "calm" | "mixed";
+type ThumbnailCategory = "eye_training" | "math" | "story" | "gameplay" | "brain" | "calm" | "riddles" | "trivia" | "mixed";
 
 const CATEGORY_THUMBNAILS: Record<ThumbnailCategory, Partial<ThumbStyle>> = {
   eye_training: { layout: "bottom-bar", paletteIdx: 4, deco: "rings", fx: "outline", pattern: "gradient" },
@@ -37,6 +39,8 @@ const CATEGORY_THUMBNAILS: Record<ThumbnailCategory, Partial<ThumbStyle>> = {
   gameplay: { layout: "split-vertical", paletteIdx: 11, deco: "arrows", fx: "outline", pattern: "gradient" },
   brain: { layout: "bottom-bar", paletteIdx: 9, deco: "halftone", fx: "outline", pattern: "grid" },
   calm: { layout: "center-burst", paletteIdx: 3, deco: "rings", fx: "shadow", pattern: "gradient" },
+  riddles: { layout: "corner-box", paletteIdx: 8, deco: "halftone", fx: "shadow", pattern: "rays" },
+  trivia: { layout: "diagonal-band", paletteIdx: 6, deco: "halftone", fx: "outline", pattern: "grid" },
   mixed: { layout: "diagonal-band", paletteIdx: 0, deco: "sparks", fx: "outline", pattern: "rays" },
 };
 
@@ -47,6 +51,8 @@ const CATEGORY_LAYOUTS: Record<ThumbnailCategory, ThumbStyle["layout"][]> = {
   gameplay: ["split-vertical", "corner-box", "diagonal-band"],
   brain: ["bottom-bar", "center-burst", "corner-box"],
   calm: ["center-burst", "circle-badge", "left-stack"],
+  riddles: ["corner-box", "diagonal-band", "center-burst"],
+  trivia: ["diagonal-band", "bottom-bar", "corner-box"],
   mixed: ["diagonal-band", "center-burst", "split-vertical"],
 };
 
@@ -180,6 +186,16 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
 
   if (cat === "calm") {
     drawCalmThumbnail(ctx, comp, p, W, H, themeVariant, hook);
+    return true;
+  }
+
+  if (cat === "riddles") {
+    drawRiddlesThumbnail(ctx, W, H, themeVariant, rng, hook);
+    return true;
+  }
+
+  if (cat === "trivia") {
+    drawTriviaThumbnail(ctx, W, H, themeVariant, rng, hook);
     return true;
   }
 

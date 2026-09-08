@@ -32,7 +32,13 @@ export type SceneKind =
   | "trivia"
   | "word-scramble"
   | "breathing"
-  | "interlude";
+  | "interlude"
+  | "riddle"
+  | "trivia-quiz"
+  | "memory-challenge"
+  | "language-puzzle"
+  | "science-fact"
+  | "history-mystery";
 
 export interface Palette {
   name: string;
@@ -240,6 +246,12 @@ export const CATEGORIES: { id: string; label: string; blurb: string; moods: Mood
   { id: "gameplay", label: "Game Plays", blurb: "Classic arcade games: snake, breakout, mazes, pong, tetris, flappy bird, asteroids, sorting visualizations, and more.", moods: ["chiptune", "energetic", "playful"] },
   { id: "brain", label: "Brain Teasers", blurb: "Memory sequences, trivia and word scrambles against the clock.", moods: ["playful", "focus", "mystery"] },
   { id: "calm", label: "Calm & Breathing", blurb: "Breathing pacers and slow visual drift for focus resets.", moods: ["calm"] },
+  { id: "riddles", label: "Riddles", blurb: "Classic riddles, lateral thinking puzzles, and brain-bending mysteries with timed reveals.", moods: ["mystery", "playful", "focus"] },
+  { id: "trivia", label: "Trivia", blurb: "Multi-category knowledge tests with multiple choice answers — history, science, geography, pop culture.", moods: ["playful", "focus", "energetic"] },
+  { id: "memory", label: "Memory Challenges", blurb: "Sequence recall, pattern matching, spot the difference, and visual memory tests.", moods: ["focus", "playful", "mystery"] },
+  { id: "language", label: "Language Puzzles", blurb: "Word scrambles, anagrams, vocabulary challenges, and linguistic brain teasers.", moods: ["playful", "focus", "calm"] },
+  { id: "science", label: "Science Facts", blurb: "Quick science demonstrations, physics principles, chemistry reactions, and mind-blowing discoveries.", moods: ["mystery", "energetic", "focus"] },
+  { id: "history", label: "History Mysteries", blurb: "Fascinating historical events, ancient civilizations, famous figures, and historical what-ifs.", moods: ["mystery", "cinematic", "calm"] },
   { id: "mixed", label: "Everything Mixed", blurb: "A different blend of all engines every time.", moods: ["playful", "focus", "cinematic"] },
 ];
 

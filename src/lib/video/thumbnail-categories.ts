@@ -1126,3 +1126,603 @@ export function drawCalmThumbnail(ctx: C2D, comp: Composition, p: Palette, W: nu
 
   fitOutlinedText(ctx, hook, W / 2, H * 0.84, W * 0.84, 94, "#ffffff", "#000");
 }
+
+
+// ==========================================
+// 7. RIDDLES (10 DISTINCT COMPOSITIONS)
+// ==========================================
+export function drawRiddlesThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
+  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["CAN YOU SOLVE IT?", "THINK ABOUT IT", "MYSTERY TIME", "BRAIN BENDER", "WHAT AM I?", "RIDDLE THIS", "GOT THE ANSWER?", "PUZZLE TIME", "FIGURE IT OUT", "USE YOUR BRAIN"][sceneType % 10];
+
+  ctx.fillStyle = colors.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  if (sceneType === 0) {
+    // Giant Question Mark
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.4, 0, W * 0.5, H * 0.4, W * 0.6);
+    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${H * 0.65}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("?", W * 0.5, H * 0.45);
+
+    // Glow
+    ctx.shadowColor = colors.accent;
+    ctx.shadowBlur = 40;
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${H * 0.65}px Arial`;
+    ctx.fillText("?", W * 0.5, H * 0.45);
+    ctx.shadowBlur = 0;
+
+  } else if (sceneType === 1) {
+    // Lock and Key
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Lock
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(W * 0.35, H * 0.45, W * 0.3, H * 0.25);
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.45, W * 0.12, Math.PI, 0, true);
+    ctx.lineWidth = W * 0.06;
+    ctx.strokeStyle = colors.primary;
+    ctx.stroke();
+
+    // Keyhole
+    ctx.fillStyle = colors.bg;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.54, W * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(W * 0.48, H * 0.54, W * 0.04, H * 0.08);
+
+  } else if (sceneType === 2) {
+    // Brain Maze
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
+    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Brain outline
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.5, W * 0.25, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Maze lines
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 8; i++) {
+      ctx.beginPath();
+      const angle = (i / 8) * Math.PI * 2;
+      const x1 = W * 0.5 + Math.cos(angle) * W * 0.15;
+      const y1 = H * 0.5 + Math.sin(angle) * W * 0.15;
+      const x2 = W * 0.5 + Math.cos(angle) * W * 0.25;
+      const y2 = H * 0.5 + Math.sin(angle) * W * 0.25;
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+  } else if (sceneType === 3) {
+    // Light Bulb Moment
+    const grad = ctx.createLinearGradient(0, H, W, 0);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Bulb
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.4, W * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glow
+    ctx.shadowColor = colors.accent;
+    ctx.shadowBlur = 60;
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.4, W * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Base
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(W * 0.45, H * 0.52, W * 0.1, H * 0.08);
+
+    // Rays
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 6;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.5 + Math.cos(angle) * W * 0.18, H * 0.4 + Math.sin(angle) * W * 0.18);
+      ctx.lineTo(W * 0.5 + Math.cos(angle) * W * 0.26, H * 0.4 + Math.sin(angle) * W * 0.26);
+      ctx.stroke();
+    }
+
+  } else if (sceneType === 4) {
+    // Thinking Head Silhouette
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Head
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.45, W * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Question marks floating
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("?", W * 0.3, H * 0.3);
+    ctx.fillText("?", W * 0.7, H * 0.35);
+    ctx.fillText("?", W * 0.6, H * 0.25);
+
+  } else if (sceneType === 5) {
+    // Puzzle Piece
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.6);
+    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Puzzle piece shape
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.3, H * 0.35);
+    ctx.lineTo(W * 0.7, H * 0.35);
+    ctx.lineTo(W * 0.7, H * 0.65);
+    ctx.lineTo(W * 0.3, H * 0.65);
+    ctx.closePath();
+    ctx.fill();
+
+    // Tab
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.35, W * 0.08, 0, Math.PI, true);
+    ctx.fill();
+
+    // Notch
+    ctx.fillStyle = colors.bg;
+    ctx.beginPath();
+    ctx.arc(W * 0.7, H * 0.5, W * 0.08, Math.PI * 1.5, Math.PI * 0.5);
+    ctx.fill();
+
+  } else if (sceneType === 6) {
+    // Detective Magnifying Glass
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Glass
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(W * 0.45, H * 0.4, W * 0.2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Handle
+    ctx.beginPath();
+    ctx.moveTo(W * 0.58, H * 0.52);
+    ctx.lineTo(W * 0.75, H * 0.7);
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = colors.primary;
+    ctx.stroke();
+
+    // Question mark inside glass
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.15}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("?", W * 0.45, H * 0.4);
+
+  } else if (sceneType === 7) {
+    // Mystery Box
+    const grad = ctx.createLinearGradient(0, H, 0, 0);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Box
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(W * 0.25, H * 0.45, W * 0.5, H * 0.35);
+
+    // Lid
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(W * 0.22, H * 0.4, W * 0.56, H * 0.08);
+
+    // Question mark emerging
+    ctx.fillStyle = colors.accent;
+    ctx.shadowColor = colors.accent;
+    ctx.shadowBlur = 30;
+    ctx.font = `bold ${W * 0.18}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("?", W * 0.5, H * 0.28);
+    ctx.shadowBlur = 0;
+
+  } else if (sceneType === 8) {
+    // Word Cloud
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
+    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    const words = ["WHAT", "WHY", "HOW", "WHO", "WHEN", "WHERE"];
+    ctx.fillStyle = colors.primary;
+    ctx.textAlign = "center";
+    for (let i = 0; i < words.length; i++) {
+      const angle = (i / words.length) * Math.PI * 2;
+      const radius = W * 0.25;
+      const x = W * 0.5 + Math.cos(angle) * radius;
+      const y = H * 0.5 + Math.sin(angle) * radius;
+      ctx.font = `bold ${W * 0.08}px Arial`;
+      ctx.fillText(words[i], x, y);
+    }
+
+    // Central question mark
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.2}px Arial`;
+    ctx.fillText("?", W * 0.5, H * 0.5);
+
+  } else {
+    // Labyrinth Path
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(0.5, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Spiral path
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    for (let i = 0; i < 100; i++) {
+      const angle = (i / 100) * Math.PI * 6;
+      const radius = (i / 100) * W * 0.3;
+      const x = W * 0.5 + Math.cos(angle) * radius;
+      const y = H * 0.5 + Math.sin(angle) * radius;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Destination
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.5, W * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  applyMicroLayout(ctx, W, H, layoutMicro);
+  fitOutlinedText(ctx, hook, W / 2, H * 0.85, W * 0.88, 96, colors.primary, colors.bg);
+}
+
+// ==========================================
+// 8. TRIVIA (10 DISTINCT COMPOSITIONS)
+// ==========================================
+export function drawTriviaThumbnail(ctx: C2D, W: number, H: number, themeVariant: number, rng: RNG, hookOverride?: string) {
+  const { sceneType, colorIdx, layoutMicro } = decodeThemeVariant(themeVariant);
+  const colors = COLOR_PALETTES[colorIdx];
+  const hook = hookOverride && hookOverride.length > 2 ? hookOverride : ["DO YOU KNOW?", "QUIZ TIME", "TEST YOUR KNOWLEDGE", "TRUE OR FALSE?", "THINK FAST", "TRIVIA CHALLENGE", "HOW MANY CAN YOU GET?", "BRAIN QUIZ", "ANSWER THIS", "FACT CHECK"][sceneType % 10];
+
+  ctx.fillStyle = colors.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  if (sceneType === 0) {
+    // Multiple Choice Grid
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    const options = ["A", "B", "C", "D"];
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${W * 0.15}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    for (let i = 0; i < 4; i++) {
+      const x = (i % 2) * W * 0.5 + W * 0.25;
+      const y = Math.floor(i / 2) * H * 0.35 + H * 0.3;
+      
+      ctx.strokeStyle = colors.primary;
+      ctx.lineWidth = 6;
+      ctx.strokeRect(x - W * 0.15, y - H * 0.1, W * 0.3, H * 0.2);
+      
+      ctx.fillStyle = i === 2 ? colors.accent : colors.primary;
+      ctx.fillText(options[i], x, y);
+    }
+
+  } else if (sceneType === 1) {
+    // Quiz Show Podium
+    const grad = ctx.createLinearGradient(0, H, 0, 0);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Podium
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.35, H * 0.7);
+    ctx.lineTo(W * 0.65, H * 0.7);
+    ctx.lineTo(W * 0.6, H * 0.45);
+    ctx.lineTo(W * 0.4, H * 0.45);
+    ctx.closePath();
+    ctx.fill();
+
+    // Screen
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(W * 0.42, H * 0.5, W * 0.16, H * 0.15);
+
+    // Score lights
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = i < 3 ? colors.accent : colors.secondary;
+      ctx.beginPath();
+      ctx.arc(W * 0.3 + i * W * 0.1, H * 0.28, W * 0.03, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  } else if (sceneType === 2) {
+    // Book Stack
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.6);
+    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Books
+    const bookColors = [colors.primary, colors.accent, colors.secondary, colors.primary];
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = bookColors[i];
+      ctx.fillRect(W * 0.35, H * 0.65 - i * H * 0.12, W * 0.3, H * 0.1);
+      ctx.strokeStyle = colors.bg;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(W * 0.35, H * 0.65 - i * H * 0.12, W * 0.3, H * 0.1);
+    }
+
+    // Question mark on top
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("?", W * 0.5, H * 0.25);
+
+  } else if (sceneType === 3) {
+    // Brain with Checkmark
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Brain
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.45, W * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Checkmark
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 12;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(W * 0.38, H * 0.45);
+    ctx.lineTo(W * 0.46, H * 0.52);
+    ctx.lineTo(W * 0.62, H * 0.35);
+    ctx.stroke();
+
+  } else if (sceneType === 4) {
+    // Trophy
+    const grad = ctx.createLinearGradient(0, H, 0, 0);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Cup
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.35, H * 0.35);
+    ctx.lineTo(W * 0.3, H * 0.55);
+    ctx.lineTo(W * 0.7, H * 0.55);
+    ctx.lineTo(W * 0.65, H * 0.35);
+    ctx.closePath();
+    ctx.fill();
+
+    // Handles
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.arc(W * 0.28, H * 0.42, W * 0.06, Math.PI, Math.PI * 1.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(W * 0.72, H * 0.42, W * 0.06, Math.PI * 1.5, Math.PI * 2);
+    ctx.stroke();
+
+    // Base
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(W * 0.42, H * 0.55, W * 0.16, H * 0.05);
+    ctx.fillRect(W * 0.38, H * 0.6, W * 0.24, H * 0.05);
+
+    // Star
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("★", W * 0.5, H * 0.44);
+
+  } else if (sceneType === 5) {
+    // Lightboard
+    const grad = ctx.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(0.5, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Board frame
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(W * 0.2, H * 0.25, W * 0.6, H * 0.5);
+
+    // Light bulbs
+    for (let i = 0; i < 8; i++) {
+      ctx.fillStyle = i % 2 === 0 ? colors.accent : colors.secondary;
+      ctx.beginPath();
+      ctx.arc(W * 0.25 + i * W * 0.07, H * 0.3, W * 0.02, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.arc(W * 0.25 + i * W * 0.07, H * 0.7, W * 0.02, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // "?" in center
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.2}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("?", W * 0.5, H * 0.5);
+
+  } else if (sceneType === 6) {
+    // Scoreboard
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
+    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Board
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(W * 0.2, H * 0.3, W * 0.6, H * 0.4);
+
+    // Score display
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.18}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("100", W * 0.5, H * 0.52);
+
+    // Label
+    ctx.fillStyle = colors.bg;
+    ctx.font = `${W * 0.06}px Arial`;
+    ctx.fillText("SCORE", W * 0.5, H * 0.62);
+
+  } else if (sceneType === 7) {
+    // Buzzer
+    const grad = ctx.createLinearGradient(0, H, 0, 0);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Button
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.5, W * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Highlight
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.beginPath();
+    ctx.arc(W * 0.48, H * 0.47, W * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.beginPath();
+    ctx.ellipse(W * 0.5, H * 0.68, W * 0.22, W * 0.08, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Text on button
+    ctx.fillStyle = colors.bg;
+    ctx.font = `bold ${W * 0.08}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("BUZZ", W * 0.5, H * 0.52);
+
+  } else if (sceneType === 8) {
+    // Flash Cards
+    const grad = ctx.createLinearGradient(W, 0, 0, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(1, colors.secondary);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Cards stacked
+    for (let i = 0; i < 3; i++) {
+      ctx.save();
+      ctx.translate(W * 0.5, H * 0.5);
+      ctx.rotate((i - 1) * 0.15);
+      ctx.fillStyle = i === 1 ? colors.primary : colors.secondary;
+      ctx.fillRect(-W * 0.25, -H * 0.2, W * 0.5, H * 0.4);
+      ctx.strokeStyle = colors.bg;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(-W * 0.25, -H * 0.2, W * 0.5, H * 0.4);
+      ctx.restore();
+    }
+
+    // Question mark on front card
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.15}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("?", W * 0.5, H * 0.52);
+
+  } else {
+    // Checkboxes
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, colors.bg);
+    grad.addColorStop(0.5, colors.secondary);
+    grad.addColorStop(1, colors.bg);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Checkboxes
+    for (let i = 0; i < 4; i++) {
+      const y = H * 0.25 + i * H * 0.16;
+      
+      // Box
+      ctx.strokeStyle = colors.primary;
+      ctx.lineWidth = 5;
+      ctx.strokeRect(W * 0.25, y, W * 0.1, W * 0.1);
+      
+      // Checkmark on one
+      if (i === 2) {
+        ctx.strokeStyle = colors.accent;
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(W * 0.27, y + W * 0.05);
+        ctx.lineTo(W * 0.3, y + W * 0.08);
+        ctx.lineTo(W * 0.33, y + W * 0.02);
+        ctx.stroke();
+      }
+      
+      // Line
+      ctx.strokeStyle = colors.primary;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.4, y + W * 0.05);
+      ctx.lineTo(W * 0.7, y + W * 0.05);
+      ctx.stroke();
+    }
+  }
+
+  applyMicroLayout(ctx, W, H, layoutMicro);
+  fitOutlinedText(ctx, hook, W / 2, H * 0.87, W * 0.88, 96, colors.primary, colors.bg);
+}

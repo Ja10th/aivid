@@ -1357,6 +1357,141 @@ const sceneWord: SceneFn = (ctx, comp, s, lt) => {
   progressBar(ctx, comp, s, lt, p.accent2);
 };
 
+const sceneRiddle: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const phase = String(s.data.phase);
+  const question = String(s.data.question);
+  const answer = String(s.data.answer);
+  const difficulty = String(s.data.difficulty);
+  
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  // Difficulty badge
+  const badgeColor = difficulty === "easy" ? "#10b981" : difficulty === "medium" ? "#f59e0b" : "#ef4444";
+  ctx.fillStyle = badgeColor;
+  rrect(ctx, W * 0.05, H * 0.05, land ? 120 : 100, land ? 40 : 35, 8);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  font(ctx, land ? 20 : 18, th.fontMono, "bold");
+  ctx.fillText(difficulty.toUpperCase(), W * 0.05 + (land ? 60 : 50), H * 0.05 + (land ? 20 : 17.5));
+  
+  if (phase === "question") {
+    // Question phase
+    ctx.fillStyle = p.fg;
+    font(ctx, land ? 44 : 36, th.fontBody);
+    const lines = wrap(ctx, question, W * 0.86);
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.35 + i * (land ? 52 : 44)));
+    
+    // Thinking animation - question marks
+    const alpha = (Math.sin(lt * 2) + 1) / 2;
+    ctx.fillStyle = hexA(p.accent, 0.3 + alpha * 0.3);
+    font(ctx, land ? 80 : 64, th.fontDisplay);
+    ctx.fillText("?", W * 0.85, H * 0.75);
+    ctx.fillText("?", W * 0.15, H * 0.7);
+    
+  } else {
+    // Answer phase
+    ctx.fillStyle = hexA(p.fg, 0.6);
+    font(ctx, land ? 32 : 28, th.fontBody);
+    const lines = wrap(ctx, question, W * 0.86);
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.22 + i * (land ? 40 : 36)));
+    
+    // Answer reveal
+    const revealProgress = easeOutBack(clamp(lt / 0.8, 0, 1));
+    ctx.save();
+    ctx.translate(W / 2, H * 0.55);
+    ctx.scale(revealProgress, revealProgress);
+    
+    ctx.fillStyle = p.accent;
+    rrect(ctx, -W * 0.42, -land ? 70 : 60, W * 0.84, land ? 140 : 120, 16);
+    ctx.fill();
+    
+    ctx.fillStyle = p.bg;
+    font(ctx, land ? 48 : 40, th.fontDisplay, "bold");
+    const answerLines = wrap(ctx, answer, W * 0.75);
+    answerLines.forEach((l, i) => ctx.fillText(l, 0, (i - (answerLines.length - 1) / 2) * (land ? 56 : 48)));
+    ctx.restore();
+  }
+  
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneTriviaQuiz: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const p = s.palette;
+  const th = comp.theme;
+  const land = comp.orientation === "landscape";
+  const phase = String(s.data.phase);
+  const question = String(s.data.question);
+  const options = s.data.options as string[];
+  const answer = Number(s.data.answer);
+  const category = String(s.data.category).replace("_", " ").toUpperCase();
+  
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  // Category badge
+  ctx.fillStyle = p.accent;
+  rrect(ctx, W * 0.05, H * 0.05, land ? 160 : 140, land ? 40 : 35, 8);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  font(ctx, land ? 18 : 16, th.fontMono, "bold");
+  ctx.fillText(category, W * 0.05 + (land ? 80 : 70), H * 0.05 + (land ? 20 : 17.5));
+  
+  // Question
+  ctx.fillStyle = p.fg;
+  font(ctx, land ? 38 : 32, th.fontBody);
+  const lines = wrap(ctx, question, W * 0.86);
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.18 + i * (land ? 46 : 40)));
+  
+  // Options
+  const bw = land ? W * 0.44 : W * 0.86;
+  const bh = land ? 70 : 65;
+  const revealed = phase === "answer";
+  
+  options.forEach((opt, i) => {
+    const e = easeOutBack(clamp((lt - 0.3 - i * 0.1) / 0.5, 0, 1));
+    let x = W / 2;
+    let y = H * 0.42 + i * (bh + 12);
+    
+    if (land && options.length === 4) {
+      // Grid layout for landscape
+      x = W / 2 + ((i % 2) - 0.5) * (bw + 20);
+      y = H * 0.52 + (Math.floor(i / 2) - 0.5) * (bh + 16);
+    }
+    
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(e, e);
+    
+    const isCorrect = revealed && i === answer;
+    const isWrong = revealed && i !== answer;
+    
+    ctx.fillStyle = isCorrect ? p.accent : isWrong ? hexA(p.muted, 0.3) : p.bg2;
+    rrect(ctx, -bw / 2, -bh / 2, bw, bh, 12);
+    ctx.fill();
+    
+    ctx.strokeStyle = isCorrect ? p.accent : hexA(p.fg, 0.5);
+    ctx.lineWidth = isCorrect ? 4 : 2;
+    ctx.stroke();
+    
+    // Option text
+    ctx.fillStyle = isCorrect ? p.bg : p.fg;
+    const label = String.fromCharCode(65 + i); // A, B, C, D
+    const text = `${label}. ${opt}`;
+    fitText(ctx, text, bw - 30, th.fontBody, land ? 26 : 24, 14);
+    ctx.fillText(text, 0, 2);
+    
+    ctx.restore();
+  });
+  
+  progressBar(ctx, comp, s, lt, p.accent2);
+};
+
 const RENDERERS: Record<string, SceneFn> = {
   title: sceneTitle, outro: sceneOutro, interlude: sceneInterlude,
   "eye-follow": sceneEyeFollow, "eye-saccade": sceneEyeSaccade, "eye-focus": sceneEyeFocus, "eye-peripheral": sceneEyePeripheral, "eye-palming": sceneEyePalming,
@@ -1366,6 +1501,7 @@ const RENDERERS: Record<string, SceneFn> = {
   "game-pong": scenePong, "game-tetris": sceneTetris, "game-flappy": sceneFlappy, "game-asteroids": sceneAsteroids,
   "game-sort": sceneSort, "game-pathfinder": scenePathfinder, "game-sand": sceneSand, "game-chess": sceneChess,
   "memory-sequence": sceneMemory, trivia: sceneTrivia, "word-scramble": sceneWord,
+  riddle: sceneRiddle, "trivia-quiz": sceneTriviaQuiz,
 };
 
 export function sceneAt(comp: Composition, t: number) {
