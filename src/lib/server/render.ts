@@ -251,10 +251,31 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     const puppeteer = await import("puppeteer-core");
     const chromium = await import("@sparticuz/chromium");
     
-    // Launch with chromium for serverless environments
+    // Configure chromium for Vercel/serverless
+    const executablePath = await chromium.default.executablePath();
+    
+    // If running on Vercel, use the path directly
+    // If local development, try to find local Chrome
+    let actualPath = executablePath;
+    if (process.env.VERCEL) {
+      // On Vercel, chromium handles its own decompression
+      chromium.default.setHeadlessMode = true;
+      chromium.default.setGraphicsMode = false;
+    } else if (!fs.existsSync(executablePath)) {
+      // Local dev - try to find Chrome/Chromium
+      const localPaths = [
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/chromium',
+      ];
+      actualPath = localPaths.find(p => fs.existsSync(p)) || executablePath;
+    }
+    
     const browser = await puppeteer.default.launch({
       args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: await chromium.default.executablePath(),
+      executablePath: actualPath,
       headless: true,
     });
     
