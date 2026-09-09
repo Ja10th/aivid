@@ -80,6 +80,8 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
                 videoId: video.id,
                 composition: comp,
                 style,
+                seed: baseSeed,
+                index,
                 outputKey: `${video.id}-variant-${index}-${fingerprint}`,
               }),
             });
@@ -92,13 +94,13 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
             }
           } catch (error) {
             console.error(`[Thumbnail] Worker failed, falling back to local:`, (error as Error).message);
-            const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
+            const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index);
             path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           }
         } else {
           // Render locally (canvas fallback on Vercel)
           console.log(`[Thumbnail] Rendering variant ${index} locally...`);
-          const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
+          const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index);
           console.log(`[Thumbnail] Rendered to: ${localThumbPath}`);
           path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           console.log(`[Thumbnail] Uploaded to: ${path}`);
@@ -130,7 +132,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       themeVariant: index 
     };
     
-    const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`);
+    const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`, baseSeed, index);
     const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}-${fingerprint}.png`, "image/png");
     
     if (video.youtubeVideoId) {

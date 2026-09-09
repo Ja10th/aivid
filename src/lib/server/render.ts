@@ -234,12 +234,14 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   return { videoPath: out, thumbPath, durationSec: D };
 }
 
-export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string): Promise<string> {
+export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string, explicitSeed?: string, explicitIndex?: number): Promise<string> {
   // Generate unique HTML-based thumbnail
   const { generateUniqueThumbnail } = await import("@/lib/video/unique-thumbnail");
-  const seed = `${comp.seed}-${outputKey || id}`;
-  const index = typeof style.themeVariant === "number" ? style.themeVariant : 0;
-  const spec = generateUniqueThumbnail(comp, seed, index);
+  
+  // Use explicit parameters if provided (for consistent regeneration), otherwise fallback to defaults
+  const seedBase = explicitSeed || `${comp.seed}-${outputKey || id}`;
+  const index = explicitIndex !== undefined ? explicitIndex : (typeof style.themeVariant === "number" ? style.themeVariant : 0);
+  const spec = generateUniqueThumbnail(comp, seedBase, index);
   
   const htmlFile = path.join(TMP_DIR, `thumb-${outputKey ?? id}.html`);
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
