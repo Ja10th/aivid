@@ -116,7 +116,6 @@ async function synthesizeLocal(text: string, voice: string, rate: string, pitch:
     const st = fs.statSync(outFile);
     return st.size > 500;
   } catch (e) {
-    console.warn("TTS failed:", (e as Error).message);
     return false;
   }
 }
@@ -143,7 +142,6 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   fs.mkdirSync(tmp, { recursive: true });
   const report = async (p: number, s: string) => { try { await hooks.onProgress?.(Math.round(p), s); } catch { /* noop */ } };
 
-  // 1) Voice-over
   const narrations: { file: string; at: number; dur: number }[] = [];
   let narrationEnd = 0;
   const narrScenes = comp.scenes.filter((s) => s.narration);
@@ -152,7 +150,7 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
     i++;
     const file = path.join(tmp, `n${i}.${isStudioVoice(comp.voice.name) ? "wav" : "mp3"}`);
     const ok = await synthesize(s.narration!, comp.voice.name, comp.voice.rate, comp.voice.pitch, file, comp.voice.fallbackVoice);
-    if (ok && !s.narrationMuted) {
+    if (ok) {
       const dur = await audioDuration(file);
       const requestedAt = s.start + (s.narrationAt ?? 0.4);
       const at = Math.max(requestedAt, narrationEnd + 0.08);
@@ -272,6 +270,7 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
   
   console.log(`[Thumbnail] Rendering ${spec.grammar} via Puppeteer (HTML)...`);
   
+  let closeBrowser: (() => Promise<void>) | null = null;
   try {
     const puppeteer = await import("puppeteer");
     
@@ -287,13 +286,20 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
         '--disable-gpu'
       ],
     });
+    closeBrowser = () => browser.close();
     
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 720 });
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      if (/^https?:/i.test(request.url())) request.abort().catch(() => undefined);
+      else request.continue().catch(() => undefined);
+    });
     page.setDefaultNavigationTimeout(10000);
     await page.goto(`file://${htmlFile}`, { waitUntil: "domcontentloaded" });
     await page.screenshot({ path: file, type: 'png' });
-    await browser.close();
+    await closeBrowser();
+    closeBrowser = null;
     
     // Clean up HTML file
     try { fs.unlinkSync(htmlFile); } catch {}
@@ -301,6 +307,7 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     console.log(`[Thumbnail] ✓ Puppeteer render complete: ${file}`);
     return { path: file, grammar: spec.grammar };
   } catch (error) {
+    await closeBrowser?.().catch(() => undefined);
     console.error("[Thumbnail] Puppeteer HTML render failed:", (error as Error).message);
     if (process.env.REQUIRE_PUPPETEER_THUMBNAILS === "true") throw error;
     console.log("[Thumbnail] Falling back to canvas rendering because the browser render failed...");

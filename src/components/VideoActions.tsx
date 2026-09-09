@@ -75,6 +75,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
       } catch {
         failed++;
         setMsg(`${index + 1 - failed} thumbnail option${index + 1 - failed === 1 ? "" : "s"} ready; ${failed} failed`);
+        break;
       }
       setTimeout(() => thumbsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     }
