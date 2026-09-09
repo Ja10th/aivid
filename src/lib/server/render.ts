@@ -247,7 +247,7 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
   
   try {
     const satori = (await import("satori")).default;
-    const sharp = (await import("sharp")).default;
+    const { Resvg } = await import("@resvg/resvg-js");
     
     // Convert HTML to JSX-like structure for Satori
     const jsx = htmlToSatoriJSX(spec.html, spec.grammar);
@@ -259,10 +259,18 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
       fonts: [], // We'll use system fonts
     });
     
-    // Convert SVG to PNG with sharp
-    await sharp(Buffer.from(svg))
-      .png()
-      .toFile(file);
+    // Convert SVG to PNG with resvg (pure WASM, no native deps)
+    const resvg = new Resvg(svg, {
+      fitTo: {
+        mode: "width",
+        value: 1280,
+      },
+    });
+    
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
+    
+    fs.writeFileSync(file, pngBuffer);
     
     console.log(`[Thumbnail] ✓ Satori render complete: ${file}`);
     return file;
