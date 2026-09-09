@@ -35,7 +35,14 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
         fd.append("mood", mood);
         r = await fetch("/api/music", { method: "POST", body: fd });
       } else r = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, title, mood }) });
-      const j = await r.json(); if (!r.ok) throw new Error(j.error || "failed");
+
+      const text = await r.text();
+      let j: any = {};
+      try { j = text ? JSON.parse(text) : {}; } catch {
+        throw new Error(text || `request failed with status ${r.status}`);
+      }
+      if (!r.ok) throw new Error(j.error || "failed");
+
       const names = Array.isArray(j) ? j.map((item) => item.title).join(", ") : j.title;
       setMsg(`added ${names}`); setUrl(""); setTitle(""); setFiles([]); router.refresh();
     } catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
