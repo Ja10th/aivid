@@ -251,11 +251,15 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     const puppeteer = await import("puppeteer-core");
     const chromium = await import("@sparticuz/chromium");
     
+    console.log("[Thumbnail] Using puppeteer-core with @sparticuz/chromium");
+    
     const browser = await puppeteer.default.launch({
       args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
       executablePath: await chromium.default.executablePath(),
       headless: true,
     });
+    
+    console.log("[Thumbnail] Puppeteer browser launched successfully");
     
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 720 });
@@ -263,8 +267,11 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     await page.screenshot({ path: file, type: 'png' });
     await browser.close();
     fs.unlinkSync(htmlFile); // Clean up HTML file
+    
+    console.log("[Thumbnail] Puppeteer rendering completed successfully");
   } catch (error) {
     console.warn("Puppeteer rendering failed, falling back to canvas:", (error as Error).message);
+    console.log("[Thumbnail] Using canvas fallback with unique HTML-generated design");
     // Fallback to old canvas-based rendering
     ensureFonts();
     const c = createCanvas(1280, 720);
