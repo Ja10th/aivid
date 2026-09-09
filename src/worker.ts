@@ -33,11 +33,11 @@ const server = http.createServer(async (req, res) => {
         const { renderThumbnail } = await import("@/lib/server/render");
         const { uploadFile } = await import("@/lib/server/storage");
         
-        const localPath = await renderThumbnail(videoId, composition, style, outputKey, seed, index);
-        const cloudPath = await uploadFile(localPath, `thumbs/${outputKey}.png`, "image/png");
+        const result = await renderThumbnail(videoId, composition, style, outputKey, seed, index);
+        const cloudPath = await uploadFile(result.path, `thumbs/${outputKey}.png`, "image/png");
         
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: true, path: cloudPath }));
+        res.end(JSON.stringify({ success: true, path: cloudPath, grammar: result.grammar }));
       } catch (error) {
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: false, error: (error as Error).message }));
