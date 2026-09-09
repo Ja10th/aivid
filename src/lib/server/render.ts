@@ -235,105 +235,290 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
 }
 
 export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string): Promise<string> {
-  // New: Generate unique HTML-based thumbnail
+  // Generate unique HTML-based thumbnail spec (for design data)
   const { generateUniqueThumbnail } = await import("@/lib/video/unique-thumbnail");
   const seed = `${comp.seed}-${outputKey || id}`;
   const index = typeof style.themeVariant === "number" ? style.themeVariant : 0;
   const spec = generateUniqueThumbnail(comp, seed, index);
   
-  // Save HTML to temp file
-  const htmlFile = path.join(TMP_DIR, `thumb-${outputKey ?? id}.html`);
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
-  fs.writeFileSync(htmlFile, spec.html);
   
-  // Use puppeteer-core with chromium for serverless compatibility
-  try {
-    const puppeteer = await import("puppeteer-core");
-    const chromium = await import("@sparticuz/chromium");
-    
-    console.log("[Thumbnail] Using puppeteer-core with @sparticuz/chromium");
-    
-    const browser = await puppeteer.default.launch({
-      args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: await chromium.default.executablePath(),
-      headless: true,
-    });
-    
-    console.log("[Thumbnail] Puppeteer browser launched successfully");
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 720 });
-    await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle0' });
-    await page.screenshot({ path: file, type: 'png' });
-    await browser.close();
-    fs.unlinkSync(htmlFile); // Clean up HTML file
-    
-    console.log("[Thumbnail] Puppeteer rendering completed successfully");
-  } catch (error) {
-    console.warn("Puppeteer rendering failed, falling back to canvas:", (error as Error).message);
-    console.log("[Thumbnail] Rendering HTML string directly to canvas instead");
-    
-    // NEW: Render the HTML string as text on canvas instead of using old genre templates
-    ensureFonts();
-    const c = createCanvas(1280, 720);
-    const ctx = c.getContext("2d") as unknown as C2D;
-    
-    // Parse colors from the HTML spec
-    const bgMatch = spec.html.match(/background:([^;]+)/);
-    const bg = bgMatch ? bgMatch[1].trim() : "#0a0f1e";
-    
-    // Fill background
-    ctx.fillStyle = bg.includes("gradient") ? "#0a0f1e" : bg;
-    ctx.fillRect(0, 0, 1280, 720);
-    
-    // Extract and render the headline
-    const headlineMatch = spec.html.match(/<div class="headline">([^<]+)<\/div>/);
-    const headline = headlineMatch ? headlineMatch[1] : comp.meta?.title || "Brain Challenge";
-    
-    // Simple text rendering - large centered
-    ctx.font = "900 80px Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 8;
-    ctx.strokeText(headline, 640, 360);
-    ctx.fillStyle = "#fff";
-    ctx.fillText(headline, 640, 360);
-    
-    // Add a visual element based on grammar type
-    const isVS = spec.grammar.includes("vs") || spec.grammar.includes("battle");
-    const isQuestion = spec.grammar.includes("question");
-    const isNumber = spec.grammar.includes("number") || spec.grammar.includes("stat");
-    
-    if (isVS) {
-      ctx.font = "900 200px Arial, sans-serif";
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 12;
-      ctx.strokeText("VS", 640, 240);
-      ctx.fillStyle = "#ff2323";
-      ctx.fillText("VS", 640, 240);
-    } else if (isQuestion) {
-      ctx.font = "900 400px Arial, sans-serif";
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 20;
-      ctx.strokeText("?", 640, 300);
-      ctx.fillStyle = "#3fe0ff";
-      ctx.fillText("?", 640, 300);
-    } else if (isNumber) {
-      const numMatch = spec.html.match(/>(\d+)%?</);
-      const num = numMatch ? numMatch[1] : String(index * 20 + 10);
-      ctx.font = "900 280px Arial, sans-serif";
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 16;
-      ctx.strokeText(num, 640, 280);
-      ctx.fillStyle = "#ffd23f";
-      ctx.fillText(num, 640, 280);
-    }
-    
-    fs.writeFileSync(file, await c.encode("png"));
+  // Render the unique design directly to canvas (no HTML/Puppeteer needed)
+  console.log(`[Thumbnail] Rendering unique design: ${spec.grammar}`);
+  ensureFonts();
+  const c = createCanvas(1280, 720);
+  const ctx = c.getContext("2d") as unknown as C2D;
+  
+  // Get color palette from spec
+  const palettes = [
+    { bg: "#0a0f1e", primary: "#3fe0ff", accent: "#ff2323", text: "#ffffff" },
+    { bg: "#1a0f2e", primary: "#a855f7", accent: "#ffd23f", text: "#ffffff" },
+    { bg: "#1a0e0a", primary: "#ff6b35", accent: "#3fe0ff", text: "#ffffff" },
+    { bg: "#0c1821", primary: "#38bdf8", accent: "#f43f5e", text: "#ffffff" },
+    { bg: "#041c1e", primary: "#2dd4bf", accent: "#ec4899", text: "#ffffff" },
+  ];
+  const palette = palettes[index % palettes.length];
+  
+  // Extract headline
+  const words = (comp.meta?.title || "Brain Challenge").split(" ");
+  const headline = words.slice(0, Math.min(5, words.length)).join(" ");
+  
+  // Render based on grammar type
+  switch (spec.grammar) {
+    case "giant-question-mark":
+      renderGiantQuestionMark(ctx, headline, palette);
+      break;
+    case "split-comparison":
+    case "vs-battle":
+      renderVSBattle(ctx, headline, palette);
+      break;
+    case "stat-bar-hero":
+      renderStatBar(ctx, headline, palette, index);
+      break;
+    case "truth-stamp":
+      renderTruthStamp(ctx, headline, palette);
+      break;
+    case "impact-number":
+      renderImpactNumber(ctx, headline, palette, comp.scenes?.length || 10);
+      break;
+    case "grid-progression":
+      renderGrid(ctx, headline, palette);
+      break;
+    default:
+      renderDefault(ctx, headline, palette, index);
   }
   
+  fs.writeFileSync(file, await c.encode("png"));
+  console.log(`[Thumbnail] Saved to: ${file}`);
   return file;
+}
+
+// Canvas rendering functions for each grammar
+function renderGiantQuestionMark(ctx: C2D, headline: string, p: any) {
+  // Radial gradient background
+  const grad = ctx.createRadialGradient(640, 320, 100, 640, 320, 700);
+  grad.addColorStop(0, p.primary + "22");
+  grad.addColorStop(1, p.bg);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1280, 720);
+  
+  // Giant question mark
+  ctx.font = "900 550px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = p.primary;
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 60;
+  ctx.shadowOffsetY = 20;
+  ctx.fillText("?", 640, 320);
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  
+  // Headline at bottom
+  ctx.font = "900 52px Arial, sans-serif";
+  ctx.strokeStyle = p.bg;
+  ctx.lineWidth = 6;
+  ctx.strokeText(headline, 640, 620);
+  ctx.fillStyle = p.text;
+  ctx.fillText(headline, 640, 620);
+}
+
+function renderVSBattle(ctx: C2D, headline: string, p: any) {
+  // Split background
+  ctx.fillStyle = p.primary;
+  ctx.fillRect(0, 0, 640, 720);
+  ctx.fillStyle = p.accent;
+  ctx.fillRect(640, 0, 640, 720);
+  
+  // VS text
+  ctx.font = "900 280px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = p.bg;
+  ctx.shadowColor = "rgba(0,0,0,0.4)";
+  ctx.shadowBlur = 40;
+  ctx.shadowOffsetY = 15;
+  ctx.fillText("VS", 640, 360);
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  
+  // Headline box
+  ctx.fillStyle = p.bg;
+  ctx.fillRect(60, 600, 1160, 90);
+  ctx.font = "900 48px Arial, sans-serif";
+  ctx.fillStyle = p.text;
+  ctx.fillText(headline, 640, 645);
+}
+
+function renderStatBar(ctx: C2D, headline: string, p: any, index: number) {
+  ctx.fillStyle = p.bg;
+  ctx.fillRect(0, 0, 1280, 720);
+  
+  const percentage = (index * 19 + 23) % 96 + 5;
+  
+  // Label
+  ctx.font = "700 42px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = p.primary;
+  ctx.fillText("CHALLENGE LEVEL", 640, 180);
+  
+  // Bar track
+  ctx.strokeStyle = p.text;
+  ctx.lineWidth = 8;
+  ctx.strokeRect(140, 230, 1000, 100);
+  
+  // Bar fill
+  ctx.fillStyle = p.accent;
+  ctx.fillRect(140, 230, 1000 * (percentage / 100), 100);
+  
+  // Percentage number
+  ctx.font = "900 200px Arial, sans-serif";
+  ctx.strokeStyle = p.accent;
+  ctx.lineWidth = 10;
+  ctx.strokeText(`${percentage}%`, 640, 480);
+  ctx.fillStyle = p.text;
+  ctx.fillText(`${percentage}%`, 640, 480);
+  
+  // Headline
+  ctx.font = "800 44px Arial, sans-serif";
+  ctx.fillStyle = p.text;
+  ctx.fillText(headline, 640, 600);
+}
+
+function renderTruthStamp(ctx: C2D, headline: string, p: any) {
+  ctx.fillStyle = p.bg;
+  ctx.fillRect(0, 0, 1280, 720);
+  
+  // Rotated stamp
+  ctx.save();
+  ctx.translate(640, 360);
+  ctx.rotate(-0.2);
+  
+  ctx.strokeStyle = p.accent;
+  ctx.lineWidth = 20;
+  ctx.strokeRect(-280, -120, 560, 240);
+  
+  ctx.font = "900 140px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = p.accent;
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 80;
+  ctx.fillText("TRUE?", 0, 0);
+  ctx.shadowBlur = 0;
+  
+  ctx.restore();
+  
+  // Headline
+  ctx.font = "900 50px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = p.text;
+  ctx.fillText(headline, 640, 640);
+}
+
+function renderImpactNumber(ctx: C2D, headline: string, p: any, count: number) {
+  const grad = ctx.createRadialGradient(640, 280, 100, 640, 280, 600);
+  grad.addColorStop(0, p.accent + "33");
+  grad.addColorStop(0.7, p.bg);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1280, 720);
+  
+  // Big number
+  ctx.font = "900 380px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.strokeStyle = p.accent;
+  ctx.lineWidth = 8;
+  ctx.strokeText(String(count), 640, 300);
+  ctx.fillStyle = p.text;
+  ctx.shadowColor = p.accent;
+  ctx.shadowBlur = 60;
+  ctx.fillText(String(count), 640, 300);
+  ctx.shadowBlur = 0;
+  
+  // Headline
+  ctx.font = "900 56px Arial, sans-serif";
+  ctx.fillStyle = p.text;
+  ctx.fillText(headline, 640, 560);
+}
+
+function renderGrid(ctx: C2D, headline: string, p: any) {
+  ctx.fillStyle = p.bg;
+  ctx.fillRect(0, 0, 1280, 720);
+  
+  // 5x3 grid
+  const cellW = 200, cellH = 160, gap = 20;
+  const startX = 140, startY = 100;
+  
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 5; col++) {
+      const num = row * 5 + col + 1;
+      const x = startX + col * (cellW + gap);
+      const y = startY + row * (cellH + gap);
+      
+      const isHighlight = num === 1 || num === 5 || num === 11;
+      ctx.fillStyle = isHighlight ? p.accent : p.primary;
+      ctx.fillRect(x, y, cellW, cellH);
+      
+      ctx.font = "900 80px Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = p.bg;
+      ctx.fillText(String(num), x + cellW / 2, y + cellH / 2);
+    }
+  }
+  
+  // Headline overlay
+  const gradOverlay = ctx.createLinearGradient(0, 600, 0, 720);
+  gradOverlay.addColorStop(0, "transparent");
+  gradOverlay.addColorStop(0.3, p.bg);
+  ctx.fillStyle = gradOverlay;
+  ctx.fillRect(0, 600, 1280, 120);
+  
+  ctx.font = "900 48px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillStyle = p.text;
+  ctx.fillText(headline, 640, 670);
+}
+
+function renderDefault(ctx: C2D, headline: string, p: any, index: number) {
+  const grad = ctx.createRadialGradient(640, 360, 100, 640, 360, 800);
+  grad.addColorStop(0, p.primary + "22");
+  grad.addColorStop(1, p.bg);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1280, 720);
+  
+  // Shape
+  const rotation = (index * 37 - 20) * (Math.PI / 180);
+  ctx.save();
+  ctx.translate(640, 360);
+  ctx.rotate(rotation);
+  ctx.fillStyle = p.accent;
+  ctx.shadowColor = "rgba(0,0,0,0.6)";
+  ctx.shadowBlur = 80;
+  ctx.shadowOffsetY = 30;
+  
+  if (index % 3 === 0) {
+    ctx.beginPath();
+    ctx.arc(0, 0, 200, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillRect(-200, -200, 400, 400);
+  }
+  
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.restore();
+  
+  // Headline
+  ctx.font = "900 60px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.strokeStyle = p.bg;
+  ctx.lineWidth = 6;
+  ctx.strokeText(headline, 640, 620);
+  ctx.fillStyle = p.text;
+  ctx.fillText(headline, 640, 620);
 }
 
 export async function renderPreviewFrame(comp: Composition, t: number): Promise<Buffer> {
