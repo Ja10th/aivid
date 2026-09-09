@@ -271,11 +271,65 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     console.log("[Thumbnail] Puppeteer rendering completed successfully");
   } catch (error) {
     console.warn("Puppeteer rendering failed, falling back to canvas:", (error as Error).message);
-    console.log("[Thumbnail] Using canvas fallback with unique HTML-generated design");
-    // Fallback to old canvas-based rendering
+    console.log("[Thumbnail] Rendering HTML string directly to canvas instead");
+    
+    // NEW: Render the HTML string as text on canvas instead of using old genre templates
     ensureFonts();
     const c = createCanvas(1280, 720);
-    drawThumbnail(c.getContext("2d") as unknown as C2D, comp, style, 1280, 720);
+    const ctx = c.getContext("2d") as unknown as C2D;
+    
+    // Parse colors from the HTML spec
+    const bgMatch = spec.html.match(/background:([^;]+)/);
+    const bg = bgMatch ? bgMatch[1].trim() : "#0a0f1e";
+    
+    // Fill background
+    ctx.fillStyle = bg.includes("gradient") ? "#0a0f1e" : bg;
+    ctx.fillRect(0, 0, 1280, 720);
+    
+    // Extract and render the headline
+    const headlineMatch = spec.html.match(/<div class="headline">([^<]+)<\/div>/);
+    const headline = headlineMatch ? headlineMatch[1] : comp.meta?.title || "Brain Challenge";
+    
+    // Simple text rendering - large centered
+    ctx.font = "900 80px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 8;
+    ctx.strokeText(headline, 640, 360);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(headline, 640, 360);
+    
+    // Add a visual element based on grammar type
+    const isVS = spec.grammar.includes("vs") || spec.grammar.includes("battle");
+    const isQuestion = spec.grammar.includes("question");
+    const isNumber = spec.grammar.includes("number") || spec.grammar.includes("stat");
+    
+    if (isVS) {
+      ctx.font = "900 200px Arial, sans-serif";
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 12;
+      ctx.strokeText("VS", 640, 240);
+      ctx.fillStyle = "#ff2323";
+      ctx.fillText("VS", 640, 240);
+    } else if (isQuestion) {
+      ctx.font = "900 400px Arial, sans-serif";
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 20;
+      ctx.strokeText("?", 640, 300);
+      ctx.fillStyle = "#3fe0ff";
+      ctx.fillText("?", 640, 300);
+    } else if (isNumber) {
+      const numMatch = spec.html.match(/>(\d+)%?</);
+      const num = numMatch ? numMatch[1] : String(index * 20 + 10);
+      ctx.font = "900 280px Arial, sans-serif";
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 16;
+      ctx.strokeText(num, 640, 280);
+      ctx.fillStyle = "#ffd23f";
+      ctx.fillText(num, 640, 280);
+    }
+    
     fs.writeFileSync(file, await c.encode("png"));
   }
   
