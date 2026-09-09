@@ -228,20 +228,38 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
 
   // 4) Thumbnail
   await report(96, "thumbnail");
-  const thumbPath = await renderThumbnail(id, comp, thumbStyle);
+  const { path: thumbPath } = await renderThumbnail(id, comp, thumbStyle);
   fs.rmSync(tmp, { recursive: true, force: true });
   await report(100, "done");
   return { videoPath: out, thumbPath, durationSec: D };
 }
 
-export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string, explicitSeed?: string, explicitIndex?: number): Promise<string> {
+export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string, explicitSeed?: string, explicitIndex?: number): Promise<{ path: string; grammar: string }> {
   // Generate unique HTML-based thumbnail
   const { generateUniqueThumbnail } = await import("@/lib/video/unique-thumbnail");
+  
+  // Fetch recently used grammars to avoid duplication (last 50 published videos)
+  let excludeGrammars: string[] = [];
+  try {
+    const { db } = await import("@/db");
+    const { thumbnailFingerprints } = await import("@/db/schema");
+    const { desc, isNotNull } = await import("drizzle-orm");
+    const recent = await db
+      .select({ grammar: thumbnailFingerprints.grammar })
+      .from(thumbnailFingerprints)
+      .where(isNotNull(thumbnailFingerprints.grammar))
+      .orderBy(desc(thumbnailFingerprints.createdAt))
+      .limit(50);
+    excludeGrammars = recent.map(r => r.grammar).filter((g): g is string => !!g);
+    console.log(`[Thumbnail] Excluding ${excludeGrammars.length} recently used grammars`);
+  } catch (error) {
+    console.warn("[Thumbnail] Could not fetch used grammars:", (error as Error).message);
+  }
   
   // Use explicit parameters if provided (for consistent regeneration), otherwise fallback to defaults
   const seedBase = explicitSeed || `${comp.seed}-${outputKey || id}`;
   const index = explicitIndex !== undefined ? explicitIndex : (typeof style.themeVariant === "number" ? style.themeVariant : 0);
-  const spec = generateUniqueThumbnail(comp, seedBase, index);
+  const spec = generateUniqueThumbnail(comp, seedBase, index, excludeGrammars);
   
   const htmlFile = path.join(TMP_DIR, `thumb-${outputKey ?? id}.html`);
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
@@ -275,7 +293,7 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     try { fs.unlinkSync(htmlFile); } catch {}
     
     console.log(`[Thumbnail] ✓ Puppeteer render complete: ${file}`);
-    return file;
+    return { path: file, grammar: spec.grammar };
   } catch (error) {
     console.error("[Thumbnail] Puppeteer failed:", (error as Error).message);
     console.log("[Thumbnail] Falling back to canvas rendering...");
@@ -323,7 +341,7 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     
     fs.writeFileSync(file, await c.encode("png"));
     console.log(`[Thumbnail] ✓ Canvas fallback complete: ${file}`);
-    return file;
+    return { path: file, grammar: spec.grammar };
   }
 }
 

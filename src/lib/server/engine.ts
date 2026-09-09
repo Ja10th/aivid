@@ -130,9 +130,11 @@ export async function createVideo(input: CreateVideoInput): Promise<Video> {
   await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: row.id }).onConflictDoNothing();
   // pre-render the thumbnail immediately so the UI has something to show
   try {
-    const tp = await renderThumbnail(row.id, comp, style);
+    const { path: tp, grammar } = await renderThumbnail(row.id, comp, style);
     const storedThumb = await uploadFile(tp, `thumbs/${row.id}.png`, "image/png");
     await db.update(videos).set({ thumbPath: storedThumb }).where(eq(videos.id, row.id));
+    // Store the grammar used
+    await db.update(thumbnailFingerprints).set({ grammar }).where(eq(thumbnailFingerprints.fingerprint, fingerprint));
     row.thumbPath = storedThumb;
   } catch (e) { console.warn("thumb prerender failed", e); }
   kickWorker();

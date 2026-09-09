@@ -82,6 +82,7 @@ export const thumbnailFingerprints = pgTable("thumbnail_fingerprints", {
   id: serial("id").primaryKey(),
   fingerprint: text("fingerprint").notNull().unique(),
   videoId: integer("video_id"),
+  grammar: text("grammar"), // Track which grammar was used to prevent duplicates
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

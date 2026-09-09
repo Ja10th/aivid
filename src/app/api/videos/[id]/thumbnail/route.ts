@@ -95,14 +95,14 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
           } catch (error) {
             console.error(`[Thumbnail] Worker failed, falling back to local:`, (error as Error).message);
             const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index);
-            path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
+            path = await uploadFile(localThumbPath.path, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           }
         } else {
           // Render locally (canvas fallback on Vercel)
           console.log(`[Thumbnail] Rendering variant ${index} locally...`);
           const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index);
-          console.log(`[Thumbnail] Rendered to: ${localThumbPath}`);
-          path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
+          console.log(`[Thumbnail] Rendered to: ${localThumbPath.path}`);
+          path = await uploadFile(localThumbPath.path, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           console.log(`[Thumbnail] Uploaded to: ${path}`);
         }
         
@@ -132,17 +132,21 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       themeVariant: index 
     };
     
-    const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`, baseSeed, index);
-    const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}-${fingerprint}.png`, "image/png");
+    const result = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`, baseSeed, index);
+    const thumbPath = await uploadFile(result.path, `thumbs/${video.id}-${fingerprint}.png`, "image/png");
     
     if (video.youtubeVideoId) {
       if (!video.channelId) throw new Error("posted video has no connected YouTube channel");
       const [channel] = await db.select().from(channels).where(eq(channels.id, video.channelId));
       if (!channel) throw new Error("connected YouTube channel not found");
-      await updateVideoThumbnail(channel, video.youtubeVideoId, localThumbPath);
+      await updateVideoThumbnail(channel, video.youtubeVideoId, result.path);
     }
     
-    await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id }).onConflictDoNothing();
+    // Store grammar with fingerprint to track usage
+    await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id, grammar: result.grammar }).onConflictDoUpdate({
+      target: thumbnailFingerprints.fingerprint,
+      set: { grammar: result.grammar }
+    });
     const [updated] = await db.update(videos).set({ thumbnailStyle: style, thumbnailFingerprint: fingerprint, thumbPath }).where(eq(videos.id, video.id)).returning();
     return Response.json({ video: updated, variants: [] });
   } catch (error) {
