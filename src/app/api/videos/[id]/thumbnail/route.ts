@@ -24,7 +24,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const { id } = await params;
     const [video] = await db.select().from(videos).where(eq(videos.id, Number(id)));
     if (!video) return bad("not found", 404);
-    const body = await _.json().catch(() => ({})) as { action?: string; index?: number; fingerprint?: string; seed?: string };
+    const body = await _.json().catch(() => ({})) as { action?: string; index?: number; fingerprint?: string; seed?: string; path?: string; grammar?: string };
 
     const comp: Composition = {
       ...(video.composition as Composition),
@@ -115,13 +115,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const index = Number(body.index);
     if (!Number.isInteger(index) || index < 0 || index >= 5) return bad("invalid thumbnail option", 400);
     
-    // When selecting a variant, we should regenerate with the SAME fingerprint as the variant
-    // to ensure the exact same thumbnail is used
     const fingerprint = body.fingerprint || uniqueThumbFingerprint(baseSeed, index);
-    
-    // Regenerate the thumbnail with exact same parameters
-    console.log(`[Thumbnail] Regenerating selected variant ${index} with seed=${baseSeed}, fingerprint=${fingerprint}`);
-    
     const style: ThumbStyle = { 
       paletteIdx: index, 
       fontIdx: 0, 
@@ -135,11 +129,11 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       themeVariant: index 
     };
     
-    // Use the SAME outputKey format as variants: ${video.id}-variant-${index}-${fingerprint}
-    // This ensures we regenerate to the exact same path/filename
     const outputKey = `${video.id}-variant-${index}-${fingerprint}`;
-    const result = await renderThumbnail(video.id, comp, style, outputKey, baseSeed, index, true);
-    const thumbPath = await uploadFile(result.path, `thumbs/${outputKey}.png`, "image/png");
+    const thumbPath = body.path || await (async () => {
+      const result = await renderThumbnail(video.id, comp, style, outputKey, baseSeed, index, true);
+      return uploadFile(result.path, `thumbs/${outputKey}.png`, "image/png");
+    })();
     
     if (video.youtubeVideoId) {
       if (!video.channelId) throw new Error("posted video has no connected YouTube channel");
@@ -150,9 +144,9 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     }
     
     // Store grammar with fingerprint to track usage
-    await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id, grammar: result.grammar }).onConflictDoUpdate({
+    await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id, grammar: body.grammar ?? null }).onConflictDoUpdate({
       target: thumbnailFingerprints.fingerprint,
-      set: { grammar: result.grammar }
+      set: { grammar: body.grammar ?? null }
     });
     const [updated] = await db.update(videos).set({ thumbnailStyle: style, thumbnailFingerprint: fingerprint, thumbPath }).where(eq(videos.id, video.id)).returning();
     return Response.json({ video: updated, variants: [] });

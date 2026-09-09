@@ -130,8 +130,24 @@ export async function createVideo(input: CreateVideoInput): Promise<Video> {
   await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: row.id }).onConflictDoNothing();
   // pre-render the thumbnail immediately so the UI has something to show
   try {
-    const { path: tp, grammar } = await renderThumbnail(row.id, comp, style);
-    const storedThumb = await uploadFile(tp, `thumbs/${row.id}-${fingerprint}.png`, "image/png");
+    const outputKey = `${row.id}-${fingerprint}`;
+    let storedThumb: string;
+    let grammar: string;
+    if (process.env.RENDER_WORKER_URL) {
+      const response = await fetch(`${process.env.RENDER_WORKER_URL}/render-thumbnail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId: row.id, composition: comp, style, seed: comp.seed, index: style.themeVariant, outputKey }),
+      });
+      const result = await response.json() as { success?: boolean; path?: string; grammar?: string; error?: string };
+      if (!response.ok || !result.success || !result.path || !result.grammar) throw new Error(result.error || "thumbnail worker failed");
+      storedThumb = result.path;
+      grammar = result.grammar;
+    } else {
+      const result = await renderThumbnail(row.id, comp, style);
+      storedThumb = await uploadFile(result.path, `thumbs/${row.id}-${fingerprint}.png`, "image/png");
+      grammar = result.grammar;
+    }
     await db.update(videos).set({ thumbPath: storedThumb }).where(eq(videos.id, row.id));
     // Store the grammar used
     await db.update(thumbnailFingerprints).set({ grammar }).where(eq(thumbnailFingerprints.fingerprint, fingerprint));

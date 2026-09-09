@@ -66,7 +66,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const chooseThumb = async (index: number) => {
     const variant = variants.find((item) => item.index === index);
     if (!variant) return;
-    const j = await call("thumbnail selected", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "select", index, fingerprint: variant.fingerprint, seed: variant.seed, style: variant.style }) }));
+    const j = await call("thumbnail selected", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "select", index, fingerprint: variant.fingerprint, seed: variant.seed, path: variant.path }) }));
     if (j?.video) setVariants([]);
   };
   const del = async () => { if (!confirm("Delete this video and its files?")) return; await call("delete", () => fetch(`/api/videos/${video.id}`, { method: "DELETE" })); router.push("/videos"); };
@@ -112,11 +112,11 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
         {msg && <div className="t-vt mt-3 ml-4 text-oxblood">{msg}</div>}
         {variants.length > 0 && <div ref={thumbsRef} className="mt-6 ml-4">
           <div className="t-vt text-oxblood mb-3">choose a thumbnail <span className="opacity-50">— click to use it</span></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {variants.map((variant) => (
               <button key={variant.fingerprint} onClick={() => chooseThumb(variant.index)} disabled={!!busy} className="text-left group relative">
                 <div className="relative overflow-hidden rounded-sm">
-                  <img src={thumbnailPreviewUrl(variant.path, variant.fingerprint)} alt={`Thumbnail option ${variant.index + 1}`} className="w-full group-hover:scale-[1.04] transition-transform duration-200" />
+                  <img src={thumbnailPreviewUrl(variant.path, variant.fingerprint)} alt={`Thumbnail option ${variant.index + 1}`} className="w-full aspect-video object-cover group-hover:scale-[1.04] transition-transform duration-200" />
                   <div className="absolute inset-0 border-2 border-transparent group-hover:border-acid transition-colors rounded-sm pointer-events-none" />
                 </div>
                 <span className="t-vt block mt-1 text-xs opacity-60 group-hover:opacity-100 transition-opacity">variation {variant.index + 1} · tap to use</span>
