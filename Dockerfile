@@ -10,8 +10,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (including tsx)
-RUN npm ci
+# Install ALL dependencies (including tsx) and allow puppeteer postinstall
+RUN npm ci --omit=optional || true && \
+    npx puppeteer browsers install chrome
 
 # Copy application files
 COPY . .
@@ -22,9 +23,6 @@ RUN mkdir -p /app/data/videos /app/data/thumbs /app/data/tmp /app/data/music && 
 
 # Expose port
 EXPOSE 10000
-
-# Set Puppeteer to use installed Chrome
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
 # Switch back to non-root user
 USER pptruser
