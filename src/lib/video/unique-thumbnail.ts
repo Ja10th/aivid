@@ -111,7 +111,7 @@ function extractHook(comp: Composition): string {
 /**
  * Choose a composition grammar based on the hook
  */
-function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = []): string {
+function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], variantIndex = 0): string {
   const hookLower = hook.toLowerCase();
   
   // Helper to filter out excluded grammars
@@ -119,104 +119,108 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = []): 
     const available = options.filter(g => !excludeGrammars.includes(g));
     return available.length > 0 ? available : options;
   };
+  const pickGrammar = (options: string[]) => {
+    const available = filterOptions(options);
+    return available[variantIndex % available.length] ?? rng.pick(available);
+  };
   
   // EYE TRAINING - calm, medical, focus-oriented
   if (hookLower.includes("eye") || hookLower.includes("follow") || hookLower.includes("track") || hookLower.includes("focus") || hookLower.includes("vision")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "concentric-target",      // Target/bullseye with tracking lines
       "medical-diagram",        // Clean anatomical eye diagram style
       "zen-circle",             // Enso circle with calm typography
       "gradient-orb",           // Smooth gradient sphere to follow
       "focus-crosshair"         // Precision crosshair overlay
-    ]));
+    ]);
   }
   
   // RIDDLES - mysterious, question-focused
   if (hookLower.includes("riddle") || hookLower.includes("question") || hookLower.includes("think")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "giant-question-mark",    // We have this
       "lock-and-key",           // Puzzle lock with keyhole
       "magnifying-mystery",     // Giant magnifying glass
       "scattered-clues",        // Evidence board with red string
       "shadow-silhouette"       // Mystery figure in shadow
-    ]));
+    ]);
   }
   
   // MEMORY - grids, sequences, patterns
   if (hookLower.includes("sequence") || hookLower.includes("remember") || hookLower.includes("memory") || hookLower.includes("item")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "grid-faces",             // We have this
       "card-flip-grid",         // Memory card game layout
       "numbered-sequence",      // Numbered tiles with one missing
       "brain-network",          // Neural network visualization
       "polaroid-scatter"        // Scattered photos to remember
-    ]));
+    ]);
   }
   
   // CHOICES / WOULD YOU RATHER - split, versus, comparison
   if (hookLower.includes("choice") || hookLower.includes("rather") || hookLower.includes("decide") || hookLower.includes("reveal")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "vs-battle",              // We have this
       "split-doors",            // Two doors, different colors
       "scale-balance",          // Tilted balance scale
       "road-fork",              // Path splits into two
       "boxing-ring"             // Two corners, fighting stance
-    ]));
+    ]);
   }
   
   // MYTHS / FACTS - stamps, debunking, truth/false
   if (hookLower.includes("myth") || hookLower.includes("debunk") || hookLower.includes("fact") || hookLower.includes("truth") || hookLower.includes("lie")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "truth-stamp",            // We have this
       "red-x-overlay",          // Giant red X with "MYTH" text
       "fact-check-badge",       // Verified checkmark badge
       "newspaper-headline",     // Breaking news style
       "detective-files"         // Case files spread out
-    ]));
+    ]);
   }
   
   // POLLS / OPINIONS - voting, stats, percentages
   if (hookLower.includes("poll") || hookLower.includes("vote") || hookLower.includes("opinion")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "hand-raising",           // Silhouette hands raised
       "pie-chart-hero",         // Giant pie chart
       "voting-booth",           // Classic voting booth
       "bar-graph-race",         // Animated bars
       "crowd-silhouettes"       // Audience voting
-    ]));
+    ]);
   }
   
   // MATH - equations, numbers, calculations
   if (hookLower.includes("math") || hookLower.includes("calculate") || hookLower.includes("solve") || hookLower.includes("problem")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "chalkboard-equation",    // We have this
       "calculator-closeup",     // Giant calculator display
       "floating-numbers",       // Numbers floating in 3D
       "blueprint-grid",         // Technical grid with equations
       "abacus-vintage"          // Retro abacus aesthetic
-    ]));
+    ]);
   }
   
   // CHALLENGES / TESTS - intensity, competition
   if (hookLower.includes("challenge") || hookLower.includes("test") || hookLower.includes("skill") || hookLower.includes("limit")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "boss-hp-bar",            // We have this
       "progress-ring-fire",     // Circular progress on fire
       "stopwatch-pressure",     // Giant ticking stopwatch
       "level-up-badge",         // RPG level up screen
       "mountain-peak"           // Climbing to summit
-    ]));
+    ]);
   }
   
   // GAMES / GAMEPLAY
   if (hookLower.includes("game") || hookLower.includes("play") || hookLower.includes("controller") || hookLower.includes("boss")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "boss-hp-bar",            // We have this
       "game-over-glitch",       // Glitchy game over screen
       "arcade-cabinet",         // Retro arcade frame
       "controller-smash",       // Broken controller
       "pixel-art-hero"          // 8-bit character
-    ]));
+    ]);
   }
   
   // STORIES - narrative, cinematic
@@ -231,7 +235,7 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = []): 
   }
   
   // DEFAULT - wild variety
-  return rng.pick(filterOptions([
+  return pickGrammar([
     "neon-sign",              // We have this
     "torn-photo",             // We have this  
     "isometric-room",         // We have this
@@ -240,7 +244,7 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = []): 
     "magazine-cover",         // Editorial magazine
     "ticket-stub",            // Torn ticket aesthetic
     "receipt-crumpled"        // Crumpled receipt texture
-  ]));
+  ]);
 }
 
 /**
@@ -249,7 +253,7 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = []): 
 export function generateUniqueThumbnail(comp: Composition, seed: string, index: number = 0, excludeGrammars: string[] = []): UniqueThumbnailSpec {
   const rng = new RNG(`${seed}-thumb-${index}`);
   const hook = extractHook(comp);
-  const grammar = chooseGrammar(hook, rng, excludeGrammars);
+  const grammar = chooseGrammar(hook, rng, excludeGrammars, index);
   
   // Rich color palettes with texture colors
   const palettes = [
