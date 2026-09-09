@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@napi-rs/canvas", "ffmpeg-static", "msedge-tts"],
+  serverExternalPackages: ["@napi-rs/canvas", "ffmpeg-static", "msedge-tts", "@resvg/resvg-js"],
   outputFileTracingExcludes: { "*": ["./public/music/**", "./data/**"] },
 };
 
