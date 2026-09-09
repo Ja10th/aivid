@@ -44,10 +44,13 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       // Generate 5 completely unique thumbnail variants
       console.log(`[Thumbnail] Generating 5 unique HTML thumbnails for video ${video.id}`);
       const variants = [];
+      
+      // Check if we should use the Render worker for better quality
+      const useWorker = process.env.RENDER_WORKER_URL && !process.env.VERCEL;
+      
       for (let index = 0; index < 5; index++) {
         const fingerprint = uniqueThumbFingerprint(uniqueSeed, index);
         console.log(`[Thumbnail] Variant ${index}: fingerprint=${fingerprint}`);
-        // Empty style object - we're using unique HTML generation now, not ThumbStyle
         const style: ThumbStyle = { 
           paletteIdx: index, 
           fontIdx: 0, 
@@ -60,11 +63,44 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
           textVariant: 0, 
           themeVariant: index 
         };
-        console.log(`[Thumbnail] Rendering variant ${index} with unique HTML system...`);
-        const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
-        console.log(`[Thumbnail] Rendered to: ${localThumbPath}`);
-        const path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
-        console.log(`[Thumbnail] Uploaded to: ${path}`);
+        
+        let path: string;
+        
+        if (useWorker) {
+          // Use Render worker for Puppeteer rendering
+          console.log(`[Thumbnail] Requesting render from worker...`);
+          try {
+            const response = await fetch(`${process.env.RENDER_WORKER_URL}/render-thumbnail`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                videoId: video.id,
+                composition: comp,
+                style,
+                outputKey: `${video.id}-variant-${index}-${fingerprint}`,
+              }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              path = result.path;
+              console.log(`[Thumbnail] Worker rendered: ${path}`);
+            } else {
+              throw new Error(result.error);
+            }
+          } catch (error) {
+            console.error(`[Thumbnail] Worker failed, falling back to local:`, (error as Error).message);
+            const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
+            path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
+          }
+        } else {
+          // Render locally (canvas fallback on Vercel)
+          console.log(`[Thumbnail] Rendering variant ${index} locally...`);
+          const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
+          console.log(`[Thumbnail] Rendered to: ${localThumbPath}`);
+          path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
+          console.log(`[Thumbnail] Uploaded to: ${path}`);
+        }
+        
         variants.push({ index, path, fingerprint, style });
       }
       console.log(`[Thumbnail] Successfully generated ${variants.length} variants`);
