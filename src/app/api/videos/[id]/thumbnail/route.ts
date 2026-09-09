@@ -37,8 +37,11 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       scenes: (video.composition as Composition)?.scenes || [],
     };
 
-    // Generate unique thumbnail seed for this regeneration session
-    const uniqueSeed = `${video.seed}-${Date.now()}`;
+    // Use consistent seed - only change when explicitly regenerating new options
+    // If user is selecting a variant, use the original video seed to maintain consistency
+    const baseSeed = body.action === "select" && body.fingerprint 
+      ? video.seed // Use original seed when selecting to ensure consistency
+      : `${video.seed}-${Date.now()}`; // New seed when generating new options
 
     if (body.action !== "select") {
       // Generate 5 completely unique thumbnail variants
@@ -49,7 +52,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       const useWorker = !!process.env.RENDER_WORKER_URL;
       
       for (let index = 0; index < 5; index++) {
-        const fingerprint = uniqueThumbFingerprint(uniqueSeed, index);
+        const fingerprint = uniqueThumbFingerprint(baseSeed, index);
         console.log(`[Thumbnail] Variant ${index}: fingerprint=${fingerprint}`);
         const style: ThumbStyle = { 
           paletteIdx: index, 
@@ -109,7 +112,9 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
     const index = Number(body.index);
     if (!Number.isInteger(index) || index < 0 || index >= 5) return bad("invalid thumbnail option", 400);
-    const fingerprint = body.fingerprint || uniqueThumbFingerprint(uniqueSeed, index);
+    
+    // CRITICAL FIX: Use the fingerprint from the selected variant to regenerate EXACTLY the same thumbnail
+    const fingerprint = body.fingerprint || uniqueThumbFingerprint(baseSeed, index);
     
     // Empty style object - unique HTML generation doesn't use ThumbStyle
     const style: ThumbStyle = { 
