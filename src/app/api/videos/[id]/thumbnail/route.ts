@@ -115,10 +115,13 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const index = Number(body.index);
     if (!Number.isInteger(index) || index < 0 || index >= 5) return bad("invalid thumbnail option", 400);
     
-    // CRITICAL FIX: Use the fingerprint from the selected variant to regenerate EXACTLY the same thumbnail
+    // When selecting a variant, we should regenerate with the SAME fingerprint as the variant
+    // to ensure the exact same thumbnail is used
     const fingerprint = body.fingerprint || uniqueThumbFingerprint(baseSeed, index);
     
-    // Empty style object - unique HTML generation doesn't use ThumbStyle
+    // Regenerate the thumbnail with exact same parameters
+    console.log(`[Thumbnail] Regenerating selected variant ${index} with seed=${baseSeed}, fingerprint=${fingerprint}`);
+    
     const style: ThumbStyle = { 
       paletteIdx: index, 
       fontIdx: 0, 
@@ -132,9 +135,11 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       themeVariant: index 
     };
     
-    // Pass skipExclusion=true so we get EXACTLY the same grammar as when variants were generated
-    const result = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`, baseSeed, index, true);
-    const thumbPath = await uploadFile(result.path, `thumbs/${video.id}-${fingerprint}.png`, "image/png`);
+    // Use the SAME outputKey format as variants: ${video.id}-variant-${index}-${fingerprint}
+    // This ensures we regenerate to the exact same path/filename
+    const outputKey = `${video.id}-variant-${index}-${fingerprint}`;
+    const result = await renderThumbnail(video.id, comp, style, outputKey, baseSeed, index, true);
+    const thumbPath = await uploadFile(result.path, `thumbs/${outputKey}.png`, "image/png");
     
     if (video.youtubeVideoId) {
       if (!video.channelId) throw new Error("posted video has no connected YouTube channel");
