@@ -252,8 +252,8 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
         .where(isNotNull(thumbnailFingerprints.grammar))
         .orderBy(desc(thumbnailFingerprints.createdAt))
         .limit(50);
-      excludeGrammars = recent.map(r => r.grammar).filter((g): g is string => !!g);
-      console.log(`[Thumbnail] Excluding ${excludeGrammars.length} recently used grammars`);
+      excludeGrammars = [...new Set(recent.map(r => r.grammar).filter((g): g is string => !!g))];
+      console.log(`[Thumbnail] Loaded ${excludeGrammars.length} recently used grammars for variety`);
     } catch (error) {
       console.warn("[Thumbnail] Could not fetch used grammars:", (error as Error).message);
     }
@@ -270,7 +270,7 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
   fs.writeFileSync(htmlFile, spec.html);
   
-  console.log(`[Thumbnail] Rendering ${spec.grammar} via Puppeteer...`);
+  console.log(`[Thumbnail] Rendering ${spec.grammar} via Puppeteer (HTML)...`);
   
   try {
     const puppeteer = await import("puppeteer");
@@ -301,8 +301,9 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     console.log(`[Thumbnail] ✓ Puppeteer render complete: ${file}`);
     return { path: file, grammar: spec.grammar };
   } catch (error) {
-    console.error("[Thumbnail] Puppeteer failed:", (error as Error).message);
-    console.log("[Thumbnail] Falling back to canvas rendering...");
+    console.error("[Thumbnail] Puppeteer HTML render failed:", (error as Error).message);
+    if (process.env.REQUIRE_PUPPETEER_THUMBNAILS === "true") throw error;
+    console.log("[Thumbnail] Falling back to canvas rendering because the browser render failed...");
     
     // Canvas fallback
     ensureFonts();

@@ -117,7 +117,7 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = []): 
   // Helper to filter out excluded grammars
   const filterOptions = (options: string[]) => {
     const available = options.filter(g => !excludeGrammars.includes(g));
-    return available.length > 0 ? available : options; // Fallback to all if all are used
+    return available.length > 0 ? available : options;
   };
   
   // EYE TRAINING - calm, medical, focus-oriented

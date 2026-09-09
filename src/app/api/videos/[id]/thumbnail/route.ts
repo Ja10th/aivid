@@ -103,7 +103,8 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
               throw new Error(result.error);
             }
           } catch (error) {
-            console.error(`[Thumbnail] Worker failed, falling back to local:`, (error as Error).message);
+            console.error(`[Thumbnail] Worker failed:`, (error as Error).message);
+            if (process.env.RENDER_WORKER_URL) throw error;
             const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index, false);
             path = await uploadFile(localThumbPath.path, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           }

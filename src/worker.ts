@@ -3,6 +3,7 @@ import http from "http";
 
 config({ path: ".env.local" });
 config();
+process.env.REQUIRE_PUPPETEER_THUMBNAILS = "true";
 const intervalMs = Number(process.env.WORKER_INTERVAL_MS || 5000);
 const once = process.env.WORKER_ONCE === "true";
 const port = Number(process.env.PORT || 10000);
