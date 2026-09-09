@@ -5,10 +5,11 @@ import { automations, channels, musicTracks, thumbnailFingerprints, videos, type
 import { and, asc, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { generateComposition } from "@/lib/video/generate";
 import { Composition, RNG, CATEGORIES } from "@/lib/video/core";
-import { randomThumbStyle, styleFingerprint, thumbnailCandidates, thumbnailScore, ThumbStyle } from "@/lib/video/thumbnail";
+import { ThumbStyle } from "@/lib/video/thumbnail";
 import { renderVideo, MUSIC_DIR, UPLOADS_MUSIC_DIR, renderThumbnail } from "./render";
 import { uploadVideo } from "./youtube";
 import { downloadFile, uploadFile, deleteFile } from "./storage";
+import crypto from "crypto";
 
 type G = typeof globalThis & { __studioWorker?: { running: boolean; timer?: NodeJS.Timeout; started: boolean; lastTick?: number } };
 const g = globalThis as G;
@@ -45,18 +46,44 @@ async function pickMusic(mood: string, seed: string) {
 }
 
 // ---------- thumbnail uniqueness ----------
-export async function uniqueThumbStyle(seed: string, category?: string): Promise<ThumbStyle> {
+// Generate a unique fingerprint for HTML-based thumbnails
+function uniqueThumbFingerprint(seed: string): string {
+  return crypto.createHash("sha256").update(`${seed}-unique-${Date.now()}`).digest("hex").slice(0, 16);
+}
+
+export async function uniqueThumbStyle(seed: string, category?: string): Promise<{ style: ThumbStyle; fingerprint: string }> {
   const rng = new RNG(seed + "thumb" + Date.now());
-  const candidates = category ? thumbnailCandidates(seed, category) : [];
-  const shuffledCandidates = rng.shuffle([...candidates]);
-  const ordered = [...shuffledCandidates, ...Array.from({ length: 200 }, () => randomThumbStyle(rng, category))]
-    .sort((a, b) => (thumbnailScore(b, category ?? "mixed") - thumbnailScore(a, category ?? "mixed")) || rng.next() - 0.5);
-  for (const st of ordered) {
-    const fp = styleFingerprint(st);
-    const exists = await db.select({ id: thumbnailFingerprints.id }).from(thumbnailFingerprints).where(eq(thumbnailFingerprints.fingerprint, fp)).limit(1);
-    if (!exists.length) return st;
+  const index = rng.int(0, 4); // Pick a random variation 0-4
+  
+  // Create a minimal ThumbStyle (values don't matter much since we're using unique HTML generation)
+  const style: ThumbStyle = {
+    paletteIdx: index,
+    fontIdx: 0,
+    hueShift: 0,
+    pattern: "gradient",
+    deco: "none",
+    layout: "center-burst",
+    tilt: 0,
+    fx: "outline",
+    textVariant: 0,
+    themeVariant: index,
+  };
+  
+  const fingerprint = uniqueThumbFingerprint(seed);
+  
+  // Check if this fingerprint already exists
+  const exists = await db.select({ id: thumbnailFingerprints.id })
+    .from(thumbnailFingerprints)
+    .where(eq(thumbnailFingerprints.fingerprint, fingerprint))
+    .limit(1);
+  
+  if (exists.length) {
+    // Regenerate with a different timestamp
+    await new Promise(resolve => setTimeout(resolve, 10));
+    return uniqueThumbStyle(seed, category);
   }
-  return rng.pick(candidates) ?? randomThumbStyle(rng, category);
+  
+  return { style, fingerprint };
 }
 
 // ---------- create ----------
@@ -76,7 +103,7 @@ export interface CreateVideoInput {
 export async function createVideo(input: CreateVideoInput): Promise<Video> {
   const comp = generateComposition({ category: input.category, orientation: input.orientation, voice: input.voice, fallbackVoice: input.fallbackVoice, mood: input.mood, seed: input.seed });
   const track = await pickMusic(comp.music.mood, comp.seed);
-  const style = await uniqueThumbStyle(comp.seed, comp.category);
+  const { style, fingerprint } = await uniqueThumbStyle(comp.seed, comp.category);
   const [row] = await db
     .insert(videos)
     .values({
@@ -91,7 +118,7 @@ export async function createVideo(input: CreateVideoInput): Promise<Video> {
       stage: "queued",
       composition: comp,
       thumbnailStyle: style,
-      thumbnailFingerprint: styleFingerprint(style),
+      thumbnailFingerprint: fingerprint,
       musicTrackId: track?.id ?? null,
       voice: comp.voice.name,
       channelId: input.channelId ?? null,
@@ -100,7 +127,7 @@ export async function createVideo(input: CreateVideoInput): Promise<Video> {
       scheduledFor: input.scheduledFor ?? null,
     })
     .returning();
-  await db.insert(thumbnailFingerprints).values({ fingerprint: styleFingerprint(style), videoId: row.id }).onConflictDoNothing();
+  await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: row.id }).onConflictDoNothing();
   // pre-render the thumbnail immediately so the UI has something to show
   try {
     const tp = await renderThumbnail(row.id, comp, style);
@@ -151,7 +178,21 @@ async function processVideo(v: Video) {
   await db.update(videos).set({ status: "rendering", progress: 0, stage: "starting", error: null }).where(eq(videos.id, v.id));
   const comp = v.composition as Composition;
   const track = v.musicTrackId ? (await db.select().from(musicTracks).where(eq(musicTracks.id, v.musicTrackId)))[0] : null;
-  const style = (v.thumbnailStyle as ThumbStyle) ?? randomThumbStyle(new RNG(v.seed), v.category);
+  
+  // Use existing thumbnailStyle or create a minimal one
+  const style = (v.thumbnailStyle as ThumbStyle) ?? {
+    paletteIdx: 0,
+    fontIdx: 0,
+    hueShift: 0,
+    pattern: "gradient" as const,
+    deco: "none" as const,
+    layout: "center-burst" as const,
+    tilt: 0,
+    fx: "outline" as const,
+    textVariant: 0,
+    themeVariant: 0,
+  };
+  
   let lastWrite = 0;
   try {
     const res = await renderVideo(v.id, comp, track ? await musicLocalPath(track.filePath) : null, style, {

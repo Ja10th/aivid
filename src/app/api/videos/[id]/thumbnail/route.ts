@@ -4,24 +4,27 @@ import { channels, thumbnailFingerprints, videos } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { Composition } from "@/lib/video/core";
 import { renderThumbnail } from "@/lib/server/render";
-import { styleFingerprint, thumbnailCandidates, type ThumbStyle } from "@/lib/video/thumbnail";
+import type { ThumbStyle } from "@/lib/video/thumbnail";
 import { uploadFile } from "@/lib/server/storage";
 import { updateVideoThumbnail } from "@/lib/server/youtube";
 import { bad } from "@/lib/server/http";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 300;
+
+// Generate a fingerprint for unique HTML thumbnails
+function uniqueThumbFingerprint(seed: string, index: number): string {
+  return crypto.createHash("sha256").update(`${seed}-unique-${index}`).digest("hex").slice(0, 16);
+}
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const [video] = await db.select().from(videos).where(eq(videos.id, Number(id)));
     if (!video) return bad("not found", 404);
-    const body = await _.json().catch(() => ({})) as { action?: string; index?: number; style?: ThumbStyle };
-    const candidates = thumbnailCandidates(`${video.seed}-${Date.now()}`, video.category);
-    // Ensure each candidate has a distinct themeVariant (0-4)
-    candidates.forEach((c, i) => { c.themeVariant = i % 5; });
+    const body = await _.json().catch(() => ({})) as { action?: string; index?: number; fingerprint?: string };
 
     const comp: Composition = {
       ...(video.composition as Composition),
@@ -31,13 +34,30 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
         ...((video.composition as Composition)?.meta ?? {}),
         title: video.title || (video.composition as Composition)?.meta?.title || "",
       },
+      scenes: (video.composition as Composition)?.scenes || [],
     };
 
+    // Generate unique thumbnail seed for this regeneration session
+    const uniqueSeed = `${video.seed}-${Date.now()}`;
+
     if (body.action !== "select") {
+      // Generate 5 completely unique thumbnail variants
       const variants = [];
-      for (let index = 0; index < candidates.length; index++) {
-        const style = candidates[index];
-        const fingerprint = styleFingerprint(style);
+      for (let index = 0; index < 5; index++) {
+        const fingerprint = uniqueThumbFingerprint(uniqueSeed, index);
+        // Empty style object - we're using unique HTML generation now, not ThumbStyle
+        const style: ThumbStyle = { 
+          paletteIdx: index, 
+          fontIdx: 0, 
+          hueShift: 0, 
+          pattern: "gradient", 
+          deco: "none", 
+          layout: "center-burst", 
+          tilt: 0, 
+          fx: "outline", 
+          textVariant: 0, 
+          themeVariant: index 
+        };
         const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
         const path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
         variants.push({ index, path, fingerprint, style });
@@ -46,17 +66,33 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     }
 
     const index = Number(body.index);
-    if (!Number.isInteger(index) || index < 0 || index >= candidates.length) return bad("invalid thumbnail option", 400);
-    const style = body.style ?? candidates[index];
-    const fingerprint = styleFingerprint(style);
+    if (!Number.isInteger(index) || index < 0 || index >= 5) return bad("invalid thumbnail option", 400);
+    const fingerprint = body.fingerprint || uniqueThumbFingerprint(uniqueSeed, index);
+    
+    // Empty style object - unique HTML generation doesn't use ThumbStyle
+    const style: ThumbStyle = { 
+      paletteIdx: index, 
+      fontIdx: 0, 
+      hueShift: 0, 
+      pattern: "gradient", 
+      deco: "none", 
+      layout: "center-burst", 
+      tilt: 0, 
+      fx: "outline", 
+      textVariant: 0, 
+      themeVariant: index 
+    };
+    
     const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`);
     const thumbPath = await uploadFile(localThumbPath, `thumbs/${video.id}-${fingerprint}.png`, "image/png");
+    
     if (video.youtubeVideoId) {
       if (!video.channelId) throw new Error("posted video has no connected YouTube channel");
       const [channel] = await db.select().from(channels).where(eq(channels.id, video.channelId));
       if (!channel) throw new Error("connected YouTube channel not found");
       await updateVideoThumbnail(channel, video.youtubeVideoId, localThumbPath);
     }
+    
     await db.insert(thumbnailFingerprints).values({ fingerprint, videoId: video.id }).onConflictDoNothing();
     const [updated] = await db.update(videos).set({ thumbnailStyle: style, thumbnailFingerprint: fingerprint, thumbPath }).where(eq(videos.id, video.id)).returning();
     return Response.json({ video: updated, variants: [] });
