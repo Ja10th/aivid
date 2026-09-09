@@ -225,13 +225,13 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
   
   // STORIES - narrative, cinematic
   if (hookLower.includes("story") || hookLower.includes("tale") || hookLower.includes("chapter")) {
-    return rng.pick(filterOptions([
+    return pickGrammar([
       "book-cover",             // Novel cover design
       "typewriter-page",        // Typed manuscript
       "film-strip",             // Cinematic film frames
       "storybook-illustration", // Illustrated page
       "chapter-heading"         // Elegant typography
-    ]));
+    ]);
   }
   
   // DEFAULT - wild variety

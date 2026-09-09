@@ -86,6 +86,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
                 style,
                 seed: baseSeed,
                 index,
+                skipExclusion: true,
                 outputKey: `${video.id}-variant-${index}-${fingerprint}`,
               }),
             });
@@ -105,13 +106,13 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
           } catch (error) {
             console.error(`[Thumbnail] Worker failed:`, (error as Error).message);
             if (process.env.RENDER_WORKER_URL) throw error;
-            const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index, false);
+            const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index, true);
             path = await uploadFile(localThumbPath.path, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           }
         } else {
           // Render locally (canvas fallback on Vercel)
           console.log(`[Thumbnail] Rendering variant ${index} locally...`);
-          const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index, false);
+          const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index, true);
           console.log(`[Thumbnail] Rendered to: ${localThumbPath.path}`);
           path = await uploadFile(localThumbPath.path, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           console.log(`[Thumbnail] Uploaded to: ${path}`);

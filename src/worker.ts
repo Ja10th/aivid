@@ -30,11 +30,11 @@ const server = http.createServer(async (req, res) => {
     req.on("data", chunk => body += chunk);
     req.on("end", async () => {
       try {
-        const { videoId, composition, style, outputKey, seed, index } = JSON.parse(body);
+        const { videoId, composition, style, outputKey, seed, index, skipExclusion } = JSON.parse(body);
         const { renderThumbnail } = await import("@/lib/server/render");
         const { uploadFile } = await import("@/lib/server/storage");
         
-        const result = await renderThumbnail(videoId, composition, style, outputKey, seed, index);
+        const result = await renderThumbnail(videoId, composition, style, outputKey, seed, index, skipExclusion === true);
         const cloudPath = await uploadFile(result.path, `thumbs/${outputKey}.png`, "image/png");
         
         res.writeHead(200, { "Content-Type": "application/json" });
