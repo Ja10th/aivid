@@ -6,9 +6,8 @@ import { Reveal, StaggerList } from "./Anim";
 
 interface T { id: number; title: string; mood: string; filePath: string; source: string; attribution: string | null }
 
-const MAX_FILES_PER_BATCH = 2;
-const MAX_BATCH_BYTES = 8 * 1024 * 1024;
-const MAX_SINGLE_FILE_BYTES = 4 * 1024 * 1024;
+const MAX_FILES_PER_BATCH = 10;
+const MAX_BATCH_BYTES = 64 * 1024 * 1024;
 
 export default function MusicPanel({ tracks }: { tracks: T[] }) {
   const router = useRouter();
@@ -24,11 +23,8 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
 
   const handleFiles = (nextFiles: FileList | File[] | null) => {
     const selected = Array.from(nextFiles ?? []).filter((file) => file.type.startsWith("audio/") || /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(file.name));
-    const valid = selected.filter((file) => file.size <= MAX_SINGLE_FILE_BYTES);
-    const rejected = selected.filter((file) => file.size > MAX_SINGLE_FILE_BYTES);
-    setFiles(valid);
-    if (rejected.length) setMsg(`Skipped ${rejected.length} file${rejected.length > 1 ? "s" : ""}: max file size is 4MB for this hosting.`);
-    else if (valid.length) setMsg(null);
+    setFiles(selected);
+    if (selected.length) setMsg(null);
   };
 
   const add = async () => {
@@ -39,7 +35,6 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
 
       if (files.length) {
         for (const file of files) {
-          if (file.size > MAX_SINGLE_FILE_BYTES) throw new Error(`file too large: ${file.name} exceeds 4MB`);
           const presign = await fetch("/api/music/presign");
           const presignData = await presign.json();
           if (!presign.ok || !presignData.enabled) throw new Error("Cloudinary is not configured for direct uploads");
