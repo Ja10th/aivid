@@ -101,41 +101,41 @@ function extractHook(comp: Composition): string {
 function chooseGrammar(hook: string, rng: RNG): string {
   const hookLower = hook.toLowerCase();
   
-  // Grammar selection based on hook content
-  if (hookLower.includes("riddle") || hookLower.includes("question")) {
-    return rng.pick(["giant-question-mark", "mystery-spotlight", "think-bubble"]);
+  // Grammar selection based on hook content - only return grammars we ACTUALLY implement
+  if (hookLower.includes("riddle") || hookLower.includes("question") || hookLower.includes("think")) {
+    return "giant-question-mark"; // We have this one
   }
   
-  if (hookLower.includes("sequence") || hookLower.includes("remember") || hookLower.includes("memory")) {
-    return rng.pick(["grid-faces", "sequence-line", "pattern-cards"]);
+  if (hookLower.includes("sequence") || hookLower.includes("remember") || hookLower.includes("memory") || hookLower.includes("item")) {
+    return "grid-faces"; // We have this one
   }
   
-  if (hookLower.includes("choice") || hookLower.includes("rather") || hookLower.includes("decide")) {
-    return rng.pick(["split-comparison", "vs-battle", "two-doors"]);
+  if (hookLower.includes("choice") || hookLower.includes("rather") || hookLower.includes("decide") || hookLower.includes("reveal")) {
+    return rng.pick(["split-comparison", "vs-battle"]); // We have both
   }
   
-  if (hookLower.includes("myth") || hookLower.includes("debunk") || hookLower.includes("fact")) {
-    return rng.pick(["truth-stamp", "false-stamp", "fact-check"]);
+  if (hookLower.includes("myth") || hookLower.includes("debunk") || hookLower.includes("fact") || hookLower.includes("truth") || hookLower.includes("lie")) {
+    return "truth-stamp"; // We have this one
   }
   
   if (hookLower.includes("poll") || hookLower.includes("vote") || hookLower.includes("opinion")) {
-    return rng.pick(["stat-bar-hero", "pie-chart", "voting-booth"]);
+    return rng.pick(["torn-photo", "neon-sign"]); // We have these
   }
   
-  if (hookLower.includes("math") || hookLower.includes("calculate") || hookLower.includes("solve")) {
-    return rng.pick(["chalkboard-equation", "math-explosion", "calculator-screen"]);
+  if (hookLower.includes("math") || hookLower.includes("calculate") || hookLower.includes("solve") || hookLower.includes("problem")) {
+    return "chalkboard-equation"; // We have this one
   }
   
-  if (hookLower.includes("challenge") || hookLower.includes("test") || hookLower.includes("skills")) {
-    return rng.pick(["boss-hp-bar", "progress-ring", "level-display"]);
+  if (hookLower.includes("challenge") || hookLower.includes("test") || hookLower.includes("skill") || hookLower.includes("limit")) {
+    return "boss-hp-bar"; // We have this one
   }
   
-  if (hookLower.includes("game") || hookLower.includes("play")) {
-    return rng.pick(["game-over-screen", "controller-smash", "arcade-cabinet"]);
+  if (hookLower.includes("game") || hookLower.includes("play") || hookLower.includes("controller") || hookLower.includes("boss")) {
+    return "boss-hp-bar"; // Reuse boss HP bar for game content
   }
   
-  // Default grammars
-  return rng.pick(["torn-photo", "neon-sign", "graffiti-wall", "polaroid-stack", "notebook-sketch"]);
+  // Default grammars - all implemented
+  return rng.pick(["torn-photo", "neon-sign", "vs-battle", "isometric-room"]);
 }
 
 /**
@@ -197,7 +197,6 @@ function generateThumbnailHTML(
       return generateTornPhoto(headline, palette, rng);
     
     case "truth-stamp":
-    case "fact-check":
       return generateTruthStamp(headline, palette, numScenes);
     
     case "neon-sign":
@@ -207,8 +206,13 @@ function generateThumbnailHTML(
     case "vs-battle":
       return generateVSBattle(headline, palette);
     
-    default:
+    case "isometric-room":
       return generateIsometricRoom(shortHeadline, palette);
+    
+    default:
+      // Fallback: use a random implemented grammar
+      const fallback = rng.pick(["giant-question-mark", "torn-photo", "neon-sign", "vs-battle"]);
+      return generateThumbnailHTML(fallback, hook, comp, palette, rng);
   }
 }
 
