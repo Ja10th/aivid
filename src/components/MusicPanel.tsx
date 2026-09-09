@@ -6,6 +6,9 @@ import { Reveal, StaggerList } from "./Anim";
 
 interface T { id: number; title: string; mood: string; filePath: string; source: string; attribution: string | null }
 
+const MAX_FILES_PER_BATCH = 3;
+const MAX_BATCH_BYTES = 18 * 1024 * 1024;
+
 export default function MusicPanel({ tracks }: { tracks: T[] }) {
   const router = useRouter();
   const [filter, setFilter] = useState("all");
@@ -27,24 +30,53 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
   const add = async () => {
     setBusy(true); setMsg(null);
     try {
-      let r: Response;
+      const batches: File[][] = [];
       if (files.length) {
-        const fd = new FormData();
-        files.forEach((file) => fd.append("file", file));
-        if (title) fd.append("title", title);
-        fd.append("mood", mood);
-        r = await fetch("/api/music", { method: "POST", body: fd });
-      } else r = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, title, mood }) });
-
-      const text = await r.text();
-      let j: any = {};
-      try { j = text ? JSON.parse(text) : {}; } catch {
-        throw new Error(text || `request failed with status ${r.status}`);
+        let current: File[] = [];
+        let currentSize = 0;
+        for (const file of files) {
+          const nextSize = currentSize + file.size;
+          if (current.length && (current.length >= MAX_FILES_PER_BATCH || nextSize > MAX_BATCH_BYTES)) {
+            batches.push(current);
+            current = [];
+            currentSize = 0;
+          }
+          current.push(file);
+          currentSize += file.size;
+        }
+        if (current.length) batches.push(current);
       }
-      if (!r.ok) throw new Error(j.error || "failed");
 
-      const names = Array.isArray(j) ? j.map((item) => item.title).join(", ") : j.title;
-      setMsg(`added ${names}`); setUrl(""); setTitle(""); setFiles([]); router.refresh();
+      const uploaded: string[] = [];
+      if (batches.length) {
+        for (const batch of batches) {
+          const fd = new FormData();
+          batch.forEach((file) => fd.append("file", file));
+          if (batch.length === 1 && title) fd.append("title", title);
+          fd.append("mood", mood);
+          const r = await fetch("/api/music", { method: "POST", body: fd });
+          const text = await r.text();
+          let j: any = {};
+          try { j = text ? JSON.parse(text) : {}; } catch {
+            throw new Error(text || `request failed with status ${r.status}`);
+          }
+          if (!r.ok) throw new Error(j.error || "failed");
+          const names = Array.isArray(j) ? j.map((item) => item.title) : [j.title];
+          uploaded.push(...names.filter(Boolean));
+        }
+      } else {
+        const r = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, title, mood }) });
+        const text = await r.text();
+        let j: any = {};
+        try { j = text ? JSON.parse(text) : {}; } catch {
+          throw new Error(text || `request failed with status ${r.status}`);
+        }
+        if (!r.ok) throw new Error(j.error || "failed");
+        uploaded.push(j.title);
+      }
+
+      setMsg(`added ${uploaded.join(", ")}`);
+      setUrl(""); setTitle(""); setFiles([]); router.refresh();
     } catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
   };
   const del = async (id: number) => { await fetch(`/api/music/${id}`, { method: "DELETE" }); router.refresh(); };

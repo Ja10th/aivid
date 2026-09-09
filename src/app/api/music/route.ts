@@ -16,6 +16,9 @@ export async function GET() {
   return Response.json(rows);
 }
 
+const MAX_FILES_PER_REQUEST = 3;
+const MAX_TOTAL_UPLOAD_BYTES = 18 * 1024 * 1024;
+
 export async function POST(req: NextRequest) {
   try {
     const ct = req.headers.get("content-type") || "";
@@ -23,6 +26,9 @@ export async function POST(req: NextRequest) {
       const fd = await req.formData();
       const files = Array.from(fd.getAll("file")).filter((value): value is File => value instanceof File);
       if (!files.length) return bad("file required");
+      const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+      if (files.length > MAX_FILES_PER_REQUEST) return bad(`too many files in one upload (${files.length}). Please upload ${MAX_FILES_PER_REQUEST} at a time.`);
+      if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) return bad(`upload batch too large (${Math.round(totalBytes / (1024 * 1024))}MB). Keep each batch under ${Math.round(MAX_TOTAL_UPLOAD_BYTES / (1024 * 1024))}MB.`);
       const mood = String(fd.get("mood") || "focus");
       const providedTitles = Array.from(fd.getAll("title")).map((value) => String(value));
       const rows = [] as any[];
