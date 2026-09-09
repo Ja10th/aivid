@@ -131,7 +131,7 @@ export async function createVideo(input: CreateVideoInput): Promise<Video> {
   // pre-render the thumbnail immediately so the UI has something to show
   try {
     const { path: tp, grammar } = await renderThumbnail(row.id, comp, style);
-    const storedThumb = await uploadFile(tp, `thumbs/${row.id}.png`, "image/png");
+    const storedThumb = await uploadFile(tp, `thumbs/${row.id}-${fingerprint}.png`, "image/png");
     await db.update(videos).set({ thumbPath: storedThumb }).where(eq(videos.id, row.id));
     // Store the grammar used
     await db.update(thumbnailFingerprints).set({ grammar }).where(eq(thumbnailFingerprints.fingerprint, fingerprint));
@@ -208,7 +208,7 @@ async function processVideo(v: Video) {
     const autoPost = v.mode === "auto" && v.channelId;
     const videoPath = await uploadFile(res.videoPath, `videos/${v.id}.mp4`, "video/mp4");
     const thumbPath = await uploadFile(res.thumbPath, `thumbs/${v.id}.png`, "image/png");
-    await db.update(videos).set({ status: autoPost ? "scheduled" : "ready", progress: 100, stage: "done", videoPath, thumbPath, durationSec: res.durationSec }).where(eq(videos.id, v.id));
+    await db.update(videos).set({ status: autoPost ? "scheduled" : "ready", progress: 100, stage: "done", videoPath, thumbPath: sql`coalesce(${videos.thumbPath}, ${thumbPath})`, durationSec: res.durationSec }).where(eq(videos.id, v.id));
     if (autoPost) setTimeout(() => publishDue().catch(console.error), 500);
   } catch (e) {
     console.error("render failed", e);
