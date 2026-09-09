@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { Composition } from "@/lib/video/core";
 import { renderThumbnail } from "@/lib/server/render";
 import type { ThumbStyle } from "@/lib/video/thumbnail";
-import { uploadFile } from "@/lib/server/storage";
+import { downloadFile, uploadFile } from "@/lib/server/storage";
 import { updateVideoThumbnail } from "@/lib/server/youtube";
 import { bad } from "@/lib/server/http";
 import crypto from "crypto";
@@ -145,7 +145,8 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       if (!video.channelId) throw new Error("posted video has no connected YouTube channel");
       const [channel] = await db.select().from(channels).where(eq(channels.id, video.channelId));
       if (!channel) throw new Error("connected YouTube channel not found");
-      await updateVideoThumbnail(channel, video.youtubeVideoId, result.path);
+      const youtubeThumbPath = await downloadFile(thumbPath, `/tmp/video-${video.id}-thumbnail.png`);
+      await updateVideoThumbnail(channel, video.youtubeVideoId, youtubeThumbPath);
     }
     
     // Store grammar with fingerprint to track usage

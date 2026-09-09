@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const status = req.nextUrl.searchParams.get("status");
-  const q = db.select({ id: videos.id, title: videos.title, category: videos.category, orientation: videos.orientation, durationSec: videos.durationSec, status: videos.status, progress: videos.progress, stage: videos.stage, thumbPath: videos.thumbPath, videoPath: videos.videoPath, channelId: videos.channelId, scheduledFor: videos.scheduledFor, youtubeVideoId: videos.youtubeVideoId, createdAt: videos.createdAt, error: videos.error, mode: videos.mode, seed: videos.seed }).from(videos).orderBy(desc(videos.createdAt)).limit(200);
+  const q = db.select({ id: videos.id, title: videos.title, category: videos.category, orientation: videos.orientation, durationSec: videos.durationSec, status: videos.status, progress: videos.progress, stage: videos.stage, thumbPath: videos.thumbPath, thumbnailFingerprint: videos.thumbnailFingerprint, videoPath: videos.videoPath, channelId: videos.channelId, scheduledFor: videos.scheduledFor, youtubeVideoId: videos.youtubeVideoId, createdAt: videos.createdAt, error: videos.error, mode: videos.mode, seed: videos.seed }).from(videos).orderBy(desc(videos.createdAt)).limit(200);
   const rows = status ? await q.where(eq(videos.status, status)) : await q;
   return Response.json(rows);
 }

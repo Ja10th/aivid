@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fmtDur, fmtDate, CAT_LABEL, relPath } from "@/lib/format";
 
 export interface VideoLite {
-  id: number; title: string; category: string; orientation: string; durationSec: number; status: string; progress: number; stage: string | null; thumbPath: string | null; scheduledFor: Date | string | null; youtubeVideoId: string | null; createdAt: Date | string; mode: string;
+  id: number; title: string; category: string; orientation: string; durationSec: number; status: string; progress: number; stage: string | null; thumbPath: string | null; thumbnailFingerprint: string | null; scheduledFor: Date | string | null; youtubeVideoId: string | null; createdAt: Date | string; mode: string;
 }
 
 export default function VideoCard({ v, i = 0 }: { v: VideoLite; i?: number }) {
@@ -11,7 +11,7 @@ export default function VideoCard({ v, i = 0 }: { v: VideoLite; i?: number }) {
   return (
     <Link href={`/videos/${v.id}`} className={`block group ${tilt}`} style={{ marginTop: i % 3 === 1 ? "2.5rem" : i % 4 === 3 ? "-1rem" : 0 }}>
       <div className="thumb-frame relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
-        {thumb ? <img src={`/api/media?f=${encodeURIComponent(thumb)}&v=${v.progress}`} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <div className="w-full h-full block-ox" />}
+        {thumb ? <img src={`/api/media?f=${encodeURIComponent(thumb)}&v=${encodeURIComponent(v.thumbnailFingerprint ?? String(v.progress))}`} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> : <div className="w-full h-full block-ox" />}
         {v.status === "rendering" && (
           <div className="absolute inset-x-0 bottom-0 h-2 bg-ink"><div className="h-full bg-acid" style={{ width: `${v.progress}%` }} /></div>
         )}
