@@ -121,7 +121,8 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
   };
   const pickGrammar = (options: string[]) => {
     const available = filterOptions(options);
-    return available[variantIndex % available.length] ?? rng.pick(available);
+    const start = rng.int(0, available.length - 1);
+    return available[(start + variantIndex) % available.length] ?? rng.pick(available);
   };
   
   // EYE TRAINING - calm, medical, focus-oriented
@@ -131,7 +132,18 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
       "medical-diagram",        // Clean anatomical eye diagram style
       "zen-circle",             // Enso circle with calm typography
       "gradient-orb",           // Smooth gradient sphere to follow
-      "focus-crosshair"         // Precision crosshair overlay
+      "focus-crosshair",        // Precision crosshair overlay
+      "spiral-path",            // Expanding spiral tracking route
+      "dual-track",             // Two-target pursuit layout
+      "pulse-beacon",           // Rhythmic focus beacon
+      "eye-lab", "iris-scan", "retina-map", "gaze-compass", "vision-radar",
+      "tracking-grid", "smooth-loop", "focus-lens", "optic-wave", "pupil-glow",
+      "sightline", "motion-trace", "calibration-eye", "depth-focus", "visual-pulse",
+      "target-lock", "peripheral-ring", "glance-meter", "eye-spectrum", "clarity-mark",
+      "ocular-orbit", "focus-atlas", "iris-compass", "vision-lab", "tracking-arc",
+      "optic-rhythm", "gaze-path", "retina-signal", "sight-focus", "eye-vector",
+      "clarity-orbit", "pursuit-line", "visual-anchor", "lens-motion", "attention-beam",
+      "perception-grid", "focus-horizon", "ocular-pulse", "gaze-studio", "vision-key"
     ]);
   }
   
@@ -175,7 +187,18 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
       "red-x-overlay",          // Giant red X with "MYTH" text
       "fact-check-badge",       // Verified checkmark badge
       "newspaper-headline",     // Breaking news style
-      "detective-files"         // Case files spread out
+      "detective-files",        // Case files spread out
+      "myth-buster-board",      // Evidence-board composition
+      "false-or-fact",          // Hard split comparison
+      "evidence-dossier",       // Investigation file composition
+      "myth-or-matter", "fact-file", "rumor-alert", "truth-lens", "claim-crusher",
+      "debunked-dossier", "proof-board", "reality-check", "myth-meter", "verified-report",
+      "false-flag", "evidence-wall", "red-string-case", "science-stamp", "headline-check",
+      "claim-vs-proof", "hoax-detector", "fact-signal", "myth-exposed", "truth-spectrum",
+      "evidence-index", "myth-lab", "truth-archive", "claim-radar", "fact-lens",
+      "debunk-room", "proof-signal", "reality-file", "rumor-grid", "verified-clue",
+      "myth-breaker", "science-case", "truth-panel", "fact-or-fiction", "claim-audit",
+      "evidence-pulse", "hoax-file", "reality-stamp", "proof-lens", "truth-board"
     ]);
   }
   
@@ -186,7 +209,9 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
       "pie-chart-hero",         // Giant pie chart
       "voting-booth",           // Classic voting booth
       "bar-graph-race",         // Animated bars
-      "crowd-silhouettes"       // Audience voting
+      "crowd-silhouettes",      // Audience voting
+      "thumbs-up-down", "vote-meter", "opinion-board", "crowd-pulse", "choice-chart",
+      "public-verdict", "poll-poster", "signal-count", "majority-mark", "voice-vote"
     ]);
   }
   
@@ -197,7 +222,18 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
       "calculator-closeup",     // Giant calculator display
       "floating-numbers",       // Numbers floating in 3D
       "blueprint-grid",         // Technical grid with equations
-      "abacus-vintage"          // Retro abacus aesthetic
+      "abacus-vintage",         // Retro abacus aesthetic
+      "math-explosion",         // Numbers bursting outward
+      "geometric-proof",        // Diagram and proof layout
+      "digital-clock",          // Countdown pressure layout
+      "equation-wall", "number-vortex", "fraction-stack", "logic-circuit", "math-lab",
+      "prime-number-grid", "sequence-race", "formula-card", "angle-arena", "countdown-board",
+      "algebra-lock", "number-ladder", "calculation-radar", "proof-notes", "digit-storm",
+      "equation-split", "ratio-meter", "geometry-desk", "answer-reveal", "quantum-numbers",
+      "theorem-card", "number-atlas", "algebra-wave", "prime-radar", "fraction-forge",
+      "calculus-board", "logic-lattice", "sequence-signal", "formula-lab", "counting-room",
+      "digit-compass", "proof-pulse", "angle-map", "answer-grid", "variable-vault",
+      "math-spectrum", "equation-orbit", "number-blueprint", "solve-screen", "infinity-counter"
     ]);
   }
   
@@ -208,7 +244,9 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
       "progress-ring-fire",     // Circular progress on fire
       "stopwatch-pressure",     // Giant ticking stopwatch
       "level-up-badge",         // RPG level up screen
-      "mountain-peak"           // Climbing to summit
+      "mountain-peak",          // Climbing to summit
+      "pressure-gauge", "challenge-card", "rank-rise", "finish-line", "trial-board",
+      "score-breaker", "skill-meter", "summit-run", "arena-countdown", "victory-screen"
     ]);
   }
   
@@ -219,7 +257,30 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
       "game-over-glitch",       // Glitchy game over screen
       "arcade-cabinet",         // Retro arcade frame
       "controller-smash",       // Broken controller
-      "pixel-art-hero"          // 8-bit character
+      "pixel-art-hero",         // 8-bit character
+      "neon-arcade", "boss-select", "combo-meter", "power-up", "game-grid",
+      "retro-score", "quest-map", "speed-run", "player-one", "final-level"
+    ]);
+  }
+
+  if (hookLower.includes("brain") || hookLower.includes("memory") || hookLower.includes("mind") || hookLower.includes("iq")) {
+    return pickGrammar([
+      "grid-faces",
+      "card-flip-grid",
+      "numbered-sequence",
+      "brain-network",
+      "polaroid-scatter",
+      "flashcard-stack",
+      "pattern-matrix",
+      "giant-question-mark",
+      "neural-map", "memory-maze", "iq-meter", "thought-grid", "logic-board",
+      "brainwave-chart", "recall-cards", "mind-palace", "sequence-lock", "cognition-lab",
+      "synapse-web", "puzzle-stack", "focus-score", "mental-sprint", "pattern-scan",
+      "memory-vault", "reasoning-room", "smart-score", "challenge-matrix", "idea-burst",
+      "neuron-atlas", "memory-orbit", "logic-signal", "mind-map", "recall-radar",
+      "thought-lab", "pattern-vault", "iq-spectrum", "cortex-grid", "reasoning-pulse",
+      "memory-lens", "synapse-lab", "mental-compass", "brainwave-map", "puzzle-radar",
+      "focus-atlas", "idea-network", "cognition-score", "mind-forge", "recall-key",
     ]);
   }
   
@@ -230,7 +291,9 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
       "typewriter-page",        // Typed manuscript
       "film-strip",             // Cinematic film frames
       "storybook-illustration", // Illustrated page
-      "chapter-heading"         // Elegant typography
+      "chapter-heading",        // Elegant typography
+      "cinema-poster", "director-cut", "noir-frame", "opening-credits", "scene-card",
+      "journey-poster", "midnight-film", "epic-title", "paperback-premiere", "story-reel"
     ]);
   }
   
@@ -243,7 +306,22 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
     "billboard-night",        // Billboard in rain
     "magazine-cover",         // Editorial magazine
     "ticket-stub",            // Torn ticket aesthetic
-    "receipt-crumpled"        // Crumpled receipt texture
+    "receipt-crumpled",       // Crumpled receipt texture
+    "cover-story", "editorial-cut", "street-poster", "gallery-card", "night-billboard",
+    "paper-archive", "album-cover", "press-sheet", "culture-page", "headline-poster",
+    "giant-question-mark", "grid-faces", "chalkboard-equation", "boss-hp-bar", "truth-stamp",
+    "vs-battle", "concentric-target", "medical-diagram", "zen-circle", "gradient-orb",
+    "focus-crosshair", "spiral-path", "dual-track", "pulse-beacon", "lock-and-key",
+    "magnifying-mystery", "scattered-clues", "shadow-silhouette", "detective-board", "code-cipher",
+    "spy-dossier", "card-flip-grid", "numbered-sequence", "brain-network", "polaroid-scatter",
+    "flashcard-stack", "pattern-matrix", "calculator-closeup", "floating-numbers", "blueprint-grid",
+    "abacus-vintage", "math-explosion", "geometric-proof", "digital-clock", "hand-raising",
+    "pie-chart-hero", "voting-booth", "bar-graph-race", "crowd-silhouettes", "thumbs-up-down",
+    "progress-ring-fire", "level-up-badge", "mountain-peak", "stopwatch-pressure", "game-over-glitch",
+    "arcade-cabinet", "controller-smash", "pixel-art-hero", "quiz-show", "buzz-in", "jeopardy-board",
+    "multiple-choice", "true-false", "book-cover", "typewriter-page", "film-strip",
+    "storybook-illustration", "chapter-heading", "graffiti-tag", "billboard-night", "magazine-cover",
+    "ticket-stub", "receipt-crumpled"
   ]);
 }
 
@@ -253,7 +331,7 @@ function chooseGrammar(hook: string, rng: RNG, excludeGrammars: string[] = [], v
 export function generateUniqueThumbnail(comp: Composition, seed: string, index: number = 0, excludeGrammars: string[] = []): UniqueThumbnailSpec {
   const rng = new RNG(`${seed}-thumb-${index}`);
   const hook = extractHook(comp);
-  const grammar = chooseGrammar(hook, rng, excludeGrammars, index);
+  const grammar = chooseGrammar(`${hook} ${comp.category}`, rng, excludeGrammars, index);
   
   // Rich color palettes with texture colors
   const palettes = [
@@ -262,8 +340,27 @@ export function generateUniqueThumbnail(comp: Composition, seed: string, index: 
     { bg: "#1a0e0a", surface: "#2d1c15", primary: "#ff6b35", accent: "#3fe0ff", text: "#ffffff", muted: "#a67c5c" },
     { bg: "#0c1821", surface: "#1a2f3d", primary: "#38bdf8", accent: "#f43f5e", text: "#ffffff", muted: "#6b8fa3" },
     { bg: "#041c1e", surface: "#0d3438", primary: "#2dd4bf", accent: "#ec4899", text: "#ffffff", muted: "#5a9a9d" },
+    { bg: "#201510", surface: "#3d2a1d", primary: "#f2c14e", accent: "#e76f51", text: "#fff8e7", muted: "#b89b72" },
+    { bg: "#101820", surface: "#243447", primary: "#f4d35e", accent: "#ee964b", text: "#f7fff7", muted: "#91a6b8" },
+    { bg: "#241525", surface: "#452947", primary: "#ff8fab", accent: "#80ed99", text: "#fff5f7", muted: "#c39ab8" },
+    { bg: "#102a43", surface: "#1f4e79", primary: "#f6bd60", accent: "#84a59d", text: "#f1faee", muted: "#8fb3c9" },
+    { bg: "#292522", surface: "#514a45", primary: "#e9c46a", accent: "#e76f51", text: "#fffaf0", muted: "#b8aaa0" },
+    { bg: "#172121", surface: "#294242", primary: "#c7f9cc", accent: "#57cc99", text: "#f1faee", muted: "#8cb8a2" },
+    { bg: "#2b1b36", surface: "#503d5b", primary: "#f7b2bd", accent: "#b8f2e6", text: "#fff8fb", muted: "#bda6c5" },
+    { bg: "#18212b", surface: "#2d4052", primary: "#ffd166", accent: "#06d6a0", text: "#f8f9fa", muted: "#91a4b5" },
+    { bg: "#321e1e", surface: "#5a3434", primary: "#ffb703", accent: "#fb8500", text: "#fff3e0", muted: "#c18e75" },
+    { bg: "#1b263b", surface: "#415a77", primary: "#e0e1dd", accent: "#fca311", text: "#ffffff", muted: "#9aa8b8" },
+    { bg: "#202c39", surface: "#34495e", primary: "#ffcc80", accent: "#ef476f", text: "#fffaf2", muted: "#a8b3bd" },
+    { bg: "#201a2b", surface: "#3a3150", primary: "#cdb4db", accent: "#ffc8dd", text: "#fffaff", muted: "#a99ab7" },
+    { bg: "#0b3d3a", surface: "#176b63", primary: "#f4f1bb", accent: "#f25f5c", text: "#f7fff7", muted: "#87b8ad" },
+    { bg: "#332b2b", surface: "#594a4a", primary: "#f2cc8f", accent: "#81b29a", text: "#fffdf7", muted: "#b6a398" },
+    { bg: "#14213d", surface: "#253b68", primary: "#fca311", accent: "#e5e5e5", text: "#ffffff", muted: "#91a2bd" },
+    { bg: "#3a1f2b", surface: "#633b4a", primary: "#ffcad4", accent: "#90dbf4", text: "#fff7f8", muted: "#c09ca8" },
+    { bg: "#17324d", surface: "#285878", primary: "#98f5e1", accent: "#f7aef8", text: "#f5ffff", muted: "#8eb5c7" },
+    { bg: "#282828", surface: "#454545", primary: "#f4f1de", accent: "#e07a5f", text: "#ffffff", muted: "#aaa39a" },
+    { bg: "#162521", surface: "#2d4a40", primary: "#d8f3dc", accent: "#95d5b2", text: "#f1faee", muted: "#8eafa0" },
   ];
-  const palette = palettes[index % palettes.length];
+  const palette = palettes[(rng.int(0, palettes.length - 1) + index * 3) % palettes.length];
   
   const html = generateThumbnailHTML(grammar, hook, comp, palette, rng);
   
@@ -328,6 +425,14 @@ function generateThumbnailHTML(
       return generateDualTrack(headline, palette);
     case "pulse-beacon":
       return generatePulseBeacon(headline, palette);
+    case "eye-lab": case "iris-scan": case "retina-map": case "gaze-compass": case "vision-radar":
+    case "tracking-grid": case "smooth-loop": case "focus-lens": case "optic-wave": case "pupil-glow":
+    case "sightline": case "motion-trace": case "calibration-eye": case "depth-focus": case "visual-pulse":
+    case "target-lock": case "peripheral-ring": case "glance-meter": case "eye-spectrum": case "clarity-mark":
+    case "ocular-orbit": case "focus-atlas": case "iris-compass": case "vision-lab": case "tracking-arc":
+        case "clarity-orbit": case "pursuit-line": case "visual-anchor": case "lens-motion": case "attention-beam":
+    case "perception-grid": case "focus-horizon": case "ocular-pulse": case "gaze-studio": case "vision-key":
+      return [generateMedicalDiagram, generateConcentricTarget, generateFocusCrosshair, generateGradientOrb, generatePulseBeacon][rng.int(0, 4)](headline, palette);
     
     // ===== RIDDLE/MYSTERY GRAMMARS =====
     case "lock-and-key":
@@ -344,9 +449,12 @@ function generateThumbnailHTML(
       return generateCodeCipher(headline, palette, rng);
     case "spy-dossier":
       return generateSpyDossier(headline, palette);
+    case "mystery-file": case "clue-wall": case "hidden-key": case "question-board": case "cipher-room":
+    case "unknown-case": case "riddle-card": case "secret-signal": case "mystery-map": case "puzzle-evidence":
+      return [generateLockAndKey, generateMagnifyingMystery, generateScatteredClues, generateDetectiveBoard, generateCodeCipher][rng.int(0, 4)](headline, palette, rng);
     
     // ===== MEMORY GRAMMARS =====
-    case "card-flip-grid":
+        case "card-flip-grid":
       return generateCardFlipGrid(headline, palette);
     case "numbered-sequence":
       return generateNumberedSequence(headline, palette, rng);
@@ -358,6 +466,15 @@ function generateThumbnailHTML(
       return generateFlashcardStack(headline, palette);
     case "pattern-matrix":
       return generatePatternMatrix(headline, palette, rng);
+    case "neural-map": case "memory-maze": case "iq-meter": case "thought-grid": case "logic-board":
+    case "brainwave-chart": case "recall-cards": case "mind-palace": case "sequence-lock": case "cognition-lab":
+    case "synapse-web": case "puzzle-stack": case "focus-score": case "mental-sprint": case "pattern-scan":
+    case "memory-vault": case "reasoning-room": case "smart-score": case "challenge-matrix": case "idea-burst":
+    case "neuron-atlas": case "memory-orbit": case "logic-signal": case "mind-map": case "recall-radar":
+    case "thought-lab": case "pattern-vault": case "iq-spectrum": case "cortex-grid": case "reasoning-pulse":
+    case "memory-lens": case "synapse-lab": case "mental-compass": case "brainwave-map": case "puzzle-radar":
+    case "idea-network": case "cognition-score": case "mind-forge": case "recall-key":
+      return [generateBrainNetwork, generateCardFlipGrid, generatePatternMatrix, generateNumberedSequence, generateFlashcardStack][rng.int(0, 4)](headline, palette, rng);
     
     // ===== MATH GRAMMARS =====
     case "calculator-closeup":
@@ -374,6 +491,15 @@ function generateThumbnailHTML(
       return generateGeometricProof(headline, palette);
     case "digital-clock":
       return generateDigitalClock(headline, palette);
+    case "equation-wall": case "number-vortex": case "fraction-stack": case "logic-circuit": case "math-lab":
+    case "prime-number-grid": case "sequence-race": case "formula-card": case "angle-arena": case "countdown-board":
+    case "algebra-lock": case "number-ladder": case "calculation-radar": case "proof-notes": case "digit-storm":
+    case "equation-split": case "ratio-meter": case "geometry-desk": case "answer-reveal": case "quantum-numbers":
+    case "theorem-card": case "number-atlas": case "algebra-wave": case "prime-radar": case "fraction-forge":
+    case "calculus-board": case "logic-lattice": case "sequence-signal": case "formula-lab": case "counting-room":
+    case "digit-compass": case "proof-pulse": case "angle-map": case "answer-grid": case "variable-vault":
+    case "math-spectrum": case "equation-orbit": case "number-blueprint": case "solve-screen": case "infinity-counter":
+      return [generateCalculatorCloseup, generateFloatingNumbers, generateBlueprintGrid, generateMathExplosion, generateGeometricProof][rng.int(0, 4)](headline, palette, rng);
     
     // ===== POLL/OPINION GRAMMARS =====
     case "hand-raising":
@@ -388,6 +514,9 @@ function generateThumbnailHTML(
       return generateCrowdSilhouettes(headline, palette, rng);
     case "thumbs-up-down":
       return generateThumbsUpDown(headline, palette);
+    case "vote-meter": case "opinion-board": case "crowd-pulse": case "choice-chart": case "public-verdict":
+    case "poll-poster": case "signal-count": case "majority-mark": case "voice-vote":
+      return [generateHandRaising, generatePieChartHero, generateBarGraphRace, generateCrowdSilhouettes, generateThumbsUpDown][rng.int(0, 4)](headline, palette, rng);
     
     // ===== CHALLENGE/GAME GRAMMARS =====
     case "progress-ring-fire":
@@ -406,6 +535,24 @@ function generateThumbnailHTML(
       return generateControllerSmash(headline, palette);
     case "pixel-art-hero":
       return generatePixelArtHero(headline, palette);
+    case "pressure-gauge": case "challenge-card": case "rank-rise": case "finish-line": case "trial-board":
+    case "score-breaker": case "skill-meter": case "summit-run": case "arena-countdown": case "victory-screen":
+      return [generateProgressRingFire, generateLevelUpBadge, generateMountainPeak, generateStopwatchPressure, generateBossHPBar][rng.int(0, 4)](headline, palette);
+    case "neon-arcade": case "boss-select": case "combo-meter": case "power-up": case "game-grid":
+    case "retro-score": case "quest-map": case "speed-run": case "player-one": case "final-level":
+      return [generateArcadeCabinet, generateGameOverGlitch, generatePixelArtHero, generateControllerSmash, generateBossHPBar][rng.int(0, 4)](headline, palette);
+
+    // ===== TRIVIA GRAMMARS =====
+    case "quiz-show":
+      return generateQuizShow(headline, palette);
+    case "buzz-in":
+      return generateBuzzIn(headline, palette);
+    case "jeopardy-board":
+      return generateJeopardyBoard(headline, palette, rng);
+    case "multiple-choice":
+      return generateMultipleChoice(headline, palette);
+    case "true-false":
+      return generateTrueFalse(headline, palette);
     
     // ===== CHOICE/VS GRAMMARS =====
     case "split-doors":
@@ -413,30 +560,76 @@ function generateThumbnailHTML(
     case "road-fork":
     case "boxing-ring":
       return generateVSBattle(headline, palette);
+    case "door-choice": case "decision-line": case "versus-card": case "forked-path": case "duel-board":
+    case "either-or": case "balance-point": case "choice-arena": case "two-worlds": case "pick-a-side":
+      return generateVSBattle(headline, palette);
     
     // ===== MYTH/FACT GRAMMARS =====
     case "red-x-overlay":
+      return generateGameOverGlitch(headline, palette);
     case "fact-check-badge":
+      return generateProgressRingFire(headline, palette);
     case "newspaper-headline":
+      return generateTornPhoto(headline, palette, rng);
     case "detective-files":
       return generateTruthStamp(headline, palette, numScenes);
+    case "myth-buster-board":
+      return generateDetectiveBoard(headline, palette, rng);
+    case "false-or-fact":
+      return generateVSBattle(headline, palette);
+    case "evidence-dossier":
+      return generateSpyDossier(headline, palette);
+    case "myth-or-matter": case "fact-file": case "rumor-alert": case "truth-lens": case "claim-crusher":
+    case "debunked-dossier": case "proof-board": case "reality-check": case "myth-meter": case "verified-report":
+    case "false-flag": case "evidence-wall": case "red-string-case": case "science-stamp": case "headline-check":
+    case "claim-vs-proof": case "hoax-detector": case "fact-signal": case "myth-exposed": case "truth-spectrum":
+    case "evidence-index": case "myth-lab": case "truth-archive": case "claim-radar": case "fact-lens":
+    case "debunk-room": case "proof-signal": case "reality-file": case "rumor-grid": case "verified-clue":
+    case "myth-breaker": case "science-case": case "truth-panel": case "fact-or-fiction": case "claim-audit":
+    case "evidence-pulse": case "hoax-file": case "reality-stamp": case "proof-lens": case "truth-board":
+      switch (rng.int(0, 4)) {
+        case 0: return generateTruthStamp(headline, palette, numScenes);
+        case 1: return generateDetectiveBoard(headline, palette, rng);
+        case 2: return generateSpyDossier(headline, palette);
+        case 3: return generateVSBattle(headline, palette);
+        default: return generateProgressRingFire(headline, palette);
+      }
     
     // ===== STORY GRAMMARS (fallback to paper aesthetic) =====
     case "book-cover":
+      return generateBookCover(headline, palette);
     case "typewriter-page":
+      return generateTypewriterPage(headline, palette);
     case "film-strip":
+      return generateFilmStrip(headline, palette, rng);
     case "storybook-illustration":
+      return generateStorybookIllustration(headline, palette);
     case "chapter-heading":
-      return generateTornPhoto(headline, palette, rng);
+      return generateChapterHeading(headline, palette);
+    case "cinema-poster": case "director-cut": case "noir-frame": case "opening-credits": case "scene-card":
+    case "journey-poster": case "midnight-film": case "epic-title": case "paperback-premiere": case "story-reel":
+      return [generateTornPhoto, generateIsometricRoom, generateNeonSign, generateVSBattle, generateRiddleSpotlight][rng.int(0, 4)](headline, palette, rng);
     
     // ===== DEFAULT/MISC GRAMMARS =====
     case "graffiti-tag":
+      return generateGraffitiTag(shortHeadline, palette);
     case "billboard-night":
-      return generateNeonSign(shortHeadline, palette);
+      return generateBillboardNight(headline, palette);
     case "magazine-cover":
+      return generateMagazineCover(headline, palette);
     case "ticket-stub":
+      return generateTicketStub(headline, palette);
     case "receipt-crumpled":
-      return generateTornPhoto(headline, palette, rng);
+      return generateReceiptCrumpled(headline, palette);
+    case "cover-story": case "editorial-cut": case "street-poster": case "gallery-card": case "night-billboard":
+    case "paper-archive": case "album-cover": case "press-sheet": case "culture-page": case "headline-poster":
+      switch (rng.int(0, 4)) {
+        case 0: return generateTornPhoto(headline, palette, rng);
+        case 1: return generateNeonSign(headline, palette);
+        case 2: return generateIsometricRoom(headline, palette);
+        case 3: return generateTruthStamp(headline, palette, numScenes);
+        default: return generateVSBattle(headline, palette);
+      }
     
     default:
       // Ultimate fallback
