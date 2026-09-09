@@ -46,7 +46,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       const variants = [];
       
       // Check if we should use the Render worker for better quality
-      const useWorker = process.env.RENDER_WORKER_URL && !process.env.VERCEL;
+      const useWorker = !!process.env.RENDER_WORKER_URL;
       
       for (let index = 0; index < 5; index++) {
         const fingerprint = uniqueThumbFingerprint(uniqueSeed, index);
