@@ -235,62 +235,89 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
 }
 
 export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string): Promise<string> {
-  // Generate unique HTML-based thumbnail spec (for design data)
+  // Generate unique HTML-based thumbnail
   const { generateUniqueThumbnail } = await import("@/lib/video/unique-thumbnail");
   const seed = `${comp.seed}-${outputKey || id}`;
   const index = typeof style.themeVariant === "number" ? style.themeVariant : 0;
   const spec = generateUniqueThumbnail(comp, seed, index);
   
+  const htmlFile = path.join(TMP_DIR, `thumb-${outputKey ?? id}.html`);
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
+  fs.writeFileSync(htmlFile, spec.html);
   
-  // Render the unique design directly to canvas (no HTML/Puppeteer needed)
-  console.log(`[Thumbnail] Rendering unique design: ${spec.grammar}`);
-  ensureFonts();
-  const c = createCanvas(1280, 720);
-  const ctx = c.getContext("2d") as unknown as C2D;
+  console.log(`[Thumbnail] Rendering ${spec.grammar} via Puppeteer...`);
   
-  // Get color palette from spec
-  const palettes = [
-    { bg: "#0a0f1e", primary: "#3fe0ff", accent: "#ff2323", text: "#ffffff" },
-    { bg: "#1a0f2e", primary: "#a855f7", accent: "#ffd23f", text: "#ffffff" },
-    { bg: "#1a0e0a", primary: "#ff6b35", accent: "#3fe0ff", text: "#ffffff" },
-    { bg: "#0c1821", primary: "#38bdf8", accent: "#f43f5e", text: "#ffffff" },
-    { bg: "#041c1e", primary: "#2dd4bf", accent: "#ec4899", text: "#ffffff" },
-  ];
-  const palette = palettes[index % palettes.length];
-  
-  // Extract headline
-  const words = (comp.meta?.title || "Brain Challenge").split(" ");
-  const headline = words.slice(0, Math.min(5, words.length)).join(" ");
-  
-  // Render based on grammar type
-  switch (spec.grammar) {
-    case "giant-question-mark":
-      renderGiantQuestionMark(ctx, headline, palette);
-      break;
-    case "split-comparison":
-    case "vs-battle":
-      renderVSBattle(ctx, headline, palette);
-      break;
-    case "stat-bar-hero":
-      renderStatBar(ctx, headline, palette, index);
-      break;
-    case "truth-stamp":
-      renderTruthStamp(ctx, headline, palette);
-      break;
-    case "impact-number":
-      renderImpactNumber(ctx, headline, palette, comp.scenes?.length || 10);
-      break;
-    case "grid-progression":
-      renderGrid(ctx, headline, palette);
-      break;
-    default:
-      renderDefault(ctx, headline, palette, index);
+  try {
+    const puppeteer = await import("puppeteer-core");
+    const chromium = await import("@sparticuz/chromium");
+    
+    // Launch with chromium for serverless environments
+    const browser = await puppeteer.default.launch({
+      args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: await chromium.default.executablePath(),
+      headless: true,
+    });
+    
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 720 });
+    await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle0' });
+    await page.screenshot({ path: file, type: 'png' });
+    await browser.close();
+    
+    // Clean up HTML file
+    try { fs.unlinkSync(htmlFile); } catch {}
+    
+    console.log(`[Thumbnail] ✓ Puppeteer render complete: ${file}`);
+    return file;
+  } catch (error) {
+    console.error("[Thumbnail] Puppeteer failed:", (error as Error).message);
+    console.log("[Thumbnail] Falling back to canvas rendering...");
+    
+    // Canvas fallback
+    ensureFonts();
+    const c = createCanvas(1280, 720);
+    const ctx = c.getContext("2d") as unknown as C2D;
+    
+    const palettes = [
+      { bg: "#0a0f1e", primary: "#3fe0ff", accent: "#ff2323", text: "#ffffff" },
+      { bg: "#1a0f2e", primary: "#a855f7", accent: "#ffd23f", text: "#ffffff" },
+      { bg: "#1a0e0a", primary: "#ff6b35", accent: "#3fe0ff", text: "#ffffff" },
+      { bg: "#0c1821", primary: "#38bdf8", accent: "#f43f5e", text: "#ffffff" },
+      { bg: "#041c1e", primary: "#2dd4bf", accent: "#ec4899", text: "#ffffff" },
+    ];
+    const palette = palettes[index % palettes.length];
+    const words = (comp.meta?.title || "Brain Challenge").split(" ");
+    const headline = words.slice(0, Math.min(5, words.length)).join(" ");
+    
+    // Render based on grammar type
+    switch (spec.grammar) {
+      case "giant-question-mark":
+        renderGiantQuestionMark(ctx, headline, palette);
+        break;
+      case "split-comparison":
+      case "vs-battle":
+        renderVSBattle(ctx, headline, palette);
+        break;
+      case "stat-bar-hero":
+        renderStatBar(ctx, headline, palette, index);
+        break;
+      case "truth-stamp":
+        renderTruthStamp(ctx, headline, palette);
+        break;
+      case "impact-number":
+        renderImpactNumber(ctx, headline, palette, comp.scenes?.length || 10);
+        break;
+      case "grid-progression":
+        renderGrid(ctx, headline, palette);
+        break;
+      default:
+        renderDefault(ctx, headline, palette, index);
+    }
+    
+    fs.writeFileSync(file, await c.encode("png"));
+    console.log(`[Thumbnail] ✓ Canvas fallback complete: ${file}`);
+    return file;
   }
-  
-  fs.writeFileSync(file, await c.encode("png"));
-  console.log(`[Thumbnail] Saved to: ${file}`);
-  return file;
 }
 
 // Canvas rendering functions for each grammar
