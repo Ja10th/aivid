@@ -33,12 +33,25 @@ function extractHook(comp: Composition): string {
   const hasMath = sceneKinds.includes("math-question");
   const hasGame = sceneKinds.some(k => k.startsWith("game-"));
   
+  // Eye training detection
+  const hasEyeTraining = category === "eye_training" || 
+    sceneKinds.some(k => ["smooth-pursuit", "saccade", "convergence", "rotation", "tracing"].includes(k)) ||
+    title.toLowerCase().includes("eye");
+  
   // Extract specific data from scenes
   const riddleData = scenes?.find(s => s.kind === "riddle")?.data as { question?: string; answer?: string } | undefined;
   const mathData = scenes?.find(s => s.kind === "math-question")?.data as { q?: string } | undefined;
   const memoryData = scenes?.find(s => s.kind === "memory-challenge")?.data as { sequence?: number[] } | undefined;
   
   // Build a specific hook based on what's in the video
+  if (hasEyeTraining) {
+    const exerciseTypes = sceneKinds.filter(k => ["smooth-pursuit", "saccade", "convergence", "rotation", "tracing"].includes(k));
+    if (exerciseTypes.length > 0) {
+      return `Follow, focus, track — ${exerciseTypes.length} eye movement exercises`;
+    }
+    return `Guided eye training — strengthen your vision muscles`;
+  }
+  
   if (hasRiddle && riddleData?.question) {
     return `A riddle that makes you think: ${riddleData.question.substring(0, 50)}...`;
   }
@@ -102,6 +115,10 @@ function chooseGrammar(hook: string, rng: RNG): string {
   const hookLower = hook.toLowerCase();
   
   // Grammar selection based on hook content - only return grammars we ACTUALLY implement
+  if (hookLower.includes("eye") || hookLower.includes("follow") || hookLower.includes("track") || hookLower.includes("focus") || hookLower.includes("vision")) {
+    return rng.pick(["neon-sign", "torn-photo", "isometric-room"]); // Calming, focused aesthetics
+  }
+  
   if (hookLower.includes("riddle") || hookLower.includes("question") || hookLower.includes("think")) {
     return "giant-question-mark"; // We have this one
   }
