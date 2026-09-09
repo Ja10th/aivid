@@ -2055,104 +2055,252 @@ export function drawWouldYouRatherThumbnail(ctx: C2D, W: number, H: number, them
   ctx.fillRect(0, 0, W, H);
 
   if (sceneType === 0) {
-    // Two paths splitting
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Split arrow
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 16;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    
-    // Left path
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.7);
-    ctx.lineTo(W * 0.3, H * 0.3);
-    ctx.stroke();
-    
-    // Right path
-    ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.7);
-    ctx.lineTo(W * 0.7, H * 0.3);
-    ctx.stroke();
-    
-    // Circles at ends
+    // Bold split with massive text
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(0, 0, W * 0.5, H);
     ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.arc(W * 0.3, H * 0.3, W * 0.08, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(W * 0.5, 0, W * 0.5, H);
     
-    ctx.fillStyle = colors.accent;
-    ctx.beginPath();
-    ctx.arc(W * 0.7, H * 0.3, W * 0.08, 0, Math.PI * 2);
-    ctx.fill();
-
-  } else if (sceneType === 1) {
-    // VS split screen
-    const grad = ctx.createLinearGradient(0, 0, W, 0);
-    grad.addColorStop(0, colors.primary);
-    grad.addColorStop(0.5, colors.secondary);
-    grad.addColorStop(1, colors.accent);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // VS text
+    // Massive VS
     ctx.fillStyle = colors.bg;
-    ctx.font = `bold ${W * 0.25}px Arial`;
+    ctx.font = `bold ${W * 0.35}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 30;
     ctx.fillText("VS", W * 0.5, H * 0.5);
+    ctx.shadowBlur = 0;
+
+  } else if (sceneType === 1) {
+    // Diagonal split with dramatic arrows
+    ctx.save();
+    ctx.translate(W * 0.5, H * 0.5);
+    ctx.rotate(-Math.PI / 8);
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(-W, -H, W, H * 2);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(0, -H, W, H * 2);
+    ctx.restore();
+    
+    // Big question mark
+    ctx.fillStyle = colors.bg;
+    ctx.font = `bold ${W * 0.5}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.7)";
+    ctx.shadowBlur = 40;
+    ctx.fillText("?", W * 0.5, H * 0.5);
+    ctx.shadowBlur = 0;
 
   } else if (sceneType === 2) {
-    // Question mark with options
+    // Radial burst from center
     const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
+    grad.addColorStop(0, colors.accent);
+    grad.addColorStop(0.6, colors.primary);
     grad.addColorStop(1, colors.bg);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
-
-    // Big question mark
-    ctx.fillStyle = colors.primary;
-    ctx.font = `bold ${W * 0.4}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("?", W * 0.5, H * 0.5);
-
-  } else {
-    // Two boxes side by side
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Left box
-    ctx.fillStyle = hexA(colors.primary, 0.3);
-    ctx.fillRect(W * 0.1, H * 0.3, W * 0.35, H * 0.4);
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 6;
-    ctx.strokeRect(W * 0.1, H * 0.3, W * 0.35, H * 0.4);
-
-    // Right box
-    ctx.fillStyle = hexA(colors.accent, 0.3);
-    ctx.fillRect(W * 0.55, H * 0.3, W * 0.35, H * 0.4);
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 6;
-    ctx.strokeRect(W * 0.55, H * 0.3, W * 0.35, H * 0.4);
-
+    
+    // Choice boxes
+    ctx.fillStyle = hexA(colors.bg, 0.9);
+    rrect(ctx, W * 0.1, H * 0.25, W * 0.35, H * 0.2, 20);
+    ctx.fill();
+    rrect(ctx, W * 0.55, H * 0.55, W * 0.35, H * 0.2, 20);
+    ctx.fill();
+    
     // Letters
-    ctx.fillStyle = colors.primary;
+    ctx.fillStyle = colors.accent;
     ctx.font = `bold ${W * 0.15}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("A", W * 0.275, H * 0.5);
+    ctx.fillText("A", W * 0.275, H * 0.35);
+    ctx.fillText("B", W * 0.725, H * 0.65);
+
+  } else if (sceneType === 3) {
+    // Bold top/bottom split
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(0, 0, W, H * 0.48);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(0, H * 0.52, W, H * 0.48);
+    
+    // Massive OR in the middle
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, H * 0.4, W, H * 0.2);
+    ctx.fillStyle = colors.secondary;
+    ctx.font = `bold ${W * 0.25}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("OR", W * 0.5, H * 0.5);
+
+  } else if (sceneType === 4) {
+    // Arrow pointing in two directions
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    ctx.fillStyle = colors.primary;
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 40;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    
+    // Left arrow
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.5);
+    ctx.lineTo(W * 0.15, H * 0.3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W * 0.15, H * 0.3);
+    ctx.lineTo(W * 0.2, H * 0.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W * 0.15, H * 0.3);
+    ctx.lineTo(W * 0.25, H * 0.35);
+    ctx.stroke();
+    
+    // Right arrow
+    ctx.strokeStyle = colors.accent;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.5);
+    ctx.lineTo(W * 0.85, H * 0.7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W * 0.85, H * 0.7);
+    ctx.lineTo(W * 0.8, H * 0.8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(W * 0.85, H * 0.7);
+    ctx.lineTo(W * 0.75, H * 0.65);
+    ctx.stroke();
+
+  } else if (sceneType === 5) {
+    // Yin yang style split
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.5, W * 0.35, -Math.PI / 2, Math.PI / 2);
+    ctx.arc(W * 0.5, H * 0.25, W * 0.175, Math.PI / 2, -Math.PI / 2, true);
+    ctx.arc(W * 0.5, H * 0.75, W * 0.175, Math.PI / 2, -Math.PI / 2);
+    ctx.closePath();
+    ctx.fill();
     
     ctx.fillStyle = colors.accent;
-    ctx.fillText("B", W * 0.725, H * 0.5);
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.5, W * 0.35, Math.PI / 2, -Math.PI / 2);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.fillStyle = colors.bg;
+    ctx.font = `bold ${W * 0.2}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("THIS", W * 0.5, H * 0.3);
+    ctx.fillText("THAT", W * 0.5, H * 0.7);
+
+  } else if (sceneType === 6) {
+    // Checkerboard with A/B
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        ctx.fillStyle = (i + j) % 2 === 0 ? colors.primary : colors.accent;
+        ctx.fillRect(i * W * 0.25, j * H * 0.25, W * 0.25, H * 0.25);
+      }
+    }
+    
+    ctx.fillStyle = hexA(colors.bg, 0.9);
+    ctx.fillRect(W * 0.25, H * 0.35, W * 0.5, H * 0.3);
+    
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${W * 0.25}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("A or B?", W * 0.5, H * 0.5);
+
+  } else if (sceneType === 7) {
+    // Traffic light style
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    const circleR = W * 0.15;
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.25, circleR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 20;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.75, circleR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 20;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+  } else if (sceneType === 8) {
+    // Road fork
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    ctx.fillStyle = colors.primary;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.45, H);
+    ctx.lineTo(W * 0.45, H * 0.5);
+    ctx.lineTo(W * 0.2, 0);
+    ctx.lineTo(W * 0.35, 0);
+    ctx.lineTo(W * 0.55, H * 0.5);
+    ctx.lineTo(W * 0.55, H);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.55, H * 0.5);
+    ctx.lineTo(W * 0.65, 0);
+    ctx.lineTo(W * 0.8, 0);
+    ctx.lineTo(W * 0.55, H * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+  } else {
+    // Two doors
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Left door
+    ctx.fillStyle = colors.primary;
+    rrect(ctx, W * 0.08, H * 0.15, W * 0.38, H * 0.7, 10);
+    ctx.fill();
+    ctx.strokeStyle = colors.bg;
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    
+    ctx.fillStyle = colors.bg;
+    ctx.beginPath();
+    ctx.arc(W * 0.38, H * 0.5, W * 0.03, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = colors.bg;
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("1", W * 0.27, H * 0.5);
+    
+    // Right door
+    ctx.fillStyle = colors.accent;
+    rrect(ctx, W * 0.54, H * 0.15, W * 0.38, H * 0.7, 10);
+    ctx.fill();
+    ctx.strokeStyle = colors.bg;
+    ctx.lineWidth = 8;
+    ctx.stroke();
+    
+    ctx.fillStyle = colors.bg;
+    ctx.beginPath();
+    ctx.arc(W * 0.62, H * 0.5, W * 0.03, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.fillText("2", W * 0.73, H * 0.5);
   }
 
   applyMicroLayout(ctx, W, H, layoutMicro);
@@ -2171,115 +2319,253 @@ export function drawMythBustersThumbnail(ctx: C2D, W: number, H: number, themeVa
   ctx.fillRect(0, 0, W, H);
 
   if (sceneType === 0) {
-    // Stamp "BUSTED" effect
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
+    // Giant BUSTED stamp
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(0, 0, W, H);
-
-    // Red stamp
+    
     ctx.save();
     ctx.translate(W * 0.5, H * 0.5);
-    ctx.rotate(-0.2);
-    ctx.strokeStyle = colors.accent;
-    ctx.lineWidth = 12;
-    ctx.strokeRect(-W * 0.3, -H * 0.15, W * 0.6, H * 0.3);
+    ctx.rotate(-0.15);
     
+    // Stamp border
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 20;
+    rrect(ctx, -W * 0.42, -H * 0.22, W * 0.84, H * 0.44, 10);
+    ctx.stroke();
+    
+    // Text
     ctx.fillStyle = colors.accent;
-    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.font = `bold ${W * 0.18}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.3)";
+    ctx.shadowBlur = 15;
     ctx.fillText("BUSTED", 0, 0);
+    ctx.shadowBlur = 0;
     ctx.restore();
 
   } else if (sceneType === 1) {
-    // True/False checkmark and X
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Checkmark
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 16;
+    // Split TRUE/FALSE
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(0, 0, W * 0.5, H);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(W * 0.5, 0, W * 0.5, H);
+    
+    // Massive checkmark
+    ctx.strokeStyle = colors.bg;
+    ctx.lineWidth = 30;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.beginPath();
-    ctx.moveTo(W * 0.2, H * 0.5);
-    ctx.lineTo(W * 0.3, H * 0.6);
-    ctx.lineTo(W * 0.45, H * 0.35);
+    ctx.moveTo(W * 0.15, H * 0.5);
+    ctx.lineTo(W * 0.23, H * 0.6);
+    ctx.lineTo(W * 0.4, H * 0.35);
     ctx.stroke();
-
-    // X mark
-    ctx.strokeStyle = colors.accent;
+    
+    // Massive X
+    ctx.strokeStyle = colors.bg;
+    ctx.lineWidth = 30;
     ctx.beginPath();
-    ctx.moveTo(W * 0.55, H * 0.35);
-    ctx.lineTo(W * 0.8, H * 0.65);
+    ctx.moveTo(W * 0.6, H * 0.35);
+    ctx.lineTo(W * 0.85, H * 0.65);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(W * 0.8, H * 0.35);
-    ctx.lineTo(W * 0.55, H * 0.65);
+    ctx.moveTo(W * 0.85, H * 0.35);
+    ctx.lineTo(W * 0.6, H * 0.65);
     ctx.stroke();
 
   } else if (sceneType === 2) {
-    // Magnifying glass
-    const grad = ctx.createLinearGradient(0, H, W, 0);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
+    // Bold question mark
+    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.6);
+    grad.addColorStop(0, colors.accent);
+    grad.addColorStop(1, colors.bg);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
+    
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${W * 0.65}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 40;
+    ctx.fillText("?", W * 0.5, H * 0.5);
+    ctx.shadowBlur = 0;
 
-    // Glass
-    ctx.strokeStyle = colors.primary;
-    ctx.lineWidth = 12;
+  } else if (sceneType === 3) {
+    // Explosion background with text
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5 + Math.cos(angle) * W * 0.5, H * 0.5 + Math.sin(angle) * H * 0.5, W * 0.3);
+      grad.addColorStop(0, colors.accent);
+      grad.addColorStop(0.5, colors.primary);
+      grad.addColorStop(1, colors.bg);
+      ctx.fillStyle = grad;
+      
+      ctx.beginPath();
+      ctx.moveTo(W * 0.5, H * 0.5);
+      ctx.arc(W * 0.5, H * 0.5, W * 0.6, angle - Math.PI / 12, angle + Math.PI / 12);
+      ctx.closePath();
+      ctx.fill();
+    }
+    
+    // Center circle
+    ctx.fillStyle = colors.secondary;
     ctx.beginPath();
-    ctx.arc(W * 0.45, H * 0.4, W * 0.2, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.arc(W * 0.5, H * 0.5, W * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = colors.bg;
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("FACT", W * 0.5, H * 0.45);
+    ctx.fillText("CHECK", W * 0.5, H * 0.55);
 
+  } else if (sceneType === 4) {
+    // Magnifying glass on mystery
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Glass circle
+    ctx.strokeStyle = colors.primary;
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.arc(W * 0.4, H * 0.45, W * 0.22, 0, Math.PI * 2);
+    ctx.stroke();
+    
     // Handle
-    ctx.lineWidth = 16;
+    ctx.lineWidth = 25;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(W * 0.58, H * 0.53);
-    ctx.lineTo(W * 0.75, H * 0.75);
+    ctx.moveTo(W * 0.55, H * 0.6);
+    ctx.lineTo(W * 0.75, H * 0.85);
     ctx.stroke();
+    
+    // Question inside
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.18}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("?", W * 0.4, H * 0.45);
 
-    // Question mark inside
+  } else if (sceneType === 5) {
+    // TRUE FALSE scales
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Balance beam
+    ctx.fillStyle = colors.secondary;
+    ctx.fillRect(W * 0.2, H * 0.5, W * 0.6, H * 0.04);
+    
+    // Left side (TRUE)
+    ctx.fillStyle = colors.primary;
+    rrect(ctx, W * 0.15, H * 0.3, W * 0.25, H * 0.2, 8);
+    ctx.fill();
+    ctx.fillStyle = colors.bg;
+    ctx.font = `bold ${W * 0.08}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("TRUE", W * 0.275, H * 0.4);
+    
+    // Right side (FALSE)
+    ctx.fillStyle = colors.accent;
+    rrect(ctx, W * 0.6, H * 0.6, W * 0.25, H * 0.2, 8);
+    ctx.fill();
+    ctx.fillStyle = colors.bg;
+    ctx.fillText("FALSE", W * 0.725, H * 0.7);
+
+  } else if (sceneType === 6) {
+    // Detective hat
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Hat brim
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(W * 0.15, H * 0.55, W * 0.7, H * 0.08);
+    
+    // Hat crown
+    rrect(ctx, W * 0.3, H * 0.3, W * 0.4, H * 0.25, 8);
+    ctx.fill();
+    
     ctx.fillStyle = colors.accent;
     ctx.font = `bold ${W * 0.15}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("?", W * 0.45, H * 0.4);
+    ctx.fillText("MYTH", W * 0.5, H * 0.75);
+
+  } else if (sceneType === 7) {
+    // Lightning bolt debunk
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.55, 0);
+    ctx.lineTo(W * 0.35, H * 0.45);
+    ctx.lineTo(W * 0.5, H * 0.45);
+    ctx.lineTo(W * 0.3, H);
+    ctx.lineTo(W * 0.6, H * 0.55);
+    ctx.lineTo(W * 0.45, H * 0.55);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 25;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+  } else if (sceneType === 8) {
+    // Broken myth symbol
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Circle with crack
+    ctx.fillStyle = colors.bg;
+    ctx.beginPath();
+    ctx.arc(W * 0.5, H * 0.5, W * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Crack
+    ctx.strokeStyle = colors.accent;
+    ctx.lineWidth = 12;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.2);
+    ctx.lineTo(W * 0.45, H * 0.4);
+    ctx.lineTo(W * 0.55, H * 0.6);
+    ctx.lineTo(W * 0.5, H * 0.8);
+    ctx.stroke();
 
   } else {
-    // Explosion burst
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.5);
-    grad.addColorStop(0, colors.accent);
-    grad.addColorStop(0.7, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
+    // Science beaker bubbling
+    ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
-
-    // Star burst
+    
+    // Beaker body
     ctx.fillStyle = colors.primary;
     ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const outerR = W * 0.3;
-      const innerR = W * 0.15;
-      const isOuter = i % 2 === 0;
-      const r = isOuter ? outerR : innerR;
-      const x = W * 0.5 + Math.cos(angle) * r;
-      const y = H * 0.5 + Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
+    ctx.moveTo(W * 0.35, H * 0.4);
+    ctx.lineTo(W * 0.3, H * 0.8);
+    ctx.lineTo(W * 0.7, H * 0.8);
+    ctx.lineTo(W * 0.65, H * 0.4);
     ctx.closePath();
+    ctx.fill();
+    
+    // Neck
+    ctx.fillRect(W * 0.4, H * 0.2, W * 0.2, H * 0.2);
+    
+    // Bubbles
+    ctx.fillStyle = colors.accent;
+    ctx.beginPath();
+    ctx.arc(W * 0.4, H * 0.6, W * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(W * 0.55, H * 0.55, W * 0.04, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.arc(W * 0.5, H * 0.35, W * 0.03, 0, Math.PI * 2);
     ctx.fill();
   }
 
+    ctx.beginPath();
   applyMicroLayout(ctx, W, H, layoutMicro);
   fitOutlinedText(ctx, hook, W / 2, H * 0.87, W * 0.88, 96, colors.primary, colors.bg);
 }
@@ -2296,109 +2582,230 @@ export function drawQuickPollThumbnail(ctx: C2D, W: number, H: number, themeVari
   ctx.fillRect(0, 0, W, H);
 
   if (sceneType === 0) {
-    // Bar chart
-    const grad = ctx.createLinearGradient(0, H, 0, 0);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
+    // Bold bar chart
+    ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
-
-    // Four bars
-    const barWidth = W * 0.15;
-    const barColors = [colors.primary, colors.accent, colors.secondary, colors.text];
-    const barHeights = [0.6, 0.8, 0.5, 0.4];
+    
+    const barColors = [colors.primary, colors.accent, colors.secondary, colors.primary];
+    const barHeights = [0.7, 0.9, 0.5, 0.6];
 
     barHeights.forEach((height, i) => {
-      const x = W * 0.15 + i * W * 0.2;
-      const barH = H * height * 0.5;
-      const y = H * 0.65 - barH;
+      const barW = W * 0.18;
+      const x = W * 0.1 + i * W * 0.22;
+      const barH = H * height * 0.55;
+      const y = H * 0.7 - barH;
       
       ctx.fillStyle = barColors[i];
-      ctx.fillRect(x, y, barWidth, barH);
-      ctx.strokeStyle = colors.text;
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, barWidth, barH);
+      ctx.fillRect(x, y, barW, barH);
+      ctx.shadowColor = "rgba(0,0,0,0.4)";
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 10;
+      ctx.fillRect(x, y, barW, barH);
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
     });
+    
+    // Big VOTE text
+    ctx.fillStyle = colors.accent;
+    ctx.font = `bold ${W * 0.15}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 15;
+    ctx.fillText("VOTE", W * 0.5, H * 0.18);
+    ctx.shadowBlur = 0;
 
   } else if (sceneType === 1) {
-    // Pie chart
-    const grad = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, W * 0.7);
-    grad.addColorStop(0, colors.secondary);
-    grad.addColorStop(1, colors.bg);
-    ctx.fillStyle = grad;
+    // Giant pie chart
+    ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
 
-    const radius = W * 0.25;
-    const slices = [0.4, 0.3, 0.2, 0.1];
+    const radius = W * 0.4;
+    const slices = [0.45, 0.3, 0.25];
+    const sliceColors = [colors.primary, colors.accent, colors.secondary];
     let currentAngle = -Math.PI / 2;
 
     slices.forEach((slice, i) => {
       const sliceAngle = slice * Math.PI * 2;
-      ctx.fillStyle = [colors.primary, colors.accent, colors.secondary, colors.text][i];
+      ctx.fillStyle = sliceColors[i];
       ctx.beginPath();
       ctx.moveTo(W * 0.5, H * 0.5);
       ctx.arc(W * 0.5, H * 0.5, radius, currentAngle, currentAngle + sliceAngle);
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = colors.bg;
-      ctx.lineWidth = 4;
-      ctx.stroke();
+      ctx.shadowColor = "rgba(0,0,0,0.3)";
+      ctx.shadowBlur = 15;
+      ctx.fill();
+      ctx.shadowBlur = 0;
       currentAngle += sliceAngle;
     });
 
   } else if (sceneType === 2) {
-    // Checkboxes
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
+    // Thumbs up massive
+    ctx.fillStyle = colors.primary;
     ctx.fillRect(0, 0, W, H);
+    
+    ctx.fillStyle = colors.bg;
+    ctx.font = `${W * 0.55}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 30;
+    ctx.fillText("👍", W * 0.5, H * 0.5);
+    ctx.shadowBlur = 0;
 
-    const boxSize = W * 0.12;
-    const positions = [[0.3, 0.35], [0.3, 0.55], [0.6, 0.35], [0.6, 0.55]];
+  } else if (sceneType === 3) {
+    // ABCD grid
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    const letters = ["A", "B", "C", "D"];
+    const boxColors = [colors.primary, colors.accent, colors.secondary, colors.primary];
+    
+    letters.forEach((letter, i) => {
+      const row = Math.floor(i / 2);
+      const col = i % 2;
+      const boxW = W * 0.42;
+      const boxH = H * 0.42;
+      const x = W * 0.08 + col * (boxW + W * 0.08);
+      const y = H * 0.08 + row * (boxH + H * 0.08);
+      
+      ctx.fillStyle = boxColors[i];
+      rrect(ctx, x, y, boxW, boxH, 15);
+      ctx.fill();
+      ctx.shadowColor = "rgba(0,0,0,0.4)";
+      ctx.shadowBlur = 15;
+      ctx.shadowOffsetY = 8;
+      rrect(ctx, x, y, boxW, boxH, 15);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      
+      ctx.fillStyle = colors.bg;
+      ctx.font = `bold ${W * 0.2}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(letter, x + boxW / 2, y + boxH / 2);
+    });
 
-    positions.forEach(([xRatio, yRatio], i) => {
-      const x = W * xRatio;
-      const y = H * yRatio;
+  } else if (sceneType === 4) {
+    // Percentage bars
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    const percentages = ["75%", "45%", "30%"];
+    const barColors = [colors.primary, colors.accent, colors.secondary];
+    
+    percentages.forEach((pct, i) => {
+      const y = H * 0.2 + i * H * 0.25;
+      const barW = parseFloat(pct) / 100 * W * 0.75;
       
-      ctx.fillStyle = hexA(colors.primary, 0.2);
-      ctx.fillRect(x, y, boxSize, boxSize);
-      ctx.strokeStyle = colors.primary;
-      ctx.lineWidth = 4;
-      ctx.strokeRect(x, y, boxSize, boxSize);
+      ctx.fillStyle = barColors[i];
+      rrect(ctx, W * 0.1, y, barW, H * 0.12, 8);
+      ctx.fill();
       
-      // Checkmark on first box
-      if (i === 0) {
+      ctx.fillStyle = colors.bg;
+      ctx.font = `bold ${W * 0.08}px Arial`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(pct, W * 0.15, y + H * 0.06);
+    });
+
+  } else if (sceneType === 5) {
+    // Dot voting
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(0, 0, W, H);
+    
+    // Random dots
+    for (let i = 0; i < 15; i++) {
+      const x = W * 0.2 + rng.range(0, W * 0.6);
+      const y = H * 0.2 + rng.range(0, H * 0.6);
+      const r = W * 0.04;
+      
+      ctx.fillStyle = i % 3 === 0 ? colors.accent : colors.bg;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+  } else if (sceneType === 6) {
+    // Raised hands
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    const hands = ["✋", "✋", "✋", "✋", "✋"];
+    hands.forEach((hand, i) => {
+      const x = W * 0.15 + i * W * 0.17;
+      const y = H * 0.55 - i * H * 0.05;
+      
+      ctx.font = `${W * 0.15}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(hand, x, y);
+    });
+    
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${W * 0.12}px Arial`;
+    ctx.fillText("VOTE!", W * 0.5, H * 0.15);
+
+  } else if (sceneType === 7) {
+    // Star rating
+    ctx.fillStyle = colors.bg;
+    ctx.fillRect(0, 0, W, H);
+    
+    const stars = ["⭐", "⭐", "⭐", "⭐", "⭐"];
+    stars.forEach((star, i) => {
+      const x = W * 0.12 + i * W * 0.18;
+      
+      ctx.font = `${W * 0.15}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(star, x, H * 0.5);
+    });
+
+  } else if (sceneType === 8) {
+    // Checkbox list
+    ctx.fillStyle = colors.primary;
+    ctx.fillRect(0, 0, W, H);
+    
+    for (let i = 0; i < 4; i++) {
+      const y = H * 0.2 + i * H * 0.2;
+      const boxSize = W * 0.12;
+      
+      ctx.fillStyle = colors.bg;
+      rrect(ctx, W * 0.15, y, boxSize, boxSize, 5);
+      ctx.fill();
+      
+      if (i === 0 || i === 2) {
         ctx.strokeStyle = colors.accent;
-        ctx.lineWidth = 6;
+        ctx.lineWidth = 8;
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.beginPath();
-        ctx.moveTo(x + boxSize * 0.2, y + boxSize * 0.5);
-        ctx.lineTo(x + boxSize * 0.4, y + boxSize * 0.7);
-        ctx.lineTo(x + boxSize * 0.8, y + boxSize * 0.3);
+        ctx.moveTo(W * 0.17, y + boxSize * 0.5);
+        ctx.lineTo(W * 0.20, y + boxSize * 0.7);
+        ctx.lineTo(W * 0.25, y + boxSize * 0.35);
         ctx.stroke();
       }
-    });
+    }
 
   } else {
-    // Thumbs up/down
-    const grad = ctx.createLinearGradient(W, 0, 0, H);
-    grad.addColorStop(0, colors.bg);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
+    // Trophy winner
+    ctx.fillStyle = colors.bg;
     ctx.fillRect(0, 0, W, H);
-
-    // Thumbs up (left)
-    ctx.fillStyle = colors.primary;
-    ctx.font = `${W * 0.25}px Arial`;
+    
+    ctx.fillStyle = colors.accent;
+    ctx.font = `${W * 0.5}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("👍", W * 0.35, H * 0.5);
-
-    // Thumbs down (right)
-    ctx.fillStyle = colors.accent;
-    ctx.fillText("👎", W * 0.65, H * 0.5);
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 30;
+    ctx.fillText("🏆", W * 0.5, H * 0.45);
+    ctx.shadowBlur = 0;
+    
+    ctx.fillStyle = colors.primary;
+    ctx.font = `bold ${W * 0.1}px Arial`;
+    ctx.fillText("#1", W * 0.5, H * 0.75);
   }
 
   applyMicroLayout(ctx, W, H, layoutMicro);
