@@ -57,11 +57,27 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const retry = () => call("retry", () => patch({ action: "retry" }));
   const regen = async () => { const j = await call("regenerate", () => fetch(`/api/videos/${video.id}/regenerate`, { method: "POST" })); if (j?.id) router.push(`/videos/${j.id}`); };
   const regenThumb = async () => {
-    const j = await call("thumbnail options", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST" }));
-    if (Array.isArray(j?.variants)) {
-      setVariants(j.variants as ThumbnailVariant[]);
+    const seed = `${video.id}-${Date.now()}`;
+    setBusy("thumbnail options"); setMsg(null); setVariants([]);
+    try {
+      const requests = Array.from({ length: 5 }, (_, index) => fetch(`/api/videos/${video.id}/thumbnail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "variant", index, seed }),
+      }).then(async (response) => {
+        const result = await readResponse(response);
+        if (!response.ok) throw new Error(typeof result.error === "string" ? result.error : "failed");
+        const next = Array.isArray(result.variants) ? result.variants as ThumbnailVariant[] : [];
+        setVariants((current) => [...current, ...next].sort((a, b) => a.index - b.index));
+        return next;
+      }));
+      const results = await Promise.allSettled(requests);
+      const failed = results.filter((result) => result.status === "rejected");
+      setMsg(failed.length ? `${failed.length} thumbnail option${failed.length === 1 ? "" : "s"} failed` : "thumbnail options: ok");
       setTimeout(() => thumbsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-    }
+    } catch (error) {
+      setMsg(`thumbnail options: ${(error as Error).message}`);
+    } finally { setBusy(null); }
   };
   const chooseThumb = async (index: number) => {
     const variant = variants.find((item) => item.index === index);

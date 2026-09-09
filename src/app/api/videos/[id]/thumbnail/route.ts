@@ -39,9 +39,11 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
     // Use consistent seed - when selecting, use the seed from the variant
     // Otherwise generate a new timestamped seed for new options
-    const baseSeed = body.action === "select" && body.seed 
-      ? body.seed // Use the EXACT seed from the selected variant
-      : `${video.seed}-${Date.now()}`; // New seed when generating new options
+    const baseSeed = body.seed && body.action !== "select"
+      ? body.seed
+      : body.action === "select" && body.seed
+        ? body.seed
+        : `${video.seed}-${Date.now()}`;
 
     if (body.action !== "select") {
       // Generate 5 completely unique thumbnail variants
@@ -51,7 +53,9 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       // Check if we should use the Render worker for better quality
       const useWorker = !!process.env.RENDER_WORKER_URL;
       
-      for (let index = 0; index < 5; index++) {
+      const requestedIndex = Number(body.index);
+      const indexes = body.action === "variant" && Number.isInteger(requestedIndex) && requestedIndex >= 0 && requestedIndex < 5 ? [requestedIndex] : [0, 1, 2, 3, 4];
+      for (const index of indexes) {
         const fingerprint = uniqueThumbFingerprint(baseSeed, index);
         console.log(`[Thumbnail] Variant ${index}: fingerprint=${fingerprint}`);
         const style: ThumbStyle = { 
@@ -85,8 +89,14 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
                 outputKey: `${video.id}-variant-${index}-${fingerprint}`,
               }),
             });
-            const result = await response.json();
-            if (result.success) {
+            const responseText = await response.text();
+            let result: { success?: boolean; path?: string; error?: string };
+            try {
+              result = JSON.parse(responseText) as typeof result;
+            } catch {
+              throw new Error(`thumbnail worker returned ${response.status}`);
+            }
+            if (result.success && result.path) {
               path = result.path;
               console.log(`[Thumbnail] Worker rendered: ${path}`);
             } else {

@@ -290,7 +290,8 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 720 });
-    await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle0' });
+    page.setDefaultNavigationTimeout(10000);
+    await page.goto(`file://${htmlFile}`, { waitUntil: "domcontentloaded" });
     await page.screenshot({ path: file, type: 'png' });
     await browser.close();
     

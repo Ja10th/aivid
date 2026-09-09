@@ -78,7 +78,7 @@ export default function StudioForm({ channels }: { channels: { id: number; title
               <label className="lbl text-acid">format</label>
               <div className="flex gap-1">
                 <button className={`chip text-bone ${orientation === "landscape" ? "on" : ""}`} onClick={() => setOrientation("landscape")}>16:9 episode</button>
-                <button className={`chip text-bone ${orientation === "portrait" ? "on" : ""}`} onClick={() => setOrientation("portrait")}>9:16 short</button>
+                <button className={`chip text-bone ${orientation === "portrait" ? "on" : ""}`} onClick={() => setOrientation("portrait")}>9:16 reel (up to 3 min)</button>
               </div>
             </div>
             <div>

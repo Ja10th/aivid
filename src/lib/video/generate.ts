@@ -1033,7 +1033,7 @@ export function generateComposition(opts: GenerateOptions): Composition {
   const seed = opts.seed || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const rng = new RNG(`${opts.category}|${opts.orientation}|${seed}`);
   const orientation = opts.orientation;
-  const target = opts.targetDuration ?? (orientation === "landscape" ? rng.int(245, 470) : rng.int(28, 58));
+  const target = opts.targetDuration ?? (orientation === "landscape" ? rng.int(245, 470) : rng.int(120, 178));
   const palettes = rng.shuffle(PALETTES).slice(0, rng.int(2, 4));
   const ctx: Ctx = { rng, orientation, palettes, sceneCount: 0, scenes: [], t: 0 };
   const category = opts.category === "random" ? rng.pick(CATEGORIES.map((c) => c.id)) : opts.category;

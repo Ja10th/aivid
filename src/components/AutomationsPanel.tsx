@@ -27,6 +27,12 @@ export default function AutomationsPanel({ autos, channels }: { autos: A[]; chan
     if (!response.ok) setMsg("Could not update automation voice");
     setBusy(null); router.refresh();
   };
+  const updateMode = async (id: number, value: "review" | "auto") => {
+    setBusy(`mode${id}`); setMsg(null);
+    const response = await fetch(`/api/automations/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: value }) });
+    if (!response.ok) setMsg("Could not update automation mode");
+    setBusy(null); router.refresh();
+  };
 
   const create = async () => {
     setBusy("create"); setMsg(null);
@@ -93,6 +99,11 @@ export default function AutomationsPanel({ autos, channels }: { autos: A[]; chan
                   <select value={a.fallbackVoice || "en-CA-Liam"} onChange={(event) => updateVoice(a.id, "fallbackVoice", event.target.value)} disabled={busy === `voice${a.id}`} className="field border-ink bg-transparent">
                     {VOICES.map((voiceOption) => <option key={voiceOption} value={voiceOption}>fallback · {voiceOption.replace("Neural", "")}</option>)}
                   </select>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="lbl mb-0">after render</span>
+                    <button onClick={() => updateMode(a.id, "review")} disabled={busy === `mode${a.id}`} className={`chip ${a.mode === "review" ? "on" : ""}`}>review</button>
+                    <button onClick={() => updateMode(a.id, "auto")} disabled={busy === `mode${a.id}` || !a.channelIds.length} className={`chip ${a.mode === "auto" ? "on" : ""}`}>auto-post</button>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-1 items-end">
                   <button onClick={() => act(a.id, "toggle", a.enabled)} className="chip">{a.enabled ? "pause" : "resume"}</button>
