@@ -13,6 +13,10 @@ RUN npm ci
 # Copy application files
 COPY . .
 
+# Create data directories with proper permissions
+RUN mkdir -p /app/data/videos /app/data/thumbs /app/data/tmp /app/data/music && \
+    chown -R pptruser:pptruser /app/data
+
 # Expose port
 EXPOSE 10000
 
