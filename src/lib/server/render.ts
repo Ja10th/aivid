@@ -246,13 +246,17 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
   fs.writeFileSync(htmlFile, spec.html);
   
-  // Use puppeteer to render HTML to PNG
+  // Use puppeteer-core with chromium for serverless compatibility
   try {
-    const puppeteer = await import("puppeteer");
+    const puppeteer = await import("puppeteer-core");
+    const chromium = await import("@sparticuz/chromium");
+    
     const browser = await puppeteer.default.launch({
+      args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: await chromium.default.executablePath(),
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
+    
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 720 });
     await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle0' });
