@@ -13,15 +13,18 @@ RUN npm ci
 # Copy application files
 COPY . .
 
-# Create data directories with proper permissions
-RUN mkdir -p /app/data/videos /app/data/thumbs /app/data/tmp /app/data/music && \
-    chown -R pptruser:pptruser /app/data
+# Fix permissions for data directories
+RUN chown -R pptruser:pptruser /app && \
+    mkdir -p /app/data/videos /app/data/thumbs /app/data/tmp /app/data/music
 
 # Expose port
 EXPOSE 10000
 
 # Set Puppeteer to use installed Chrome
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
+# Switch to non-root user
+USER pptruser
 
 # Start worker
 CMD ["npm", "run", "worker"]
