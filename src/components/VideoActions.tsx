@@ -5,7 +5,7 @@ import { Reveal } from "./Anim";
 import type { ThumbStyle } from "@/lib/video/thumbnail";
 
 interface V { id: number; title: string; description: string; tags: string[]; status: string; channelId: number | null; scheduledFor: string | null; videoUrl: string | null; mode: string }
-interface ThumbnailVariant { index: number; path: string; fingerprint: string; style: ThumbStyle }
+interface ThumbnailVariant { index: number; path: string; fingerprint: string; style: ThumbStyle; seed: string }
 
 function toLocalInput(iso: string | null) {
   if (!iso) return "";
@@ -66,7 +66,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const chooseThumb = async (index: number) => {
     const variant = variants.find((item) => item.index === index);
     if (!variant) return;
-    const j = await call("thumbnail selected", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "select", index, style: variant.style }) }));
+    const j = await call("thumbnail selected", () => fetch(`/api/videos/${video.id}/thumbnail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "select", index, fingerprint: variant.fingerprint, seed: variant.seed, style: variant.style }) }));
     if (j?.video) setVariants([]);
   };
   const del = async () => { if (!confirm("Delete this video and its files?")) return; await call("delete", () => fetch(`/api/videos/${video.id}`, { method: "DELETE" })); router.push("/videos"); };

@@ -24,7 +24,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const { id } = await params;
     const [video] = await db.select().from(videos).where(eq(videos.id, Number(id)));
     if (!video) return bad("not found", 404);
-    const body = await _.json().catch(() => ({})) as { action?: string; index?: number; fingerprint?: string };
+    const body = await _.json().catch(() => ({})) as { action?: string; index?: number; fingerprint?: string; seed?: string };
 
     const comp: Composition = {
       ...(video.composition as Composition),
@@ -37,10 +37,10 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       scenes: (video.composition as Composition)?.scenes || [],
     };
 
-    // Use consistent seed - only change when explicitly regenerating new options
-    // If user is selecting a variant, use the original video seed to maintain consistency
-    const baseSeed = body.action === "select" && body.fingerprint 
-      ? video.seed // Use original seed when selecting to ensure consistency
+    // Use consistent seed - when selecting, use the seed from the variant
+    // Otherwise generate a new timestamped seed for new options
+    const baseSeed = body.action === "select" && body.seed 
+      ? body.seed // Use the EXACT seed from the selected variant
       : `${video.seed}-${Date.now()}`; // New seed when generating new options
 
     if (body.action !== "select") {
@@ -104,10 +104,10 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
           console.log(`[Thumbnail] Uploaded to: ${path}`);
         }
         
-        variants.push({ index, path, fingerprint, style });
+        variants.push({ index, path, fingerprint, style, seed: baseSeed });
       }
       console.log(`[Thumbnail] Successfully generated ${variants.length} variants`);
-      return Response.json({ video, variants });
+      return Response.json({ video, variants, baseSeed });
     }
 
     const index = Number(body.index);
