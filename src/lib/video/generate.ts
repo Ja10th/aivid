@@ -779,7 +779,7 @@ function wouldyourather(ctx: Ctx, target: number) {
     const data = shuffled[index % shuffled.length];
     index++;
     
-    const duration = r.int(10, 15);
+    const duration = r.int(15, 22); // Increased for better engagement
     
     push(ctx, "would-you-rather", duration, {
       question: data.question,
@@ -812,12 +812,12 @@ function mythbusters(ctx: Ctx, target: number) {
   const shuffled = r.shuffle([...MYTHS]);
   let index = 0;
   
-  while (ctx.t < target - 12) {
+  while (ctx.t < target - 18) {
     const data = shuffled[index % shuffled.length];
     index++;
     
-    const thinkTime = r.int(6, 10);
-    const revealTime = r.int(5, 8);
+    const thinkTime = r.int(8, 12); // Increased for better engagement
+    const revealTime = r.int(7, 11); // Increased for better engagement
     
     // Question phase
     push(ctx, "myth-buster", thinkTime, {
@@ -868,7 +868,7 @@ function polls(ctx: Ctx, target: number) {
     const data = shuffled[index % shuffled.length];
     index++;
     
-    const duration = r.int(8, 12);
+    const duration = r.int(12, 18); // Increased for better engagement
     
     push(ctx, "quick-poll", duration, {
       question: data.question,
@@ -1052,14 +1052,15 @@ export function generateComposition(opts: GenerateOptions): Composition {
     case "polls": polls(ctx, target); break;
     default: mixed(ctx, target);
   }
-  // Portrait (shorts): cap scene lengths and total under 60s
+  // Portrait (shorts): cap scene lengths and total at 180s (3 min - YouTube Shorts max)
   if (orientation === "portrait") {
     for (const s of ctx.scenes) {
       const need = s.narration ? estimateSpeech(s.narration) + 1.5 : 0;
-      s.duration = Math.min(s.duration, Math.max(need, s.kind === "title" || s.kind === "outro" ? 5 : 18));
+      s.duration = Math.min(s.duration, Math.max(need, s.kind === "title" || s.kind === "outro" ? 5 : 25));
     }
     const total = () => ctx.scenes.reduce((a, s) => a + s.duration, 0);
-    while (total() > 59 && ctx.scenes.length > 3) ctx.scenes.splice(ctx.scenes.length - 2, 1);
+    // Allow up to 180 seconds (3 minutes) for YouTube Shorts
+    while (total() > 178 && ctx.scenes.length > 5) ctx.scenes.splice(ctx.scenes.length - 2, 1);
     let t = 0;
     for (const s of ctx.scenes) { s.start = t; t += s.duration; }
     ctx.t = t;
