@@ -6,8 +6,9 @@ import { Reveal, StaggerList } from "./Anim";
 
 interface T { id: number; title: string; mood: string; filePath: string; source: string; attribution: string | null }
 
-const MAX_FILES_PER_BATCH = 3;
-const MAX_BATCH_BYTES = 18 * 1024 * 1024;
+const MAX_FILES_PER_BATCH = 2;
+const MAX_BATCH_BYTES = 8 * 1024 * 1024;
+const MAX_SINGLE_FILE_BYTES = 4 * 1024 * 1024;
 
 export default function MusicPanel({ tracks }: { tracks: T[] }) {
   const router = useRouter();
@@ -23,54 +24,54 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
 
   const handleFiles = (nextFiles: FileList | File[] | null) => {
     const selected = Array.from(nextFiles ?? []).filter((file) => file.type.startsWith("audio/") || /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(file.name));
-    setFiles(selected);
-    if (selected.length) setMsg(null);
+    const valid = selected.filter((file) => file.size <= MAX_SINGLE_FILE_BYTES);
+    const rejected = selected.filter((file) => file.size > MAX_SINGLE_FILE_BYTES);
+    setFiles(valid);
+    if (rejected.length) setMsg(`Skipped ${rejected.length} file${rejected.length > 1 ? "s" : ""}: max file size is 4MB for this hosting.`);
+    else if (valid.length) setMsg(null);
   };
 
   const add = async () => {
     setBusy(true); setMsg(null);
     try {
-      const batches: File[][] = [];
-      if (files.length) {
-        let current: File[] = [];
-        let currentSize = 0;
-        for (const file of files) {
-          const nextSize = currentSize + file.size;
-          if (current.length && (current.length >= MAX_FILES_PER_BATCH || nextSize > MAX_BATCH_BYTES)) {
-            batches.push(current);
-            current = [];
-            currentSize = 0;
-          }
-          current.push(file);
-          currentSize += file.size;
-        }
-        if (current.length) batches.push(current);
-      }
-
+      if (!files.length && !url) throw new Error("choose a music file or direct URL");
       const uploaded: string[] = [];
-      if (batches.length) {
-        for (const batch of batches) {
-          const fd = new FormData();
-          batch.forEach((file) => fd.append("file", file));
-          if (batch.length === 1 && title) fd.append("title", title);
-          fd.append("mood", mood);
-          const r = await fetch("/api/music", { method: "POST", body: fd });
+
+      if (files.length) {
+        for (const file of files) {
+          if (file.size > MAX_SINGLE_FILE_BYTES) throw new Error(`file too large: ${file.name} exceeds 4MB`);
+          const presign = await fetch("/api/music/presign");
+          const presignData = await presign.json();
+          if (!presign.ok || !presignData.enabled) throw new Error("Cloudinary is not configured for direct uploads");
+
+          const form = new FormData();
+          form.append("file", file);
+          form.append("api_key", presignData.apiKey);
+          form.append("timestamp", String(presignData.timestamp));
+          form.append("signature", presignData.signature);
+          form.append("folder", presignData.folder);
+
+          const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${presignData.cloudName}/auto/upload`, { method: "POST", body: form });
+          const uploadJson = await uploadRes.json().catch(() => ({}));
+          if (!uploadRes.ok) throw new Error(uploadJson.error?.message || "direct upload failed");
+
+          const storedTitle = (title || file.name.replace(/\.[^.]+$/, "")).trim() || "track";
+          const r = await fetch("/api/music", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: uploadJson.secure_url, title: storedTitle, mood, attribution: uploadJson.secure_url }),
+          });
           const text = await r.text();
           let j: any = {};
-          try { j = text ? JSON.parse(text) : {}; } catch {
-            throw new Error(text || `request failed with status ${r.status}`);
-          }
+          try { j = text ? JSON.parse(text) : {}; } catch { throw new Error(text || `request failed with status ${r.status}`); }
           if (!r.ok) throw new Error(j.error || "failed");
-          const names = Array.isArray(j) ? j.map((item) => item.title) : [j.title];
-          uploaded.push(...names.filter(Boolean));
+          uploaded.push(j.title || storedTitle);
         }
       } else {
         const r = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, title, mood }) });
         const text = await r.text();
         let j: any = {};
-        try { j = text ? JSON.parse(text) : {}; } catch {
-          throw new Error(text || `request failed with status ${r.status}`);
-        }
+        try { j = text ? JSON.parse(text) : {}; } catch { throw new Error(text || `request failed with status ${r.status}`); }
         if (!r.ok) throw new Error(j.error || "failed");
         uploaded.push(j.title);
       }
