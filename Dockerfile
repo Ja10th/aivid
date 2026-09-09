@@ -10,8 +10,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (including tsx) and allow puppeteer postinstall
-RUN npm ci --omit=optional || true && \
+# Install ALL dependencies (including tsx and optional deps)
+RUN npm ci --include=optional && \
     npx puppeteer browsers install chrome
 
 # Copy application files
