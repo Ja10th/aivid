@@ -94,13 +94,13 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
             }
           } catch (error) {
             console.error(`[Thumbnail] Worker failed, falling back to local:`, (error as Error).message);
-            const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index);
+            const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index, false);
             path = await uploadFile(localThumbPath.path, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           }
         } else {
           // Render locally (canvas fallback on Vercel)
           console.log(`[Thumbnail] Rendering variant ${index} locally...`);
-          const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index);
+          const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`, baseSeed, index, false);
           console.log(`[Thumbnail] Rendered to: ${localThumbPath.path}`);
           path = await uploadFile(localThumbPath.path, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
           console.log(`[Thumbnail] Uploaded to: ${path}`);
@@ -132,8 +132,9 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       themeVariant: index 
     };
     
-    const result = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`, baseSeed, index);
-    const thumbPath = await uploadFile(result.path, `thumbs/${video.id}-${fingerprint}.png`, "image/png");
+    // Pass skipExclusion=true so we get EXACTLY the same grammar as when variants were generated
+    const result = await renderThumbnail(video.id, comp, style, `${video.id}-${fingerprint}`, baseSeed, index, true);
+    const thumbPath = await uploadFile(result.path, `thumbs/${video.id}-${fingerprint}.png`, "image/png`);
     
     if (video.youtubeVideoId) {
       if (!video.channelId) throw new Error("posted video has no connected YouTube channel");

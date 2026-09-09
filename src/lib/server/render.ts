@@ -234,26 +234,31 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   return { videoPath: out, thumbPath, durationSec: D };
 }
 
-export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string, explicitSeed?: string, explicitIndex?: number): Promise<{ path: string; grammar: string }> {
+export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string, explicitSeed?: string, explicitIndex?: number, skipExclusion: boolean = false): Promise<{ path: string; grammar: string }> {
   // Generate unique HTML-based thumbnail
   const { generateUniqueThumbnail } = await import("@/lib/video/unique-thumbnail");
   
   // Fetch recently used grammars to avoid duplication (last 50 published videos)
+  // BUT skip exclusion when regenerating a specific selected variant
   let excludeGrammars: string[] = [];
-  try {
-    const { db } = await import("@/db");
-    const { thumbnailFingerprints } = await import("@/db/schema");
-    const { desc, isNotNull } = await import("drizzle-orm");
-    const recent = await db
-      .select({ grammar: thumbnailFingerprints.grammar })
-      .from(thumbnailFingerprints)
-      .where(isNotNull(thumbnailFingerprints.grammar))
-      .orderBy(desc(thumbnailFingerprints.createdAt))
-      .limit(50);
-    excludeGrammars = recent.map(r => r.grammar).filter((g): g is string => !!g);
-    console.log(`[Thumbnail] Excluding ${excludeGrammars.length} recently used grammars`);
-  } catch (error) {
-    console.warn("[Thumbnail] Could not fetch used grammars:", (error as Error).message);
+  if (!skipExclusion) {
+    try {
+      const { db } = await import("@/db");
+      const { thumbnailFingerprints } = await import("@/db/schema");
+      const { desc, isNotNull } = await import("drizzle-orm");
+      const recent = await db
+        .select({ grammar: thumbnailFingerprints.grammar })
+        .from(thumbnailFingerprints)
+        .where(isNotNull(thumbnailFingerprints.grammar))
+        .orderBy(desc(thumbnailFingerprints.createdAt))
+        .limit(50);
+      excludeGrammars = recent.map(r => r.grammar).filter((g): g is string => !!g);
+      console.log(`[Thumbnail] Excluding ${excludeGrammars.length} recently used grammars`);
+    } catch (error) {
+      console.warn("[Thumbnail] Could not fetch used grammars:", (error as Error).message);
+    }
+  } else {
+    console.log(`[Thumbnail] Skipping grammar exclusion (regenerating selected variant)`);
   }
   
   // Use explicit parameters if provided (for consistent regeneration), otherwise fallback to defaults
