@@ -42,9 +42,11 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
     if (body.action !== "select") {
       // Generate 5 completely unique thumbnail variants
+      console.log(`[Thumbnail] Generating 5 unique HTML thumbnails for video ${video.id}`);
       const variants = [];
       for (let index = 0; index < 5; index++) {
         const fingerprint = uniqueThumbFingerprint(uniqueSeed, index);
+        console.log(`[Thumbnail] Variant ${index}: fingerprint=${fingerprint}`);
         // Empty style object - we're using unique HTML generation now, not ThumbStyle
         const style: ThumbStyle = { 
           paletteIdx: index, 
@@ -58,10 +60,14 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
           textVariant: 0, 
           themeVariant: index 
         };
+        console.log(`[Thumbnail] Rendering variant ${index} with unique HTML system...`);
         const localThumbPath = await renderThumbnail(video.id, comp, style, `${video.id}-variant-${index}-${fingerprint}`);
+        console.log(`[Thumbnail] Rendered to: ${localThumbPath}`);
         const path = await uploadFile(localThumbPath, `thumbs/${video.id}-variant-${index}-${fingerprint}.png`, "image/png");
+        console.log(`[Thumbnail] Uploaded to: ${path}`);
         variants.push({ index, path, fingerprint, style });
       }
+      console.log(`[Thumbnail] Successfully generated ${variants.length} variants`);
       return Response.json({ video, variants });
     }
 
