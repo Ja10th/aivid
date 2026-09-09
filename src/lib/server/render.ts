@@ -235,11 +235,39 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
 }
 
 export async function renderThumbnail(id: number, comp: Composition, style: ThumbStyle, outputKey?: string): Promise<string> {
-  ensureFonts();
-  const c = createCanvas(1280, 720);
-  drawThumbnail(c.getContext("2d") as unknown as C2D, comp, style, 1280, 720);
+  // New: Generate unique HTML-based thumbnail
+  const { generateUniqueThumbnail } = await import("@/lib/video/unique-thumbnail");
+  const seed = `${comp.seed}-${outputKey || id}`;
+  const index = typeof style.themeVariant === "number" ? style.themeVariant : 0;
+  const spec = generateUniqueThumbnail(comp, seed, index);
+  
+  // Save HTML to temp file
+  const htmlFile = path.join(TMP_DIR, `thumb-${outputKey ?? id}.html`);
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
-  fs.writeFileSync(file, await c.encode("png"));
+  fs.writeFileSync(htmlFile, spec.html);
+  
+  // Use puppeteer to render HTML to PNG
+  try {
+    const puppeteer = await import("puppeteer");
+    const browser = await puppeteer.default.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 720 });
+    await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle0' });
+    await page.screenshot({ path: file, type: 'png' });
+    await browser.close();
+    fs.unlinkSync(htmlFile); // Clean up HTML file
+  } catch (error) {
+    console.warn("Puppeteer rendering failed, falling back to canvas:", (error as Error).message);
+    // Fallback to old canvas-based rendering
+    ensureFonts();
+    const c = createCanvas(1280, 720);
+    drawThumbnail(c.getContext("2d") as unknown as C2D, comp, style, 1280, 720);
+    fs.writeFileSync(file, await c.encode("png"));
+  }
+  
   return file;
 }
 
