@@ -241,51 +241,33 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
   const index = typeof style.themeVariant === "number" ? style.themeVariant : 0;
   const spec = generateUniqueThumbnail(comp, seed, index);
   
-  const htmlFile = path.join(TMP_DIR, `thumb-${outputKey ?? id}.html`);
   const file = path.join(THUMBS_DIR, `${outputKey ?? id}.png`);
-  fs.writeFileSync(htmlFile, spec.html);
   
-  console.log(`[Thumbnail] Rendering ${spec.grammar} via Puppeteer...`);
+  console.log(`[Thumbnail] Rendering ${spec.grammar} via Satori...`);
   
   try {
-    const puppeteer = await import("puppeteer-core");
-    const chromium = await import("@sparticuz/chromium");
+    const satori = (await import("satori")).default;
+    const sharp = (await import("sharp")).default;
     
-    // Get chromium executable path
-    const executablePath = await chromium.default.executablePath();
+    // Convert HTML to JSX-like structure for Satori
+    const jsx = htmlToSatoriJSX(spec.html, spec.grammar);
     
-    // If local development and chromium not found, try to find local Chrome
-    let actualPath = executablePath;
-    if (!process.env.VERCEL && !fs.existsSync(executablePath)) {
-      const localPaths = [
-        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-        '/Applications/Chromium.app/Contents/MacOS/Chromium',
-        '/usr/bin/google-chrome',
-        '/usr/bin/chromium-browser',
-        '/usr/bin/chromium',
-      ];
-      actualPath = localPaths.find(p => fs.existsSync(p)) || executablePath;
-    }
-    
-    const browser = await puppeteer.default.launch({
-      args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: actualPath,
-      headless: true,
+    // Render to SVG with Satori
+    const svg = await satori(jsx, {
+      width: 1280,
+      height: 720,
+      fonts: [], // We'll use system fonts
     });
     
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 720 });
-    await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle0' });
-    await page.screenshot({ path: file, type: 'png' });
-    await browser.close();
+    // Convert SVG to PNG with sharp
+    await sharp(Buffer.from(svg))
+      .png()
+      .toFile(file);
     
-    // Clean up HTML file
-    try { fs.unlinkSync(htmlFile); } catch {}
-    
-    console.log(`[Thumbnail] ✓ Puppeteer render complete: ${file}`);
+    console.log(`[Thumbnail] ✓ Satori render complete: ${file}`);
     return file;
   } catch (error) {
-    console.error("[Thumbnail] Puppeteer failed:", (error as Error).message);
+    console.error("[Thumbnail] Satori failed:", (error as Error).message);
     console.log("[Thumbnail] Falling back to canvas rendering...");
     
     // Canvas fallback
@@ -332,6 +314,302 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     fs.writeFileSync(file, await c.encode("png"));
     console.log(`[Thumbnail] ✓ Canvas fallback complete: ${file}`);
     return file;
+  }
+}
+
+// Convert HTML string to Satori JSX
+function htmlToSatoriJSX(html: string, grammar: string): any {
+  // Extract colors from HTML
+  const bgMatch = html.match(/body\{[^}]*background:([^;}]+)/);
+  const primaryMatch = html.match(/color:([#a-f0-9]+)/i);
+  const headlineMatch = html.match(/<div class="headline">([^<]+)<\/div>/);
+  
+  const headline = headlineMatch ? headlineMatch[1] : "Brain Challenge";
+  
+  // Parse background (handle gradients)
+  let background = bgMatch ? bgMatch[1].trim() : "#0a0f1e";
+  if (background.includes("radial-gradient")) {
+    const colorMatch = background.match(/#[a-f0-9]{6}/gi);
+    background = colorMatch ? colorMatch[colorMatch.length - 1] : "#0a0f1e";
+  } else if (background.includes("linear-gradient")) {
+    const colorMatch = background.match(/#[a-f0-9]{6}/gi);
+    background = colorMatch ? colorMatch[colorMatch.length - 1] : "#0a0f1e";
+  }
+  
+  // Build JSX based on grammar
+  switch (grammar) {
+    case "giant-question-mark":
+      return {
+        type: "div",
+        props: {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            background,
+            position: "relative",
+          },
+          children: [
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 450,
+                  fontWeight: 900,
+                  color: "#3fe0ff",
+                  marginBottom: 80,
+                },
+                children: "?",
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  position: "absolute",
+                  bottom: 60,
+                  fontSize: 48,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  textAlign: "center",
+                  maxWidth: 1100,
+                },
+                children: headline,
+              },
+            },
+          ],
+        },
+      };
+    
+    case "split-comparison":
+    case "vs-battle":
+      return {
+        type: "div",
+        props: {
+          style: {
+            display: "flex",
+            width: "100%",
+            height: "100%",
+            position: "relative",
+          },
+          children: [
+            {
+              type: "div",
+              props: {
+                style: {
+                  width: "50%",
+                  height: "100%",
+                  background: "#3fe0ff",
+                },
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  width: "50%",
+                  height: "100%",
+                  background: "#ff2323",
+                },
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  fontSize: 280,
+                  fontWeight: 900,
+                  color: "#0a0f1e",
+                },
+                children: "VS",
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  position: "absolute",
+                  bottom: 60,
+                  left: 60,
+                  right: 60,
+                  fontSize: 48,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  textAlign: "center",
+                  background: "#0a0f1e",
+                  padding: "30px",
+                  borderRadius: 8,
+                },
+                children: headline,
+              },
+            },
+          ],
+        },
+      };
+    
+    case "stat-bar-hero":
+      const percentage = 75;
+      return {
+        type: "div",
+        props: {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            background,
+            padding: 100,
+          },
+          children: [
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 42,
+                  fontWeight: 700,
+                  color: "#3fe0ff",
+                  marginBottom: 30,
+                  letterSpacing: "0.1em",
+                },
+                children: "CHALLENGE LEVEL",
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  width: "100%",
+                  height: 100,
+                  border: "8px solid #ffffff",
+                  borderRadius: 12,
+                  background: "rgba(0,0,0,0.5)",
+                  overflow: "hidden",
+                  position: "relative",
+                  display: "flex",
+                },
+                children: {
+                  type: "div",
+                  props: {
+                    style: {
+                      width: `${percentage}%`,
+                      height: "100%",
+                      background: "#ff2323",
+                    },
+                  },
+                },
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 200,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  marginTop: 40,
+                },
+                children: `${percentage}%`,
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 44,
+                  fontWeight: 800,
+                  color: "#ffffff",
+                  marginTop: 30,
+                  textAlign: "center",
+                },
+                children: headline,
+              },
+            },
+          ],
+        },
+      };
+    
+    case "impact-number":
+      const number = headline.match(/\d+/) ? headline.match(/\d+/)![0] : "10";
+      return {
+        type: "div",
+        props: {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            background,
+          },
+          children: [
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 380,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                },
+                children: number,
+              },
+            },
+            {
+              type: "div",
+              props: {
+                style: {
+                  fontSize: 56,
+                  fontWeight: 900,
+                  color: "#ffffff",
+                  marginTop: 40,
+                  textAlign: "center",
+                  maxWidth: 900,
+                },
+                children: headline,
+              },
+            },
+          ],
+        },
+      };
+    
+    default:
+      return {
+        type: "div",
+        props: {
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            background,
+          },
+          children: {
+            type: "div",
+            props: {
+              style: {
+                fontSize: 60,
+                fontWeight: 900,
+                color: "#ffffff",
+                textAlign: "center",
+                maxWidth: 1000,
+                padding: "0 80px",
+              },
+              children: headline,
+            },
+          },
+        },
+      };
   }
 }
 
