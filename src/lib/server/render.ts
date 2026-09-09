@@ -252,11 +252,12 @@ export async function renderThumbnail(id: number, comp: Composition, style: Thum
     // Convert HTML to JSX-like structure for Satori
     const jsx = htmlToSatoriJSX(spec.html, spec.grammar);
     
-    // Render to SVG with Satori
+    // Render to SVG with Satori - skip font loading to avoid HarfBuzz issues
     const svg = await satori(jsx, {
       width: 1280,
       height: 720,
-      fonts: [], // We'll use system fonts
+      fonts: [], // No custom fonts - use SVG default
+      embedFont: false, // Skip font embedding to avoid WASM loading issues
     });
     
     // Convert SVG to PNG with resvg (pure WASM, no native deps)
