@@ -12,19 +12,32 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [mood, setMood] = useState("focus");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const shown = tracks.filter((t) => filter === "all" || t.mood === filter);
+
+  const handleFiles = (nextFiles: FileList | File[] | null) => {
+    const selected = Array.from(nextFiles ?? []).filter((file) => file.type.startsWith("audio/") || /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(file.name));
+    setFiles(selected);
+    if (selected.length) setMsg(null);
+  };
 
   const add = async () => {
     setBusy(true); setMsg(null);
     try {
       let r: Response;
-      if (file) { const fd = new FormData(); fd.append("file", file); fd.append("title", title || file.name); fd.append("mood", mood); r = await fetch("/api/music", { method: "POST", body: fd }); }
-      else r = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, title, mood }) });
+      if (files.length) {
+        const fd = new FormData();
+        files.forEach((file) => fd.append("file", file));
+        if (title) fd.append("title", title);
+        fd.append("mood", mood);
+        r = await fetch("/api/music", { method: "POST", body: fd });
+      } else r = await fetch("/api/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, title, mood }) });
       const j = await r.json(); if (!r.ok) throw new Error(j.error || "failed");
-      setMsg(`added ${j.title}`); setUrl(""); setTitle(""); setFile(null); router.refresh();
+      const names = Array.isArray(j) ? j.map((item) => item.title).join(", ") : j.title;
+      setMsg(`added ${names}`); setUrl(""); setTitle(""); setFiles([]); router.refresh();
     } catch (e) { setMsg((e as Error).message); } finally { setBusy(false); }
   };
   const del = async (id: number) => { await fetch(`/api/music/${id}`, { method: "DELETE" }); router.refresh(); };
@@ -37,12 +50,22 @@ export default function MusicPanel({ tracks }: { tracks: T[] }) {
           <label className="lbl">direct audio URL (or upload a downloaded Pixabay file)</label>
           <input value={url} onChange={(e) => setUrl(e.target.value)} className="field bg-transparent" placeholder="https://…/track.mp3" />
           <div className="t-vt my-2 text-center">— or —</div>
-          <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="t-vt" />
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
+            className={`border-2 border-dashed rounded-xl p-4 text-center transition ${dragging ? "border-acid bg-acid/10" : "border-bone/30 bg-ink/30"}`}
+          >
+            <div className="t-vt text-acid">drag & drop audio files here</div>
+            <div className="t-serif mt-2 text-sm opacity-80">or pick a batch from your computer</div>
+            <input type="file" accept="audio/*" multiple onChange={(e) => handleFiles(e.target.files)} className="mt-3 block w-full text-sm text-bone file:mr-3 file:rounded file:border-0 file:bg-acid file:px-3 file:py-2 file:text-ink" />
+          </div>
           <div className="grid grid-cols-2 gap-3 mt-3">
-            <div><label className="lbl">title</label><input value={title} onChange={(e) => setTitle(e.target.value)} className="field bg-transparent" /></div>
+            <div><label className="lbl">title</label><input value={title} onChange={(e) => setTitle(e.target.value)} className="field bg-transparent" placeholder={files.length > 1 ? "optional for batch" : "optional"} /></div>
             <div><label className="lbl">mood</label><select value={mood} onChange={(e) => setMood(e.target.value)} className="field bg-transparent">{MOODS.map((m) => <option key={m} value={m}>{m}</option>)}</select></div>
           </div>
-          <button onClick={add} disabled={busy || (!url && !file)} className="btn mt-4">{busy ? "adding…" : "Add to library"}</button>
+          <div className="t-vt mt-2 text-oxblood">{files.length > 0 ? `${files.length} file${files.length > 1 ? "s" : ""} selected — same mood applied to the batch` : "No files selected"}</div>
+          <button onClick={add} disabled={busy || (!url && !files.length)} className="btn mt-4">{busy ? "adding…" : files.length > 1 ? `Add ${files.length} tracks` : "Add to library"}</button>
           {msg && <div className="t-vt mt-2">{msg}</div>}
         </div>
       </Reveal>

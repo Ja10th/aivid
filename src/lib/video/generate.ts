@@ -1033,7 +1033,7 @@ export function generateComposition(opts: GenerateOptions): Composition {
   const seed = opts.seed || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const rng = new RNG(`${opts.category}|${opts.orientation}|${seed}`);
   const orientation = opts.orientation;
-  const target = opts.targetDuration ?? (orientation === "landscape" ? rng.int(245, 470) : rng.int(120, 178));
+  const target = opts.targetDuration ?? (orientation === "landscape" ? rng.int(245, 470) : rng.int(70, 110));
   const palettes = rng.shuffle(PALETTES).slice(0, rng.int(2, 4));
   const ctx: Ctx = { rng, orientation, palettes, sceneCount: 0, scenes: [], t: 0 };
   const category = opts.category === "random" ? rng.pick(CATEGORIES.map((c) => c.id)) : opts.category;
@@ -1052,15 +1052,15 @@ export function generateComposition(opts: GenerateOptions): Composition {
     case "polls": polls(ctx, target); break;
     default: mixed(ctx, target);
   }
-  // Portrait (shorts): cap scene lengths and total at 180s (3 min - YouTube Shorts max)
+  // Portrait (shorts): keep the reel tight, skip the slow intro/outro, and stay under a safer Shorts-safe ceiling.
   if (orientation === "portrait") {
+    ctx.scenes = ctx.scenes.filter((s) => s.kind !== "title" && s.kind !== "outro");
     for (const s of ctx.scenes) {
       const need = s.narration ? estimateSpeech(s.narration) + 1.5 : 0;
-      s.duration = Math.min(s.duration, Math.max(need, s.kind === "title" || s.kind === "outro" ? 5 : 25));
+      s.duration = Math.min(s.duration, Math.max(need, 20));
     }
     const total = () => ctx.scenes.reduce((a, s) => a + s.duration, 0);
-    // Allow up to 180 seconds (3 minutes) for YouTube Shorts
-    while (total() > 178 && ctx.scenes.length > 5) ctx.scenes.splice(ctx.scenes.length - 2, 1);
+    while (total() > 110 && ctx.scenes.length > 3) ctx.scenes.splice(ctx.scenes.length - 2, 1);
     let t = 0;
     for (const s of ctx.scenes) { s.start = t; t += s.duration; }
     ctx.t = t;
@@ -1096,7 +1096,7 @@ export function generateComposition(opts: GenerateOptions): Composition {
       fontMono: rng.pick(FONTS.mono),
     },
     scenes: ctx.scenes,
-    music: { mood, volume: isCalm ? 0.16 : 0.22 },
+    music: { mood, volume: 0.08 },
     voice: { name: voiceName, fallbackVoice: opts.fallbackVoice || "en-CA-Liam", rate: isCalm ? rng.pick(["-8%", "-12%", "-5%"]) : rng.pick(["+0%", "+4%", "-3%"]), pitch: rng.pick(["+0Hz", "-2Hz", "+2Hz"]) },
     meta: { title: "", description: "", tags: [], thumbText: "", thumbSub: "" },
   };
