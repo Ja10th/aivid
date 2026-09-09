@@ -114,45 +114,127 @@ function extractHook(comp: Composition): string {
 function chooseGrammar(hook: string, rng: RNG): string {
   const hookLower = hook.toLowerCase();
   
-  // Grammar selection based on hook content - only return grammars we ACTUALLY implement
+  // EYE TRAINING - calm, medical, focus-oriented
   if (hookLower.includes("eye") || hookLower.includes("follow") || hookLower.includes("track") || hookLower.includes("focus") || hookLower.includes("vision")) {
-    return rng.pick(["neon-sign", "torn-photo", "isometric-room"]); // Calming, focused aesthetics
+    return rng.pick([
+      "concentric-target",      // Target/bullseye with tracking lines
+      "medical-diagram",        // Clean anatomical eye diagram style
+      "zen-circle",             // Enso circle with calm typography
+      "gradient-orb",           // Smooth gradient sphere to follow
+      "focus-crosshair"         // Precision crosshair overlay
+    ]);
   }
   
+  // RIDDLES - mysterious, question-focused
   if (hookLower.includes("riddle") || hookLower.includes("question") || hookLower.includes("think")) {
-    return "giant-question-mark"; // We have this one
+    return rng.pick([
+      "giant-question-mark",    // We have this
+      "lock-and-key",           // Puzzle lock with keyhole
+      "magnifying-mystery",     // Giant magnifying glass
+      "scattered-clues",        // Evidence board with red string
+      "shadow-silhouette"       // Mystery figure in shadow
+    ]);
   }
   
+  // MEMORY - grids, sequences, patterns
   if (hookLower.includes("sequence") || hookLower.includes("remember") || hookLower.includes("memory") || hookLower.includes("item")) {
-    return "grid-faces"; // We have this one
+    return rng.pick([
+      "grid-faces",             // We have this
+      "card-flip-grid",         // Memory card game layout
+      "numbered-sequence",      // Numbered tiles with one missing
+      "brain-network",          // Neural network visualization
+      "polaroid-scatter"        // Scattered photos to remember
+    ]);
   }
   
+  // CHOICES / WOULD YOU RATHER - split, versus, comparison
   if (hookLower.includes("choice") || hookLower.includes("rather") || hookLower.includes("decide") || hookLower.includes("reveal")) {
-    return rng.pick(["split-comparison", "vs-battle"]); // We have both
+    return rng.pick([
+      "vs-battle",              // We have this
+      "split-doors",            // Two doors, different colors
+      "scale-balance",          // Tilted balance scale
+      "road-fork",              // Path splits into two
+      "boxing-ring"             // Two corners, fighting stance
+    ]);
   }
   
+  // MYTHS / FACTS - stamps, debunking, truth/false
   if (hookLower.includes("myth") || hookLower.includes("debunk") || hookLower.includes("fact") || hookLower.includes("truth") || hookLower.includes("lie")) {
-    return "truth-stamp"; // We have this one
+    return rng.pick([
+      "truth-stamp",            // We have this
+      "red-x-overlay",          // Giant red X with "MYTH" text
+      "fact-check-badge",       // Verified checkmark badge
+      "newspaper-headline",     // Breaking news style
+      "detective-files"         // Case files spread out
+    ]);
   }
   
+  // POLLS / OPINIONS - voting, stats, percentages
   if (hookLower.includes("poll") || hookLower.includes("vote") || hookLower.includes("opinion")) {
-    return rng.pick(["torn-photo", "neon-sign"]); // We have these
+    return rng.pick([
+      "hand-raising",           // Silhouette hands raised
+      "pie-chart-hero",         // Giant pie chart
+      "voting-booth",           // Classic voting booth
+      "bar-graph-race",         // Animated bars
+      "crowd-silhouettes"       // Audience voting
+    ]);
   }
   
+  // MATH - equations, numbers, calculations
   if (hookLower.includes("math") || hookLower.includes("calculate") || hookLower.includes("solve") || hookLower.includes("problem")) {
-    return "chalkboard-equation"; // We have this one
+    return rng.pick([
+      "chalkboard-equation",    // We have this
+      "calculator-closeup",     // Giant calculator display
+      "floating-numbers",       // Numbers floating in 3D
+      "blueprint-grid",         // Technical grid with equations
+      "abacus-vintage"          // Retro abacus aesthetic
+    ]);
   }
   
+  // CHALLENGES / TESTS - intensity, competition
   if (hookLower.includes("challenge") || hookLower.includes("test") || hookLower.includes("skill") || hookLower.includes("limit")) {
-    return "boss-hp-bar"; // We have this one
+    return rng.pick([
+      "boss-hp-bar",            // We have this
+      "progress-ring-fire",     // Circular progress on fire
+      "stopwatch-pressure",     // Giant ticking stopwatch
+      "level-up-badge",         // RPG level up screen
+      "mountain-peak"           // Climbing to summit
+    ]);
   }
   
+  // GAMES / GAMEPLAY
   if (hookLower.includes("game") || hookLower.includes("play") || hookLower.includes("controller") || hookLower.includes("boss")) {
-    return "boss-hp-bar"; // Reuse boss HP bar for game content
+    return rng.pick([
+      "boss-hp-bar",            // We have this
+      "game-over-glitch",       // Glitchy game over screen
+      "arcade-cabinet",         // Retro arcade frame
+      "controller-smash",       // Broken controller
+      "pixel-art-hero"          // 8-bit character
+    ]);
   }
   
-  // Default grammars - all implemented
-  return rng.pick(["torn-photo", "neon-sign", "vs-battle", "isometric-room"]);
+  // STORIES - narrative, cinematic
+  if (hookLower.includes("story") || hookLower.includes("tale") || hookLower.includes("chapter")) {
+    return rng.pick([
+      "book-cover",             // Novel cover design
+      "typewriter-page",        // Typed manuscript
+      "film-strip",             // Cinematic film frames
+      "storybook-illustration", // Illustrated page
+      "chapter-heading"         // Elegant typography
+    ]);
+  }
+  
+  // DEFAULT - wild variety
+  return rng.pick([
+    "neon-sign",              // We have this
+    "torn-photo",             // We have this  
+    "isometric-room",         // We have this
+    "graffiti-tag",           // Street art style
+    "billboard-night",        // Billboard in rain
+    "magazine-cover",         // Editorial magazine
+    "ticket-stub",            // Torn ticket aesthetic
+    "receipt-crumpled"        // Crumpled receipt texture
+  ]);
 }
 
 /**
@@ -198,36 +280,121 @@ function generateThumbnailHTML(
   const numScenes = comp.scenes?.length || 10;
   
   switch (grammar) {
+    // Existing grammars
     case "giant-question-mark":
       return generateRiddleSpotlight(headline, palette);
-    
     case "grid-faces":
       return generateFaceGrid(shortHeadline, palette, rng);
-    
     case "chalkboard-equation":
       return generateChalkboard(headline, palette, rng);
-    
     case "boss-hp-bar":
       return generateBossHPBar(headline, palette);
-    
     case "torn-photo":
       return generateTornPhoto(headline, palette, rng);
-    
     case "truth-stamp":
       return generateTruthStamp(headline, palette, numScenes);
-    
     case "neon-sign":
       return generateNeonSign(shortHeadline, palette);
-    
     case "split-comparison":
     case "vs-battle":
       return generateVSBattle(headline, palette);
-    
     case "isometric-room":
       return generateIsometricRoom(shortHeadline, palette);
     
+    // Eye training grammars
+    case "concentric-target":
+      return generateConcentricTarget(headline, palette);
+    case "medical-diagram":
+      return generateMedicalDiagram(headline, palette);
+    case "zen-circle":
+      return generateZenCircle(headline, palette);
+    case "gradient-orb":
+    case "focus-crosshair":
+      return generateConcentricTarget(headline, palette); // Reuse similar
+    
+    // Riddle grammars
+    case "lock-and-key":
+      return generateLockAndKey(headline, palette);
+    case "magnifying-mystery":
+      return generateMagnifyingMystery(headline, palette);
+    case "scattered-clues":
+    case "shadow-silhouette":
+      return generateMagnifyingMystery(headline, palette); // Reuse similar
+    
+    // Memory grammars
+    case "card-flip-grid":
+      return generateCardFlipGrid(headline, palette);
+    case "numbered-sequence":
+    case "brain-network":
+    case "polaroid-scatter":
+      return generateCardFlipGrid(headline, palette); // Reuse grid concept
+    
+    // Choice grammars (already have split-comparison, vs-battle)
+    case "split-doors":
+    case "scale-balance":
+    case "road-fork":
+    case "boxing-ring":
+      return generateVSBattle(headline, palette); // Reuse split concept
+    
+    // Myth/fact grammars (already have truth-stamp)
+    case "red-x-overlay":
+    case "fact-check-badge":
+    case "newspaper-headline":
+    case "detective-files":
+      return generateTruthStamp(headline, palette, numScenes); // Reuse stamp
+    
+    // Poll grammars
+    case "hand-raising":
+      return generateHandRaising(headline, palette, rng);
+    case "pie-chart-hero":
+    case "voting-booth":
+    case "bar-graph-race":
+    case "crowd-silhouettes":
+      return generateHandRaising(headline, palette, rng); // Reuse hand concept
+    
+    // Math grammars
+    case "calculator-closeup":
+      return generateCalculatorCloseup(headline, palette);
+    case "floating-numbers":
+      return generateFloatingNumbers(headline, palette, rng);
+    case "blueprint-grid":
+    case "abacus-vintage":
+      return generateFloatingNumbers(headline, palette, rng); // Reuse number theme
+    
+    // Challenge grammars
+    case "progress-ring-fire":
+    case "level-up-badge":
+    case "mountain-peak":
+      return generateBossHPBar(headline, palette); // Reuse intensity
+    case "stopwatch-pressure":
+      return generateStopwatchPressure(headline, palette);
+    
+    // Game grammars
+    case "game-over-glitch":
+    case "arcade-cabinet":
+    case "controller-smash":
+    case "pixel-art-hero":
+      return generateBossHPBar(headline, palette); // Reuse game intensity
+    
+    // Story grammars (not yet implemented - use fallback)
+    case "book-cover":
+    case "typewriter-page":
+    case "film-strip":
+    case "storybook-illustration":
+    case "chapter-heading":
+      return generateTornPhoto(headline, palette, rng); // Paper/literary feel
+    
+    // Default category grammars (not yet implemented - use existing)
+    case "graffiti-tag":
+    case "billboard-night":
+      return generateNeonSign(shortHeadline, palette);
+    case "magazine-cover":
+    case "ticket-stub":
+    case "receipt-crumpled":
+      return generateTornPhoto(headline, palette, rng);
+    
     default:
-      // Fallback: use a random implemented grammar
+      // Ultimate fallback: use a random implemented grammar
       const fallback = rng.pick(["giant-question-mark", "torn-photo", "neon-sign", "vs-battle"]);
       return generateThumbnailHTML(fallback, hook, comp, palette, rng);
   }
@@ -458,3 +625,250 @@ body{width:1280px;height:720px;background:#050506;display:flex;align-items:cente
 <div class="word">TRAPPED</div>
 </body></html>`;
 }
+
+// ============ NEW GRAMMARS FOR EACH CONTENT TYPE ============
+
+// EYE TRAINING GRAMMARS
+function generateConcentricTarget(headline: string, p: any): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:${p.bg};display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.target{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.headline{position:absolute;bottom:80px;left:80px;right:80px;font-family:'Inter',sans-serif;font-weight:700;font-size:48px;color:${p.text};text-align:center;letter-spacing:0.02em}
+</style></head><body>
+<svg class="target" width="500" height="500" viewBox="0 0 500 500">
+<circle cx="250" cy="250" r="220" fill="none" stroke="${p.primary}" stroke-width="3" opacity="0.3"/>
+<circle cx="250" cy="250" r="180" fill="none" stroke="${p.primary}" stroke-width="3" opacity="0.4"/>
+<circle cx="250" cy="250" r="140" fill="none" stroke="${p.primary}" stroke-width="3" opacity="0.5"/>
+<circle cx="250" cy="250" r="100" fill="none" stroke="${p.primary}" stroke-width="4" opacity="0.7"/>
+<circle cx="250" cy="250" r="60" fill="none" stroke="${p.accent}" stroke-width="4" opacity="0.9"/>
+<circle cx="250" cy="250" r="20" fill="${p.accent}"/>
+<line x1="0" y1="250" x2="500" y2="250" stroke="${p.muted}" stroke-width="1" opacity="0.3"/>
+<line x1="250" y1="0" x2="250" y2="500" stroke="${p.muted}" stroke-width="1" opacity="0.3"/>
+</svg>
+<div class="headline">FOLLOW • FOCUS • TRACK</div>
+</body></html>`;
+}
+
+function generateMedicalDiagram(headline: string, p: any): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:#f8f9fa;position:relative;overflow:hidden}
+.grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 19px,#e0e4e8 19px,#e0e4e8 20px),repeating-linear-gradient(90deg,transparent,transparent 19px,#e0e4e8 19px,#e0e4e8 20px)}
+.eye{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.label{position:absolute;top:80px;left:80px;font-family:'IBM Plex Mono',sans-serif;font-weight:600;font-size:32px;color:#2d3748;letter-spacing:0.1em}
+.subtext{position:absolute;bottom:80px;left:80px;right:80px;font-family:'IBM Plex Mono',sans-serif;font-weight:600;font-size:42px;color:#1a202c;text-align:center}
+</style></head><body>
+<div class="grid"></div>
+<svg class="eye" width="400" height="250" viewBox="0 0 400 250">
+<ellipse cx="200" cy="125" rx="180" ry="100" fill="none" stroke="${p.primary}" stroke-width="4"/>
+<circle cx="200" cy="125" r="60" fill="none" stroke="${p.accent}" stroke-width="4"/>
+<circle cx="200" cy="125" r="30" fill="${p.accent}"/>
+<path d="M 50 125 L 20 105 M 50 125 L 20 145" stroke="${p.muted}" stroke-width="2"/>
+<path d="M 350 125 L 380 105 M 350 125 L 380 145" stroke="${p.muted}" stroke-width="2"/>
+</svg>
+<div class="label">EYE TRAINING</div>
+<div class="subtext">${headline.toUpperCase()}</div>
+</body></html>`;
+}
+
+function generateZenCircle(headline: string, p: any): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:#f5f1e8;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg)}
+.text{position:absolute;bottom:100px;left:100px;right:100px;font-family:'Noto Serif',sans-serif;font-weight:700;font-size:54px;color:#2a2520;text-align:center;line-height:1.3}
+.zen{position:absolute;top:100px;right:100px;font-family:'Noto Serif',sans-serif;font-weight:400;font-size:28px;color:#6b6158;writing-mode:vertical-rl}
+</style></head><body>
+<svg class="circle" width="500" height="500" viewBox="0 0 500 500">
+<path d="M 450 250 A 200 200 0 1 1 50 250" fill="none" stroke="${p.accent}" stroke-width="40" stroke-linecap="round"/>
+</svg>
+<div class="zen">平和 · Peace</div>
+<div class="text">${headline}</div>
+</body></html>`;
+}
+
+// RIDDLE GRAMMARS
+function generateLockAndKey(headline: string, p: any): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:${p.bg};display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.lock{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%)}
+.key{position:absolute;top:65%;left:50%;transform:translate(-50%,0) rotate(25deg)}
+.headline{position:absolute;bottom:80px;left:80px;right:80px;font-family:'Cinzel',sans-serif;font-weight:900;font-size:52px;color:${p.text};text-align:center;line-height:1.2}
+</style></head><body>
+<svg class="lock" width="300" height="350" viewBox="0 0 300 350">
+<rect x="50" y="150" width="200" height="180" rx="10" fill="${p.surface}" stroke="${p.primary}" stroke-width="6"/>
+<path d="M 100 150 L 100 100 Q 100 20 150 20 Q 200 20 200 100 L 200 150" fill="none" stroke="${p.primary}" stroke-width="6"/>
+<circle cx="150" cy="240" r="30" fill="${p.accent}"/>
+<rect x="140" y="240" width="20" height="50" fill="${p.accent}"/>
+</svg>
+<svg class="key" width="200" height="80" viewBox="0 0 200 80">
+<circle cx="40" cy="40" r="30" fill="none" stroke="${p.accent}" stroke-width="6"/>
+<rect x="60" y="35" width="120" height="10" fill="${p.accent}"/>
+<rect x="150" y="25" width="10" height="30" fill="${p.accent}"/>
+<rect x="170" y="25" width="10" height="30" fill="${p.accent}"/>
+</svg>
+<div class="headline">CAN YOU<br>UNLOCK IT?</div>
+</body></html>`;
+}
+
+function generateMagnifyingMystery(headline: string, p: any): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:#1a1612;position:relative;overflow:hidden}
+.paper{position:absolute;inset:60px;background:#e8dfc8;box-shadow:inset 0 0 100px rgba(0,0,0,0.2)}
+.glass{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-20deg)}
+.clue{position:absolute;top:140px;left:120px;font-family:'Special Elite',cursive;font-size:36px;color:#3a2f1e;max-width:500px;line-height:1.6;transform:rotate(-2deg)}
+.headline{position:absolute;bottom:100px;right:120px;font-family:'Special Elite',cursive;font-size:56px;color:#a63c2e;transform:rotate(3deg);text-align:right}
+</style></head><body>
+<div class="paper"></div>
+<svg class="glass" width="400" height="400" viewBox="0 0 400 400">
+<circle cx="180" cy="180" r="150" fill="rgba(255,255,255,0.1)" stroke="${p.accent}" stroke-width="20"/>
+<circle cx="180" cy="180" r="120" fill="none" stroke="${p.accent}" stroke-width="4" opacity="0.5"/>
+<rect x="280" y="280" width="30" height="140" rx="15" fill="${p.accent}" transform="rotate(45 295 295)"/>
+</svg>
+<div class="clue">${headline}</div>
+<div class="headline">FIND THE<br>ANSWER</div>
+</body></html>`;
+}
+
+// MEMORY GRAMMARS
+function generateCardFlipGrid(headline: string, p: any): string {
+  const cards = Array.from({length: 12}, (_, i) => {
+    const row = Math.floor(i / 4);
+    const col = i % 4;
+    const isFlipped = i === 5 || i === 8;
+    return `<rect x="${col * 180 + 100}" y="${row * 200 + 80}" width="150" height="180" rx="8" fill="${isFlipped ? p.accent : p.surface}" stroke="${p.primary}" stroke-width="4"/>`;
+  }).join('');
+  
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:${p.bg};position:relative;overflow:hidden}
+.headline{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Rubik',sans-serif;font-weight:900;font-size:72px;color:${p.text};text-align:center;z-index:10;text-shadow:4px 4px 0 ${p.bg}}
+</style></head><body>
+<svg width="1280" height="720">${cards}</svg>
+<div class="headline">MATCH<br>THE PAIRS</div>
+</body></html>`;
+}
+
+// MATH GRAMMARS
+function generateCalculatorCloseup(headline: string, p: any): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:${p.surface};display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.calc{width:800px;height:600px;background:${p.bg};border-radius:20px;padding:40px;box-shadow:0 30px 80px rgba(0,0,0,0.8)}
+.display{background:#1a2a1a;color:${p.accent};font-family:'Orbitron',sans-serif;font-weight:900;font-size:96px;padding:40px;border-radius:10px;text-align:right;margin-bottom:30px}
+.buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.btn{aspect-ratio:1;background:${p.surface};border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:48px;color:${p.text};box-shadow:0 4px 0 rgba(0,0,0,0.3)}
+</style></head><body>
+<div class="calc">
+<div class="display">42</div>
+<div class="buttons">
+<div class="btn">7</div><div class="btn">8</div><div class="btn">9</div><div class="btn" style="background:${p.accent}">÷</div>
+<div class="btn">4</div><div class="btn">5</div><div class="btn">6</div><div class="btn" style="background:${p.accent}">×</div>
+</div>
+</div>
+</body></html>`;
+}
+
+function generateFloatingNumbers(headline: string, p: any, rng: RNG): string {
+  const numbers = Array.from({length: 20}, () => {
+    const x = rng.int(50, 1230);
+    const y = rng.int(50, 670);
+    const size = rng.int(40, 120);
+    const opacity = rng.next() * 0.5 + 0.3;
+    const num = rng.pick(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', '−', '×', '÷']);
+    return `<text x="${x}" y="${y}" font-size="${size}" fill="${p.primary}" opacity="${opacity}">${num}</text>`;
+  }).join('');
+  
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:${p.bg};position:relative;overflow:hidden}
+.headline{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Anton',sans-serif;font-size:96px;color:${p.text};text-align:center;z-index:10;background:${p.bg};padding:40px 80px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+</style></head><body>
+<svg width="1280" height="720" style="font-family:'Anton',sans-serif">${numbers}</svg>
+<div class="headline">${headline}</div>
+</body></html>`;
+}
+
+// POLL/OPINION GRAMMARS
+function generateHandRaising(headline: string, p: any, rng: RNG): string {
+  const hands = Array.from({length: 8}, (_, i) => {
+    const x = i * 160 + 80;
+    const h = rng.int(150, 350);
+    return `<path d="M ${x},600 L ${x},${600 - h} L ${x - 20},${600 - h + 40} M ${x},${600 - h} L ${x + 20},${600 - h + 40}" stroke="${p.primary}" stroke-width="16" stroke-linecap="round" fill="none"/>`;
+  }).join('');
+  
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:${p.bg};position:relative;overflow:hidden}
+.headline{position:absolute;top:80px;left:80px;right:80px;font-family:'Bebas Neue',sans-serif;font-size:88px;color:${p.text};text-align:center;letter-spacing:0.05em}
+.sub{position:absolute;top:200px;left:80px;right:80px;font-family:'Bebas Neue',sans-serif;font-size:42px;color:${p.muted};text-align:center;letter-spacing:0.15em}
+</style></head><body>
+<svg width="1280" height="720">${hands}</svg>
+<div class="headline">WHAT DO YOU THINK?</div>
+<div class="sub">VOTE NOW</div>
+</body></html>`;
+}
+
+// CHALLENGE GRAMMARS
+function generateStopwatchPressure(headline: string, p: any): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1280px;height:720px;background:${p.bg};display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.watch{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+.time{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Teko',sans-serif;font-weight:700;font-size:180px;color:${p.accent};text-shadow:0 0 40px ${p.accent}}
+.headline{position:absolute;bottom:100px;left:100px;right:100px;font-family:'Teko',sans-serif;font-weight:700;font-size:64px;color:${p.text};text-align:center;letter-spacing:0.08em}
+</style></head><body>
+<svg class="watch" width="600" height="600" viewBox="0 0 600 600">
+<circle cx="300" cy="300" r="280" fill="none" stroke="${p.primary}" stroke-width="8"/>
+<circle cx="300" cy="300" r="260" fill="${p.surface}"/>
+${Array.from({length: 12}, (_, i) => {
+  const angle = (i * 30 - 90) * Math.PI / 180;
+  const x1 = 300 + Math.cos(angle) * 240;
+  const y1 = 300 + Math.sin(angle) * 240;
+  const x2 = 300 + Math.cos(angle) * 220;
+  const y2 = 300 + Math.sin(angle) * 220;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${p.muted}" stroke-width="6"/>`;
+}).join('')}
+<line x1="300" y1="300" x2="300" y2="120" stroke="${p.accent}" stroke-width="8" stroke-linecap="round"/>
+<line x1="300" y1="300" x2="450" y2="300" stroke="${p.accent}" stroke-width="8" stroke-linecap="round"/>
+<circle cx="300" cy="300" r="20" fill="${p.accent}"/>
+</svg>
+<div class="time">00:10</div>
+<div class="headline">BEAT THE CLOCK</div>
+</body></html>`;
+}
+
+// Update the switch statement to include all new grammars
