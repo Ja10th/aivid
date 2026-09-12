@@ -55,6 +55,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   const schedule = async () => call("schedule", () => patch({ title, description, tags: tags.split(",").map((t) => t.trim()).filter(Boolean), channelId: channelId || null, scheduledFor: when ? new Date(when).toISOString() : null, action: "schedule" }));
   const unschedule = () => call("unschedule", () => patch({ action: "unschedule" }));
   const retry = () => call("retry", () => patch({ action: "retry" }));
+  const retryPost = () => call("retry-post", () => patch({ action: "retry-post" }));
   const regen = async () => { const j = await call("regenerate", () => fetch(`/api/videos/${video.id}/regenerate`, { method: "POST" })); if (j?.id) router.push(`/videos/${j.id}`); };
   const regenThumb = async () => {
     const seed = `${video.id}-${Date.now()}`;
@@ -90,7 +91,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
   };
   const del = async () => { if (!confirm("Delete this video and its files?")) return; await call("delete", () => fetch(`/api/videos/${video.id}`, { method: "DELETE" })); router.push("/videos"); };
 
-  const canPost = video.status === "ready" || video.status === "scheduled";
+  const canPost = video.status === "ready" || video.status === "scheduled" || video.status === "failed";
   return (
     <>
       <Reveal delay={300} className="col-span-12 md:col-start-2 md:col-span-6 mt-16 z-10">
@@ -126,6 +127,7 @@ export default function VideoActions({ video, channels }: { video: V; channels: 
           <button onClick={regenThumb} disabled={!!busy} className="btn btn-ghost">Regenerate thumbnail</button>
           <button onClick={regen} disabled={!!busy} className="btn btn-ghost">Regenerate (new seed)</button>
           {video.status === "failed" && <button onClick={retry} disabled={!!busy} className="btn btn-ghost">Retry render</button>}
+          {video.status === "failed" && video.videoUrl && <button onClick={retryPost} disabled={!!busy} className="btn btn-ghost">Retry post</button>}
           <button onClick={del} disabled={!!busy} className="btn btn-danger">Delete</button>
         </div>
         {msg && <div className="t-vt mt-3 ml-4 text-oxblood">{msg}</div>}

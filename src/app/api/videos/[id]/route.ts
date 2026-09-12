@@ -49,9 +49,11 @@ export async function PATCH(req: NextRequest, { params }: P) {
   if (b.action === "schedule") { set.status = "scheduled"; set.error = null; }
   if (b.action === "unschedule") set.status = "ready";
   if (b.action === "retry") { set.status = "queued"; set.progress = 0; set.stage = "queued"; set.error = null; }
+  if (b.action === "retry-post") { set.status = "ready"; set.progress = 100; set.stage = "ready"; set.error = null; }
   const [v] = await db.update(videos).set(set).where(eq(videos.id, Number(id))).returning();
   if (!v) return bad("not found", 404);
   if (b.action === "retry") kickWorker();
+  if (b.action === "retry-post") { setTimeout(() => publishDue().catch(console.error), 200); }
   if (b.composition) kickWorker();
   if (b.action === "schedule") setTimeout(() => publishDue().catch(console.error), 200);
     return Response.json(v);

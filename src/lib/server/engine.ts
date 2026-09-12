@@ -317,8 +317,8 @@ export async function recoverStalePosting(now = new Date()) {
   for (const video of stale) {
     if (!isStalePosting(video, now)) continue;
     await db.update(videos).set({
-      status: "failed",
-      stage: "timed_out",
+      status: "ready",
+      stage: "ready",
       error: `Posting timed out after ${Math.round((Number(now) - Number(new Date(video.createdAt ?? now))) / 60000)} minutes; please retry manually.`,
     }).where(eq(videos.id, video.id));
   }
