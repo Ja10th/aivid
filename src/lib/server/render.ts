@@ -5,7 +5,6 @@ import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
 import { Composition, FONT_FILES, RNG, estimateSpeech } from "@/lib/video/core";
 import { drawFrame, C2D, Cache } from "@/lib/video/draw";
 import { drawThumbnail, ThumbStyle } from "@/lib/video/thumbnail";
-import { isStudioVoice, speedFromRate, studioTts } from "@/lib/server/studio-api";
 
 export const DATA_DIR = process.env.VERCEL ? path.join("/tmp", "aiv2") : path.join(process.cwd(), "data");
 export const VIDEOS_DIR = path.join(DATA_DIR, "videos");
@@ -81,21 +80,17 @@ export async function audioDuration(file: string): Promise<number> {
 }
 
 const STUDIO_FALLBACK_VOICE = "en-CA-Liam";
+const LEGACY_STUDIO_VOICE_IDS = new Set(["aria", "nicole", "adam", "fable"]);
+
+export function resolveRenderVoice(voice: string, fallbackVoice = STUDIO_FALLBACK_VOICE): string {
+  if (!voice || voice === "random") return fallbackVoice;
+  return LEGACY_STUDIO_VOICE_IDS.has(voice.toLowerCase()) ? fallbackVoice : voice;
+}
 
 // ---------- TTS (Microsoft Edge neural voices, no API key) ----------
 export async function synthesize(text: string, voice: string, rate: string, pitch: string, outFile: string, fallbackVoice = STUDIO_FALLBACK_VOICE): Promise<boolean> {
-  if (isStudioVoice(voice)) {
-    try {
-      const audio = await studioTts(text, voice, speedFromRate(rate));
-      if (audio.length <= 500 || audio.subarray(0, 4).toString() !== "RIFF") throw new Error("invalid Studio audio response");
-      fs.writeFileSync(outFile, audio);
-      return true;
-    } catch (error) {
-      console.warn(`Studio Voice ${voice} unavailable; falling back to ${fallbackVoice}:`, (error as Error).message);
-      return synthesizeLocal(text, fallbackVoice, rate, pitch, outFile);
-    }
-  }
-  return synthesizeLocal(text, voice, rate, pitch, outFile);
+  const renderVoice = resolveRenderVoice(voice, fallbackVoice);
+  return synthesizeLocal(text, renderVoice, rate, pitch, outFile);
 }
 
 async function synthesizeLocal(text: string, voice: string, rate: string, pitch: string, outFile: string): Promise<boolean> {
@@ -148,7 +143,7 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   let i = 0;
   for (const s of narrScenes) {
     i++;
-    const file = path.join(tmp, `n${i}.${isStudioVoice(comp.voice.name) ? "wav" : "mp3"}`);
+    const file = path.join(tmp, `n${i}.mp3`);
     const ok = await synthesize(s.narration!, comp.voice.name, comp.voice.rate, comp.voice.pitch, file, comp.voice.fallbackVoice);
     if (ok) {
       const dur = await audioDuration(file);

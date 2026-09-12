@@ -88,23 +88,59 @@ export async function uploadVideo(ch: Channel, opts: { filePath: string; thumbPa
     snippet: { title: opts.title.slice(0, 100), description: opts.description.slice(0, 4900), tags: opts.tags.slice(0, 30), categoryId: "27" },
     status: { privacyStatus: opts.privacy ?? "public", selfDeclaredMadeForKids: false, ...(opts.publishAt ? { publishAt: opts.publishAt.toISOString(), privacyStatus: "private" } : {}) },
   };
-  const init = await fetch("https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json; charset=UTF-8", "X-Upload-Content-Length": String(size), "X-Upload-Content-Type": "video/mp4" },
-    body: JSON.stringify(meta),
-  });
+
+  async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...init, signal: controller.signal });
+    } catch (error) {
+      if ((error as Error).name === "AbortError") {
+        throw new Error(`${init.method ?? "Request"} to ${url} timed out after ${Math.round(timeoutMs / 1000)}s`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  const init = await fetchWithTimeout(
+    "https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status",
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json; charset=UTF-8", "X-Upload-Content-Length": String(size), "X-Upload-Content-Type": "video/mp4" },
+      body: JSON.stringify(meta),
+    },
+    120_000,
+  );
   if (!init.ok) throw new Error(`upload init failed: ${init.status} ${await init.text()}`);
   const loc = init.headers.get("location");
   if (!loc) throw new Error("no upload location returned");
   const body = fs.readFileSync(opts.filePath);
-  const up = await fetch(loc, { method: "PUT", headers: { "Content-Length": String(size), "Content-Type": "video/mp4" }, body });
+  const up = await fetchWithTimeout(loc, {
+    method: "PUT",
+    headers: { "Content-Length": String(size), "Content-Type": "video/mp4" },
+    body,
+  }, 180_000);
   if (!up.ok) throw new Error(`upload failed: ${up.status} ${await up.text()}`);
   const vid = (await up.json()) as { id: string };
-  if (opts.thumbPath && fs.existsSync(opts.thumbPath)) {
-    try {
-      const th = await fetch(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${vid.id}`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/png" }, body: fs.readFileSync(opts.thumbPath) });
-      if (!th.ok) console.warn("thumbnail set failed", await th.text());
-    } catch (e) { console.warn("thumbnail set error", e); }
+  if (opts.thumbPath) {
+    const thumbPath = opts.thumbPath;
+    if (fs.existsSync(thumbPath)) {
+      try {
+        const thumbBuffer = fs.readFileSync(thumbPath);
+        const th = await fetchWithTimeout(
+          `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${vid.id}`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/png" },
+            body: thumbBuffer,
+          },
+          60_000,
+        );
+        if (!th.ok) console.warn("thumbnail set failed", await th.text());
+      } catch (e) { console.warn("thumbnail set error", e); }
+    }
   }
   return vid.id;
 }

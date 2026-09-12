@@ -9,6 +9,7 @@ import { ThumbStyle } from "@/lib/video/thumbnail";
 import { renderVideo, MUSIC_DIR, UPLOADS_MUSIC_DIR, renderThumbnail } from "./render";
 import { uploadVideo } from "./youtube";
 import { downloadFile, uploadFile, deleteFile } from "./storage";
+import { isStalePosting } from "./worker-recovery";
 import crypto from "crypto";
 
 type G = typeof globalThis & { __studioWorker?: { running: boolean; timer?: NodeJS.Timeout; started: boolean; lastTick?: number } };
@@ -164,6 +165,7 @@ export function kickWorker() {
   g.__studioWorker!.running = true;
   (async () => {
     try {
+      await recoverStalePosting();
       // recover anything stuck in rendering from a previous process
       await db.update(videos).set({ status: "queued", stage: "requeued", progress: 0 }).where(eq(videos.status, "rendering"));
       for (;;) {
@@ -310,8 +312,21 @@ export async function planAutomation(a: typeof automations.$inferSelect, force =
   return created;
 }
 
+export async function recoverStalePosting(now = new Date()) {
+  const stale = await db.select().from(videos).where(eq(videos.status, "posting"));
+  for (const video of stale) {
+    if (!isStalePosting(video, now)) continue;
+    await db.update(videos).set({
+      status: "failed",
+      stage: "timed_out",
+      error: `Posting timed out after ${Math.round((Number(now) - Number(new Date(video.createdAt ?? now))) / 60000)} minutes; please retry manually.`,
+    }).where(eq(videos.id, video.id));
+  }
+}
+
 export async function tick() {
   g.__studioWorker!.lastTick = Date.now();
+  await recoverStalePosting();
   const list = await db.select().from(automations).where(eq(automations.enabled, true));
   for (const a of list) {
     try { await planAutomation(a); } catch (e) { console.error("plan failed", a.id, e); }

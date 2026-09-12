@@ -58,8 +58,20 @@ async function run() {
   const { kickWorker, tick, workerStatus } = await import("@/lib/server/engine");
   console.log(`render worker online; polling every ${intervalMs}ms`);
   if (once) {
-    await tick();
-    while (workerStatus().running) await new Promise((resolve) => setTimeout(resolve, 1000));
+    const startedAt = Date.now();
+    const timeoutMs = 10 * 60 * 1000;
+    await Promise.race([
+      tick(),
+      new Promise<never>((_, reject) => {
+        const timer = setTimeout(() => reject(new Error(`worker:once exceeded ${Math.round(timeoutMs / 1000)}s`)), timeoutMs);
+        void timer;
+      }),
+    ]).catch((error) => {
+      console.error("worker:once timed out or failed", error);
+    });
+    while (workerStatus().running && Date.now() - startedAt < timeoutMs) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
     return;
   }
   for (;;) {
