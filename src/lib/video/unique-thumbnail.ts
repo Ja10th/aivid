@@ -104,7 +104,7 @@ function extractHook(comp: Composition): HookResult {
     const text =
       specifics.eyeExerciseTypes.length > 0
         ? `Follow, focus, track — ${specifics.eyeExerciseTypes.length} eye movement exercises`
-        : `Guided eye training — strengthen your vision muscles`;
+        : `Guided visual comfort — follow, focus, and rest`;
     return { text, specifics };
   }
 

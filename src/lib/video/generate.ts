@@ -21,6 +21,7 @@ const BGS: BgStyle[] = ["solid", "gradient", "grid", "dots", "noise", "rays", "d
 interface Ctx {
   rng: RNG;
   orientation: Orientation;
+  category: string;
   palettes: Palette[];
   sceneCount: number;
   scenes: Scene[];
@@ -29,6 +30,9 @@ interface Ctx {
 
 function push(ctx: Ctx, kind: SceneKind, duration: number, data: Record<string, unknown>, narration?: string, opts?: Partial<Scene>) {
   const pal = ctx.palettes[ctx.sceneCount % ctx.palettes.length];
+  const backgroundPool: BgStyle[] = kind === "title" || ctx.category === "eye_training"
+    ? ["solid", "gradient", "rings"]
+    : BGS;
   const sc: Scene = {
     id: `s${ctx.sceneCount}`,
     kind,
@@ -36,7 +40,7 @@ function push(ctx: Ctx, kind: SceneKind, duration: number, data: Record<string, 
     duration,
     transition: ctx.sceneCount === 0 ? "cut" : ctx.rng.pick(TRANSITIONS),
     palette: pal,
-    bgStyle: ctx.rng.pick(BGS),
+    bgStyle: ctx.rng.pick(backgroundPool),
     narration,
     narrationAt: opts?.narrationAt ?? 0.4,
     data,
@@ -50,21 +54,21 @@ function push(ctx: Ctx, kind: SceneKind, duration: number, data: Record<string, 
 
 // ---------------- EYE TRAINING ----------------
 const EYE_INTROS = [
-  "Welcome to today's eye training session. Sit comfortably, keep your head still, and let only your eyes move.",
-  "This is a guided eye workout. Relax your shoulders, breathe naturally, and follow the shapes with your eyes only.",
-  "Let's give your eyes a gentle workout. Keep your head steady and stay about an arm's length from the screen.",
-  "Time to train your eyes. Blink naturally, keep your neck relaxed, and follow every movement smoothly.",
-  "Ready to strengthen your vision? Stay an arm's length from the screen. Head still, only your eyes move from here.",
-  "Eye training session starting now. Soft gaze, relaxed forehead, and remember — move only your eyes, not your head.",
-  "Seven minutes of deliberate eye movement. It will reduce strain and sharpen your focus over time.",
-  "Your eyes have muscles — and like any muscle, they benefit from regular training. Let's begin.",
+  "Welcome to today's visual comfort session. Sit comfortably, blink naturally, and let only your eyes move when it feels easy.",
+  "This is a gentle gaze and screen-break routine. Relax your shoulders, breathe naturally, and follow the shapes without straining.",
+  "We will practice comfortable tracking and fixation. Keep your head steady only if that feels natural, and stay about an arm's length from the screen.",
+  "This session is for visual awareness and relaxation, not for diagnosing or treating an eye condition. Stop if anything feels uncomfortable.",
+  "Move within a comfortable range and blink whenever you need to. There is no benefit to forcing a stretch or chasing a target perfectly.",
+  "Before we begin: stop for pain, dizziness, nausea, headache, double vision, or unusual blur, and speak with an eye-care professional about persistent symptoms.",
+  "Take a few minutes away from close work. Keep your gaze soft, your forehead relaxed, and pause whenever your eyes need a break.",
+  "This is a guided visual reset. It may help you pause from screen work, but it does not improve eyesight or replace an eye examination.",
 ];
 const FOLLOW_PATHS = ["circle", "figure8", "lissajous", "zigzag", "spiral", "wave", "square", "random", "diagonal", "bowtie", "triangle"] as const;
 const FOLLOW_LINES: Record<string, string[]> = {
   circle: ["Follow the dot as it travels in a circle. Keep the motion smooth, no jumping ahead.", "Trace the circle with your eyes. Smooth and steady.", "A full circle now. Exhale slowly as you complete each loop.", "Round and round. Your eyes should glide, not jump."],
   figure8: ["Now a figure eight. Let your eyes glide through the crossing point without stopping.", "Follow the infinity loop. Relax your brow as you track it.", "The infinity path. Smooth through the center, no pausing.", "Infinity shape — a classic tracking exercise. Stay fluid through every curve."],
   lissajous: ["This path is a little unpredictable. Stay locked onto the dot and let your eyes flow.", "A weaving pattern now. Keep relaxed while you track it.", "Complex curve ahead. Don't rush — stay with the dot wherever it leads.", "Lissajous curve. Let your eyes adapt to the rhythm of the shape."],
-  zigzag: ["Sharp zigzags. Change direction quickly but keep your head perfectly still.", "Follow the zigzag. Fast turns, smooth tracking.", "Zigzag pattern. React with your eyes only — your head stays locked.", "Rapid direction changes now. This is reflex training for your eye muscles."],
+  zigzag: ["Sharp zigzags. Follow only as quickly as feels comfortable, and let your head move naturally if needed.", "Follow the zigzag at an easy pace. Smooth tracking matters more than speed.", "Zigzag pattern. Keep the movement comfortable and pause if your eyes feel tired.", "A few direction changes now. This is a visual coordination exercise, not a speed test."],
   spiral: ["A spiral, outward then inward. Notice how far your eyes can comfortably reach.", "Track the spiral to the edge and back to center.", "Expanding and contracting spiral. Feel the range of your vision.", "Spiral path — let your eyes ride the curve all the way out and all the way back."],
   wave: ["A slow horizontal wave. This trains smooth pursuit from side to side.", "Ride the wave with your eyes, left to right and back.", "Horizontal wave. Let your eyes surf across the screen without snapping.", "Side-to-side wave. This is one of the most natural motions for your eyes."],
   square: ["Now a square path. Hold each corner briefly, then move along the edge.", "Trace the square. Corners are pauses, edges are smooth.", "Square tracking. Crisp at the corners, smooth on the straights.", "Four sides, four corners. Let your gaze be deliberate and controlled."],
@@ -77,20 +81,19 @@ const FOLLOW_LINES: Record<string, string[]> = {
 function eyeTraining(ctx: Ctx, target: number) {
   const r = ctx.rng;
   push(ctx, "title", 6, {
-    title: r.pick(["Eye Workout", "Eye Training", "Vision Drills", "Eye Gym", "Focus & Track", "Daily Eye Care", "Eye Mobility", "Eye Strength", "Visual Training"]),
-    sub: r.pick(["Guided session", "Follow with your eyes only", "Keep your head still", "Daily routine", "No equipment needed", "Reduce screen fatigue", "Strengthen your focus", "5–10 minutes a day"]),
+    title: r.pick(["Visual Reset", "Gaze Practice", "Focus & Track", "Screen Break", "Daily Eye Care", "Visual Comfort", "Gentle Tracking", "Look Away & Reset"]),
+    sub: r.pick(["Guided session", "Follow at your own pace", "Keep your gaze comfortable", "Daily screen break", "No equipment needed", "Pause from close work", "Visual awareness", "5–10 minutes a day"]),
+    eyebrow: r.pick(["VISUAL COMFORT", "SCREEN BREAK", "GENTLE GAZE PRACTICE"]),
   }, r.pick(EYE_INTROS));
   let round = 0;
   while (ctx.t < target - 12) {
     const drill = r.pick([
-      "follow", "follow", "follow", "follow",
+      "follow", "follow", "follow",
       "saccade", "saccade",
       "focus", "focus",
       "peripheral",
       "palming",
-      "convergence",
       "blink-count",
-      "rotation",
       "tracing",
     ]);
     round++;
@@ -116,10 +119,10 @@ function eyeTraining(ctx: Ctx, target: number) {
       push(ctx, "eye-focus", dur, { period: r.range(2.5, 6), shape, letter: r.pick(["E", "A", "K", "8", "Z", "F", "T", "O", "C", "X"]) }, r.pick([
         "Focus shift. As the shape grows, imagine it coming close. As it shrinks, let your focus relax into the distance.",
         "Near and far. Keep the shape crisp as it changes size.",
-        "This drill relaxes your focusing muscles. Follow the size change and blink when you need to.",
-        "Accommodation training. Let your lens adjust naturally with each size change.",
-        "The shape is pulsing between near and far. Ride that shift without straining.",
-        "Focus in as it grows, defocus as it shrinks. It's a workout for your ciliary muscle.",
+        "Follow the size change with a relaxed gaze and blink when you need to.",
+        "Let the shape change while your eyes remain comfortable. Do not force clarity or strain to keep it sharp.",
+        "The shape is pulsing gently. Notice the change without trying to exercise or stretch your eyes.",
+        "Keep your gaze easy as the shape changes. Looking away is always fine if your eyes feel tired.",
       ]));
     } else if (drill === "peripheral") {
       const dur = r.int(18, 40);
@@ -136,8 +139,8 @@ function eyeTraining(ctx: Ctx, target: number) {
       push(ctx, "eye-follow", dur, { path: "circle", speed: r.range(0.25, 0.65), size: r.int(8, 20), shape: "dot", trail: false, rotateDir: 1, convergence: true, color: r.pick(["red", "cyan", "white"]) }, r.pick([
         "Convergence drill. Watch the two targets as they approach each other. Keep both in focus.",
         "Both targets together now. Let your eyes converge as they meet in the center.",
-        "Cross-eye training. Follow the targets toward each other without losing either one.",
-        "Convergence. This exercise strengthens the muscles that pull your eyes inward to read and focus up close.",
+        "Optional convergence practice. Follow the targets only while both eyes remain comfortable.",
+        "This is a visual coordination prompt, not a treatment. Stop for double vision, strain, or headache.",
       ]));
     } else if (drill === "blink-count") {
       const dur = r.int(16, 30);
@@ -152,7 +155,7 @@ function eyeTraining(ctx: Ctx, target: number) {
       const dur = r.int(20, 36);
       const dir = r.chance(0.5) ? "clockwise" : "counterclockwise";
       push(ctx, "eye-rotation", dur, { direction: dir, speed: r.range(0.3, 0.7), reps: r.int(2, 5) }, r.pick([
-        `Slow eye rotation, ${dir}. Let your eyes travel the full circle — top, right, bottom, left. Keep the arc smooth.`,
+        `Slow gaze rotation, ${dir}. Keep the circle small and comfortable, or skip it if it causes strain.`,
         `Eye circles ${dir}. This stretches the extraocular muscles and increases their range of motion.`,
         `Rolling your eyes ${dir} deliberately is a real exercise. Nice and slow, all the way around.`,
         `${dir.charAt(0).toUpperCase() + dir.slice(1)} rotation now. If you feel a slight tension, that's the muscle working.`,
@@ -920,7 +923,7 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
   const titleScene = scenes.find((s) => s.kind === "title");
   const base = (titleScene?.data.title as string) || "Session";
   const tmpl: Record<string, string[]> = {
-    eye_training: [`${base} — ${mins} Minute Guided Eye Exercise ${emoji}`, `${mins} Min Eye Training | Follow, Focus, Relax`, `Daily Eye Workout #${day}: Smooth Pursuit & Saccades`, `Rest Your Eyes: ${mins}-Minute Guided Routine`],
+    eye_training: [`${base} — ${mins} Minute Visual Comfort Session ${emoji}`, `${mins} Min Screen Break | Follow, Focus, Relax`, `Daily Visual Reset #${day}: Smooth Tracking & Blinks`, `Rest Your Eyes: ${mins}-Minute Guided Routine`],
     math: [`${base}: ${scenes.filter((s) => s.kind.startsWith("math")).length} Mental Math Questions ${emoji}`, `Can You Solve These? ${mins} Min Mental Math Sprint`, `Daily Math Drill #${day} — Answer Before The Timer`, `Mental Math Practice (${mins} min, timed)`],
     story: [`${base} | A Short Story ${emoji}`, `${base} — Narrated Story to Relax To`, `Bedtime Story: ${base}`, `${base} (Original Short Fiction, ${mins} min)`],
     gameplay: [
@@ -941,14 +944,24 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
     polls: [`${base} — Quick Polls ${emoji}`, `${mins} Min Opinion Questions`, `You Decide #${day}`, `Vote Now!`],
     mixed: [`${base} #${day} — Eyes, Brain & Breath ${emoji}`, `${mins} Minute Mixed Mind Session`, `Daily Variety Session #${day}`],
   };
-  const title = r.pick(tmpl[category] || tmpl.mixed);
+  const title = category === "eye_training"
+    ? r.pick([
+      `${mins}-Minute Eye Strain Relief Screen Break | Guided Visual Comfort`,
+      `Digital Eye Strain Relief Routine | ${mins}-Minute Eye Rest & Focus Break`,
+      `Eye Rest Exercises for Screen Fatigue | ${mins}-Minute Guided Routine`,
+      `20-20-20-Inspired Eye Break | ${mins} Minutes of Gentle Visual Relaxation`,
+    ])
+    : r.pick(tmpl[category] || tmpl.mixed);
   const catInfo = CATEGORIES.find((c) => c.id === category);
   const narrations = scenes.filter((s) => s.narration).slice(0, 3).map((s) => s.narration).join(" ");
   const chapters = scenes.filter((s) => s.kind !== "interlude").map((s) => `${fmt(s.start)} ${chapterName(s)}`).join("\n");
-  const desc = `${catInfo?.blurb ?? ""}\n\n${narrations}\n\nChapters:\n${chapters}\n\n${r.pick(["New session generated every day.", "Every video is generated fresh — no two are the same.", "Subscribe for a new one tomorrow."])} ${r.pick(["#${category}", ""])}\n\nMusic: Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 — http://creativecommons.org/licenses/by/4.0/`
+  const eyeSeoIntro = category === "eye_training"
+    ? `Use this gentle eye strain relief routine as a screen break for digital eye strain, tired eyes, and close-work fatigue. Follow the moving targets at a comfortable pace, blink naturally, and look away whenever you need to. This is a relaxation and visual-awareness routine, not medical treatment or a vision test.`
+    : "";
+  const desc = `${eyeSeoIntro || catInfo?.blurb || ""}\n\n${narrations}\n\nChapters:\n${chapters}\n\n${r.pick(["New session generated every day.", "Every video is generated fresh — no two are the same.", "Subscribe for a new one tomorrow."])} ${r.pick(["#${category}", ""])}\n\nMusic: Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 — http://creativecommons.org/licenses/by/4.0/`
     .replace("${category}", category.replace("_", ""));
   const tagBank: Record<string, string[]> = {
-    eye_training: ["eye exercises", "eye training", "vision", "eye workout", "smooth pursuit", "saccades", "eye strain relief", "focus"],
+    eye_training: ["eye strain relief", "digital eye strain", "screen break", "eye rest", "tired eyes", "screen fatigue", "20-20-20 rule", "visual comfort", "visual awareness", "gentle tracking", "smooth pursuit", "saccades", "focus break"],
     math: ["mental math", "math practice", "arithmetic", "math quiz", "brain training", "math drill", "quick math"],
     story: ["short story", "bedtime story", "narrated story", "audiobook", "fiction", "storytelling", "relaxing"],
     gameplay: ["classic games", "snake game", "breakout", "maze solving", "game of life", "marble race", "tetris", "pong", "sorting visualization", "pathfinding", "flappy bird", "asteroids", "particle simulation", "satisfying", "relaxing gameplay", "arcade classics"],
@@ -964,7 +977,7 @@ function meta(r: RNG, category: string, scenes: Scene[], durationSec: number, or
   };
   const tags = [...(tagBank[category] || []), "daily", orientation === "portrait" ? "shorts" : "generated"];
   const thumbHooks: Record<string, string[]> = {
-    eye_training: ["FOLLOW THE DOT", "EYE WORKOUT", "KEEP YOUR HEAD STILL", "TRACK THIS", "EYE ROTATION", "TRACE THIS", "VISION DRILL", "BLINK TRAINING"],
+    eye_training: ["FOLLOW THE DOT", "SCREEN BREAK", "MOVE COMFORTABLY", "TRACK THIS", "LOOK AWAY", "TRACE THIS", "VISUAL RESET", "BLINK BREAK"],
     math: ["CAN YOU SOLVE IT?", "BEAT THE TIMER", "MENTAL MATH", "NO CALCULATOR", "ORDER OF OPS", "CUBE THIS", "MATH SPRINT"],
     story: [base, "THE LAST LETTER", "A STRANGE NIGHT", "WHAT HAPPENED?", "THE LOST KEY", "BEFORE DAWN"],
     gameplay: ["WATCH IT RUN", "CLASSIC ARCADE", "GAME TIME", "NEW RUN", "PIXEL PERFECT", "GAME ON", "PLAY SESSION", "ARCADE MODE"],
@@ -993,7 +1006,7 @@ function chapterName(s: Scene): string {
     case "eye-focus": return "Focus shift";
     case "eye-peripheral": return "Peripheral";
     case "eye-palming": return "Palming rest";
-    case "eye-rotation": return `Eye rotation: ${d.direction}`;
+    case "eye-rotation": return `Gaze rotation: ${d.direction}`;
     case "eye-tracing": return `Tracing: ${d.shape}`;
     case "math-question": return `Question ${d.index}`;
     case "math-sequence": return `Sequence ${d.index}`;
@@ -1035,8 +1048,8 @@ export function generateComposition(opts: GenerateOptions): Composition {
   const orientation = opts.orientation;
   const target = opts.targetDuration ?? (orientation === "landscape" ? rng.int(245, 470) : rng.int(70, 110));
   const palettes = rng.shuffle(PALETTES).slice(0, rng.int(2, 4));
-  const ctx: Ctx = { rng, orientation, palettes, sceneCount: 0, scenes: [], t: 0 };
   const category = opts.category === "random" ? rng.pick(CATEGORIES.map((c) => c.id)) : opts.category;
+  const ctx: Ctx = { rng, orientation, category, palettes, sceneCount: 0, scenes: [], t: 0 };
   switch (category) {
     case "eye_training": eyeTraining(ctx, target); break;
     case "math": math(ctx, target); break;

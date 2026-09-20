@@ -18,7 +18,7 @@ export function fmtDate(d?: Date | string | null) {
   return dt.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 export const CAT_LABEL: Record<string, string> = { 
-  eye_training: "Eye Training", 
+  eye_training: "Visual Comfort", 
   math: "Math", 
   story: "Story", 
   gameplay: "Game Play", 

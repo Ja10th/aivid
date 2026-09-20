@@ -200,8 +200,9 @@ const sceneTitle: SceneFn = (ctx, comp, s, lt) => {
   const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
   const e = easeOutBack(clamp(lt / 0.9, 0, 1));
   const r = new RNG(s.id + "layout");
-  const layout = r.int(0, 3);
+  const layout = s.data.eyebrow ? 0 : r.int(0, 3);
   const title = String(s.data.title ?? ""); const sub = String(s.data.sub ?? "");
+  const eyebrow = String(s.data.eyebrow ?? "");
   ctx.save();
   // decorative block
   ctx.fillStyle = p.accent;
@@ -216,10 +217,19 @@ const sceneTitle: SceneFn = (ctx, comp, s, lt) => {
   const x = layout === 2 ? W * 0.08 : layout === 3 ? W * 0.6 : W / 2;
   ctx.textAlign = layout === 2 || layout === 3 ? "left" : "center";
   const baseY = layout === 1 ? H * 0.55 : H * 0.45;
+  if (eyebrow) {
+    ctx.globalAlpha = clamp(lt / 0.5, 0, 1);
+    ctx.fillStyle = p.accent;
+    font(ctx, comp.orientation === "landscape" ? 24 : 20, th.fontMono, "bold");
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(eyebrow, W / 2, H * 0.16);
+    ctx.globalAlpha = 1;
+  }
   lines.forEach((ln, i) => {
     const y = baseY + (i - (lines.length - 1) / 2) * size * 1.05;
     const off = (1 - e) * (i % 2 ? 80 : -80);
-    ctx.fillStyle = p.accent2; ctx.fillText(ln, x + off + 5, y + 5);
+    ctx.fillStyle = hexA(p.accent2, 0.42); ctx.fillText(ln, x + off + 2, y + 2);
     ctx.fillStyle = p.fg; ctx.fillText(ln, x + off, y);
   });
   if (sub) {
@@ -268,12 +278,13 @@ const sceneInterlude: SceneFn = (ctx, comp, s, lt) => {
 
 function followPos(path: string, ph: number, W: number, H: number, rng: RNG): [number, number] {
   const cx = W / 2, cy = H / 2, rx = W * 0.38, ry = H * 0.36;
+  const unit = (value: number, period = 1) => ((value % period) + period) % period;
   switch (path) {
     case "circle": return [cx + Math.cos(ph) * Math.min(rx, ry), cy + Math.sin(ph) * Math.min(rx, ry)];
     case "figure8": return [cx + Math.sin(ph) * rx, cy + Math.sin(ph * 2) * ry * 0.8];
     case "lissajous": return [cx + Math.sin(ph * 3) * rx, cy + Math.sin(ph * 2 + 1) * ry];
-    case "zigzag": { const u = (ph / (Math.PI * 2)) % 1; const k = Math.floor(u * 8); const f = (u * 8) % 1; const x0 = k % 2 ? W * 0.1 : W * 0.9, x1 = k % 2 ? W * 0.9 : W * 0.1; return [lerp(x0, x1, f), H * 0.15 + (k / 7) * H * 0.7]; }
-    case "spiral": { const u = (ph / (Math.PI * 2)) % 2; const rr = (u < 1 ? u : 2 - u); return [cx + Math.cos(ph * 3) * rr * rx, cy + Math.sin(ph * 3) * rr * ry]; }
+    case "zigzag": { const u = unit(ph / (Math.PI * 2)); const k = Math.floor(u * 8); const f = unit(u * 8); const x0 = k % 2 ? W * 0.1 : W * 0.9, x1 = k % 2 ? W * 0.9 : W * 0.1; return [lerp(x0, x1, f), H * 0.15 + (k / 7) * H * 0.7]; }
+    case "spiral": { const u = unit(ph / (Math.PI * 2), 2); const rr = (u < 1 ? u : 2 - u); return [cx + Math.cos(ph * 3) * rr * rx, cy + Math.sin(ph * 3) * rr * ry]; }
     case "wave": return [cx + Math.sin(ph) * rx, cy + Math.sin(ph * 4) * ry * 0.25];
     case "square": { const u = (ph / (Math.PI * 2)) % 1; const side = Math.floor(u * 4), f = (u * 4) % 1; const L = cx - rx * 0.9, R = cx + rx * 0.9, T = cy - ry * 0.9, B = cy + ry * 0.9; if (side === 0) return [lerp(L, R, f), T]; if (side === 1) return [R, lerp(T, B, f)]; if (side === 2) return [lerp(R, L, f), B]; return [L, lerp(B, T, f)]; }
     case "diagonal": {
@@ -281,7 +292,7 @@ function followPos(path: string, ph: number, W: number, H: number, rng: RNG): [n
       return [lerp(cx - rx, cx + rx, u), lerp(cy - ry, cy + ry, u)];
     }
     case "bowtie": {
-      const u = (ph / (Math.PI * 2)) % 1;
+      const u = unit(ph / (Math.PI * 2));
       const t = u * 4;
       if (t < 1) return [lerp(cx - rx, cx, t), lerp(cy - ry, cy, t)];
       if (t < 2) return [lerp(cx, cx + rx, t - 1), lerp(cy, cy + ry, t - 1)];
@@ -289,7 +300,7 @@ function followPos(path: string, ph: number, W: number, H: number, rng: RNG): [n
       return [lerp(cx, cx - rx, t - 3), lerp(cy, cy - ry, t - 3)];
     }
     case "triangle": {
-      const u = (ph / (Math.PI * 2)) % 1;
+      const u = unit(ph / (Math.PI * 2));
       const t = u * 3;
       const p0: [number, number] = [cx, cy - ry];
       const p1: [number, number] = [cx + rx, cy + ry];
@@ -481,7 +492,7 @@ const sceneEyeRotation: SceneFn = (ctx, comp, s, lt) => {
   ctx.fillText("roll smoothly with the target", cx, cy);
 
   ctx.fillStyle = hexA(p.fg, 0.85); font(ctx, 24, th.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.fillText(`eye rotation · ${dir}`, 24, 20);
+  ctx.fillText(`gaze rotation · ${dir}`, 24, 20);
   progressBar(ctx, comp, s, lt, p.accent2);
 };
 

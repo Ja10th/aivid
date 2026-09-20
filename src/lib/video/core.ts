@@ -240,7 +240,7 @@ export const MOODS = ["calm", "focus", "playful", "chiptune", "cinematic", "myst
 export type Mood = (typeof MOODS)[number];
 
 export const CATEGORIES: { id: string; label: string; blurb: string; moods: Mood[] }[] = [
-  { id: "eye_training", label: "Eye Training", blurb: "Smooth pursuit, saccades, focus shifts, rotation, tracing, and convergence drills — narrated.", moods: ["calm", "focus"] },
+  { id: "eye_training", label: "Visual Comfort", blurb: "Gentle gaze, blinking, fixation, tracking, and screen-break routines — narrated.", moods: ["calm", "focus"] },
   { id: "math", label: "Math Exercises", blurb: "Timed arithmetic, sequences and mental math with reveals.", moods: ["focus", "playful", "chiptune"] },
   { id: "story", label: "Stories", blurb: "Procedurally written short fiction, narrated, with illustrated panels.", moods: ["cinematic", "calm", "mystery"] },
   { id: "gameplay", label: "Game Plays", blurb: "Classic arcade games: snake, breakout, mazes, pong, tetris, flappy bird, asteroids, sorting visualizations, and more.", moods: ["chiptune", "energetic", "playful"] },
