@@ -35,6 +35,10 @@ export default function Nav() {
       <Link href="/" className="fixed left-3 bottom-3 z-40 h-bungee text-[13px] leading-none bg-magenta text-ink px-2 py-1 rotate-[-4deg] hover:rotate-[4deg] transition-transform">
         LOOP<br />FOUNDRY
       </Link>
+      <div className="fixed right-3 bottom-3 z-40 flex gap-3 t-vt text-sm">
+        <Link href="/privacy-policy" className="bg-bone/80 px-1 underline-hot">privacy</Link>
+        <Link href="/terms-of-service" className="bg-bone/80 px-1 underline-hot">terms</Link>
+      </div>
     </>
   );
 }
