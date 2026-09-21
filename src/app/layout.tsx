@@ -6,6 +6,9 @@ import Nav from "@/components/Nav";
 export const metadata: Metadata = {
   title: "Loop Foundry — autonomous YouTube video factory",
   description: "Generates, renders, schedules and posts unique videos to your YouTube channels every day.",
+  verification: {
+    google: "tHtGcvYTFpw1elC9JaWd5BXgAGvxuFacPaPzSHBt99Q",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
