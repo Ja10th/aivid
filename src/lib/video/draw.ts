@@ -252,6 +252,22 @@ function puzzleBrand(category: string) {
   return PUZZLE_BRANDS[category] ?? PUZZLE_BRANDS.brain;
 }
 
+function puzzleContrastScene(comp: Composition, s: Scene): Scene {
+  const brand = puzzleBrand(comp.category);
+  return {
+    ...s,
+    palette: {
+      ...s.palette,
+      bg: "#050609",
+      bg2: "#111722",
+      fg: "#f7f8fa",
+      accent: brand.accent,
+      accent2: brand.accent2,
+      muted: "#75808d",
+    },
+  };
+}
+
 function drawPuzzleBackground(ctx: C2D, comp: Composition, s: Scene, lt: number) {
   const { width: W, height: H } = comp;
   const brand = puzzleBrand(comp.category);
@@ -1934,8 +1950,11 @@ function drawScene(ctx: C2D, comp: Composition, s: Scene, lt: number, cache: Cac
   } else {
     drawBackground(ctx, s, comp, lt);
   }
-  const fn = RENDERERS[s.kind];
-  if (fn) fn(ctx, comp, s, lt, cache);
+  const renderedScene = ["brain", "trivia", "riddles"].includes(comp.category)
+    ? puzzleContrastScene(comp, s)
+    : s;
+  const fn = RENDERERS[renderedScene.kind];
+  if (fn) fn(ctx, comp, renderedScene, lt, cache);
 }
 
 export function drawFrame(ctx: C2D, comp: Composition, t: number, cache: Cache) {
