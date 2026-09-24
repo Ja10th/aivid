@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { db } from "@/db";
-import { automations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { automations, videos } from "@/db/schema";
+import { and, eq, isNotNull } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 type P = { params: Promise<{ id: string }> };
 export async function PATCH(req: NextRequest, { params }: P) {
@@ -20,6 +20,19 @@ export async function PATCH(req: NextRequest, { params }: P) {
   if ("fallbackVoice" in b) set.fallbackVoice = b.fallbackVoice;
   if ("musicMood" in b) set.musicMood = b.musicMood;
   const [a] = await db.update(automations).set(set).where(eq(automations.id, Number(id))).returning();
+  // Older automations defaulted to review mode. Their planner already stored
+  // scheduledFor, so enabling auto-post can safely promote completed clips
+  // without creating a second batch or losing their planned times.
+  if (a && set.mode === "auto" && a.channelIds.length) {
+    await db.update(videos)
+      .set({ status: "scheduled", error: null })
+      .where(and(
+        eq(videos.automationId, a.id),
+        eq(videos.status, "ready"),
+        isNotNull(videos.channelId),
+        isNotNull(videos.scheduledFor),
+      ));
+  }
   return Response.json(a);
 }
 export async function DELETE(_: NextRequest, { params }: P) {

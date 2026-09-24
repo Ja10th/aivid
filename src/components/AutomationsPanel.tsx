@@ -12,7 +12,10 @@ export default function AutomationsPanel({ autos, channels }: { autos: A[]; chan
   const [cats, setCats] = useState<string[]>(["eye_training", "brain"]);
   const [chIds, setChIds] = useState<number[]>(channels.slice(0, 1).map((c) => c.id));
   const [perDay, setPerDay] = useState(2);
-  const [mode, setMode] = useState<"review" | "auto">("review");
+  // Automations are intended to publish on their configured timetable. Review
+  // remains available, but should be an explicit opt-in rather than the
+  // default that leaves every rendered clip in `ready`.
+  const [mode, setMode] = useState<"review" | "auto">("auto");
   const [times, setTimes] = useState("09:00, 18:00");
   const [orientation, setOrientation] = useState("landscape");
   const [voice, setVoice] = useState("random");
@@ -69,7 +72,9 @@ export default function AutomationsPanel({ autos, channels }: { autos: A[]; chan
             <div><label className="lbl text-acid">format</label>
               <select value={orientation} onChange={(e) => setOrientation(e.target.value)} className="field text-bone border-bone bg-ink"><option value="landscape">16:9 episodes (4+ min)</option><option value="portrait">9:16 shorts</option><option value="mixed">mixed</option></select></div>
             <div><label className="lbl text-acid">after render</label>
-              <div className="flex gap-1"><button className={`chip text-bone ${mode === "review" ? "on" : ""}`} onClick={() => setMode("review")}>review</button><button className={`chip text-bone ${mode === "auto" ? "on" : ""}`} onClick={() => setMode("auto")}>auto-post</button></div></div>
+              <div className="flex gap-1"><button className={`chip text-bone ${mode === "review" ? "on" : ""}`} onClick={() => setMode("review")}>review</button><button className={`chip text-bone ${mode === "auto" ? "on" : ""}`} onClick={() => setMode("auto")} disabled={!chIds.length}>auto-post</button></div>
+              {!chIds.length && <div className="t-vt text-magenta mt-1">connect a channel to schedule automatically</div>}
+            </div>
             <div><label className="lbl text-acid">voice</label><select value={voice} onChange={(e) => setVoice(e.target.value)} className="field text-bone border-bone bg-ink"><option value="random">random</option>{STUDIO_VOICES.map((v) => <option key={v.id} value={v.id}>{v.label} · Studio</option>)}{VOICES.map((v) => <option key={v} value={v}>{v.replace("Neural", "")}</option>)}</select></div>
             <div><label className="lbl text-acid">Studio fallback</label><select value={fallbackVoice} onChange={(e) => setFallbackVoice(e.target.value)} className="field text-bone border-bone bg-ink">{VOICES.map((v) => <option key={v} value={v}>{v.replace("Neural", "")}</option>)}</select></div>
             <div><label className="lbl text-acid">music</label><select value={mood} onChange={(e) => setMood(e.target.value)} className="field text-bone border-bone bg-ink"><option value="auto">auto</option>{MOODS.map((m) => <option key={m} value={m}>{m}</option>)}</select></div>

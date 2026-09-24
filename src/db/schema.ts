@@ -28,7 +28,7 @@ export const automations = pgTable("automations", {
   categories: jsonb("categories").$type<string[]>().notNull(),
   channelIds: jsonb("channel_ids").$type<number[]>().notNull(),
   perDay: integer("per_day").notNull().default(1),
-  mode: text("mode").notNull().default("review"), // review | auto
+  mode: text("mode").notNull().default("auto"), // review | auto
   postTimes: jsonb("post_times").$type<string[]>().notNull(), // "HH:MM" local
   orientation: text("orientation").notNull().default("landscape"), // landscape | portrait | mixed
   voice: text("voice").notNull().default("random"),

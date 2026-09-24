@@ -156,6 +156,61 @@ function splitHeadline(text: string): string[] {
   return [text];
 }
 
+// Shared Loop Foundry identity for the thinking formats. The old category
+// illustrations were busy and inconsistent; these thumbnails read as one
+// recognisable series while keeping a different accent and symbol per format.
+export function drawBrandedPuzzleThumbnail(
+  ctx: C2D,
+  W: number,
+  H: number,
+  category: "brain" | "trivia" | "riddles",
+  themeVariant: number,
+  hookOverride?: string,
+) {
+  const variants = [
+    { accent: "#b8ff3c", secondary: "#42e8ff", code: "BRAIN / 01", symbol: "?" },
+    { accent: "#42e8ff", secondary: "#ffb000", code: "TRIVIA / 01", symbol: "A?" },
+    { accent: "#ff4fa3", secondary: "#b8ff3c", code: "RIDDLES / 01", symbol: "?" },
+  ] as const;
+  const brand = variants[category === "brain" ? 0 : category === "trivia" ? 1 : 2];
+  const v = Math.abs(themeVariant) % 5;
+  const pad = 26 + (v % 2) * 8;
+  ctx.fillStyle = "#050609"; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = hexA(brand.secondary, 0.18); ctx.lineWidth = 2;
+  const step = 64 + (v % 3) * 10;
+  for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.strokeStyle = brand.accent; ctx.lineWidth = 14; ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
+  ctx.strokeStyle = hexA(brand.secondary, 0.75); ctx.lineWidth = 3; ctx.strokeRect(pad + 18, pad + 18, W - (pad + 18) * 2, H - (pad + 18) * 2);
+  ctx.fillStyle = brand.accent; ctx.fillRect(pad, pad, 170, 44);
+  ctx.fillStyle = "#050609"; ctx.font = `800 22px "VT323", "DejaVu Sans Mono", monospace`; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(brand.code, pad + 18, pad + 22);
+  ctx.fillStyle = hexA(brand.secondary, 0.95); ctx.font = `800 20px "VT323", "DejaVu Sans Mono", monospace`; ctx.textAlign = "right"; ctx.fillText("LOOP / FOUNDRY", W - pad - 14, pad + 22);
+
+  const cx = W * 0.74, cy = H * 0.48;
+  ctx.save(); ctx.translate(cx, cy);
+  if (category === "brain") {
+    ctx.strokeStyle = brand.accent; ctx.lineWidth = 9; ctx.setLineDash([20, 12]); ctx.beginPath(); ctx.arc(0, 0, 130 + v * 10, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 - Math.PI / 2; ctx.fillStyle = i % 2 ? brand.secondary : brand.accent; ctx.beginPath(); ctx.arc(Math.cos(a) * 165, Math.sin(a) * 165, 13, 0, Math.PI * 2); ctx.fill(); }
+    outlinedText(ctx, "?", 0, 12, 190, "#f7f8fa", "#050609");
+  } else if (category === "trivia") {
+    const labels = ["A", "B", "C", "D"];
+    labels.forEach((label, i) => { const x = (i % 2) * 126 - 63, y = Math.floor(i / 2) * 112 - 56; ctx.fillStyle = i === v % 4 ? brand.accent : hexA(brand.secondary, 0.72); rrect(ctx, x - 48, y - 39, 96, 78, 12); ctx.fill(); outlinedText(ctx, label, x, y + 3, 58, "#050609", "#050609"); });
+    ctx.strokeStyle = brand.secondary; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, 170, 0, Math.PI * 2); ctx.stroke();
+  } else {
+    ctx.strokeStyle = brand.accent; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(-120, 120); ctx.lineTo(0, -150); ctx.lineTo(120, 120); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle = brand.secondary; ctx.beginPath(); ctx.arc(0, -150, 12, 0, Math.PI * 2); ctx.arc(-120, 120, 12, 0, Math.PI * 2); ctx.arc(120, 120, 12, 0, Math.PI * 2); ctx.fill();
+    outlinedText(ctx, "?", 0, 18, 190, "#f7f8fa", "#050609");
+  }
+  ctx.restore();
+
+  const hook = hookOverride || (category === "brain" ? "THINK FASTER" : category === "trivia" ? "CAN YOU GET THEM ALL?" : "SOLVE BEFORE THE REVEAL");
+  const words = hook.toUpperCase().split(/\s+/).slice(0, 8).join(" ");
+  const maxW = W * 0.55;
+  fitOutlinedText(ctx, words, W * 0.07, H * 0.54, maxW, 92, "#f7f8fa", "#050609");
+  ctx.fillStyle = brand.accent; ctx.fillRect(W * 0.07, H * 0.76, Math.min(maxW, 300), 9);
+  ctx.fillStyle = hexA(brand.secondary, 0.9); ctx.font = `800 24px "VT323", "DejaVu Sans Mono", monospace`; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.fillText("THINK · PLAY · REVEAL", W * 0.07, H * 0.84);
+}
+
 // ==========================================
 // PARAMETRIC 3-LAYER DECODE SYSTEM
 // themeVariant (0-799) decodes to:

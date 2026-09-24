@@ -242,6 +242,76 @@ const sceneTitle: SceneFn = (ctx, comp, s, lt) => {
   ctx.restore();
 };
 
+const PUZZLE_BRANDS: Record<string, { label: string; accent: string; accent2: string }> = {
+  brain: { label: "BRAIN / 01", accent: "#b8ff3c", accent2: "#42e8ff" },
+  trivia: { label: "TRIVIA / 01", accent: "#42e8ff", accent2: "#ffb000" },
+  riddles: { label: "RIDDLES / 01", accent: "#ff4fa3", accent2: "#b8ff3c" },
+};
+
+function puzzleBrand(category: string) {
+  return PUZZLE_BRANDS[category] ?? PUZZLE_BRANDS.brain;
+}
+
+function drawPuzzleBackground(ctx: C2D, comp: Composition, s: Scene, lt: number) {
+  const { width: W, height: H } = comp;
+  const brand = puzzleBrand(comp.category);
+  ctx.fillStyle = "#050609";
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = hexA(brand.accent2, 0.13);
+  ctx.lineWidth = 1;
+  const step = Math.max(42, Math.round(Math.min(W, H) / 14));
+  const offset = (lt * 3) % step;
+  for (let x = -step + offset; x < W + step; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = -step + offset; y < H + step; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.strokeStyle = brand.accent;
+  ctx.lineWidth = 8;
+  ctx.strokeRect(18, 18, W - 36, H - 36);
+  ctx.strokeStyle = hexA(brand.accent2, 0.55);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(34, 34, W - 68, H - 68);
+  ctx.fillStyle = hexA(brand.accent, 0.85);
+  ctx.fillRect(42, 42, 8, 36);
+  ctx.fillRect(42, 42, 36, 8);
+  ctx.fillStyle = hexA(brand.accent2, 0.7);
+  ctx.fillRect(W - 78, H - 50, 36, 8);
+  ctx.fillRect(W - 50, H - 78, 8, 36);
+  ctx.fillStyle = hexA(brand.accent2, 0.8);
+  font(ctx, 20, comp.theme.fontMono, "bold"); ctx.textAlign = "left"; ctx.textBaseline = "top";
+  ctx.fillText(brand.label, 64, 48);
+  ctx.textAlign = "right";
+  ctx.fillText("LOOP / FOUNDRY", W - 64, 48);
+  ctx.fillStyle = hexA(brand.accent, 0.8);
+  ctx.beginPath(); ctx.arc(W - 62, H - 62, 5 + Math.sin(lt * 3) * 1.5, 0, Math.PI * 2); ctx.fill();
+  void s;
+}
+
+const scenePuzzleIntro: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  const brand = puzzleBrand(comp.category);
+  const th = comp.theme;
+  ctx.fillStyle = "#050609"; ctx.fillRect(0, 0, W, H);
+  const intro = String(s.data.sub ?? "A fresh challenge").toUpperCase();
+  const reveal = easeOutBack(clamp((lt - 1.1) / 0.8, 0, 1));
+  if (lt < 1.8) {
+    const pulse = 1 + Math.sin(lt * 4) * 0.025;
+    ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(pulse, pulse);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = brand.accent; ctx.shadowColor = brand.accent; ctx.shadowBlur = 34;
+    font(ctx, Math.min(W * 0.26, H * 0.25), th.fontDisplay, "bold"); ctx.fillText("HI", 0, 0);
+    ctx.shadowBlur = 0; ctx.restore();
+  } else {
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = brand.accent; font(ctx, 22, th.fontMono, "bold"); ctx.fillText(brand.label, W / 2, H * 0.28);
+    ctx.save(); ctx.translate(W / 2, H * 0.47); ctx.scale(reveal, reveal);
+    ctx.fillStyle = "#f4f6f8"; font(ctx, Math.min(W * 0.105, H * 0.15), th.fontDisplay, "bold");
+    const title = String(s.data.title ?? "Puzzle session");
+    const titleSize = fitText(ctx, title, W * 0.78, th.fontDisplay, Math.min(W * 0.105, H * 0.15), 28, "bold");
+    void titleSize; ctx.fillText(title, 0, 0); ctx.restore();
+    ctx.fillStyle = hexA(brand.accent2, 0.9); font(ctx, 24, th.fontMono, "bold"); ctx.fillText(intro, W / 2, H * 0.68);
+    ctx.fillStyle = hexA("#f4f6f8", 0.55); font(ctx, 18, th.fontMono); ctx.fillText("THINK · PLAY · REVEAL", W / 2, H * 0.78);
+  }
+};
+
 const sceneOutro: SceneFn = (ctx, comp, s, lt) => {
   const { width: W, height: H } = comp; const p = s.palette; const th = comp.theme;
   const e = easeInOut(clamp(lt / 1, 0, 1));
@@ -282,7 +352,9 @@ function followPos(path: string, ph: number, W: number, H: number, rng: RNG): [n
   switch (path) {
     case "circle": return [cx + Math.cos(ph) * Math.min(rx, ry), cy + Math.sin(ph) * Math.min(rx, ry)];
     case "figure8": return [cx + Math.sin(ph) * rx, cy + Math.sin(ph * 2) * ry * 0.8];
-    case "lissajous": return [cx + Math.sin(ph * 3) * rx, cy + Math.sin(ph * 2 + 1) * ry];
+    // Keep this as a flat, repeatable 3:2 path. The phase offset made the
+    // target feel like it was receding or arriving from behind the viewer.
+    case "lissajous": return [cx + Math.sin(ph * 3) * rx, cy + Math.sin(ph * 2) * ry * 0.72];
     case "zigzag": { const u = unit(ph / (Math.PI * 2)); const k = Math.floor(u * 8); const f = unit(u * 8); const x0 = k % 2 ? W * 0.1 : W * 0.9, x1 = k % 2 ? W * 0.9 : W * 0.1; return [lerp(x0, x1, f), H * 0.15 + (k / 7) * H * 0.7]; }
     case "spiral": { const u = unit(ph / (Math.PI * 2), 2); const rr = (u < 1 ? u : 2 - u); return [cx + Math.cos(ph * 3) * rr * rx, cy + Math.sin(ph * 3) * rr * ry]; }
     case "wave": return [cx + Math.sin(ph) * rx, cy + Math.sin(ph * 4) * ry * 0.25];
@@ -362,24 +434,42 @@ const sceneEyeFollow: SceneFn = (ctx, comp, s, lt) => {
   }
 
   const rng = new RNG(s.id + "path");
+  // Migrate older eye compositions that still contain the retired wave path.
+  const path = comp.category === "eye_training" && s.data.path === "wave" ? "circle" : String(s.data.path);
   const ph = lt * speed * (s.data.rotateDir as number);
-  if (s.data.trail) {
-    for (let i = 12; i > 0; i--) {
-      const [tx, ty] = followPos(String(s.data.path), ph - i * 0.05 * speed, W, H, new RNG(s.id + "path"));
-      ctx.fillStyle = hexA(p.accent, 0.4 * (1 - i / 12)); ctx.beginPath(); ctx.arc(tx, ty, size * (1 - i / 14), 0, Math.PI * 2); ctx.fill();
-    }
-  }
-  const [x, y] = followPos(String(s.data.path), ph, W, H, rng);
-  ctx.fillStyle = p.accent; ctx.strokeStyle = p.accent;
-  ctx.shadowColor = p.accent; ctx.shadowBlur = 20;
-  drawShape(ctx, String(s.data.shape), x, y, size, lt);
+  const [x, y] = followPos(path, ph, W, H, rng);
+  // A single high-contrast ball is easier to follow and keeps the exercise
+  // looking intentional across every background and aspect ratio.
+  ctx.fillStyle = p.fg; ctx.strokeStyle = p.fg;
+  ctx.shadowColor = p.fg; ctx.shadowBlur = 22;
+  drawShape(ctx, "dot", x, y, size, lt);
   ctx.shadowBlur = 0;
+  ctx.fillStyle = p.accent;
+  ctx.beginPath(); ctx.arc(x - size * 0.28, y - size * 0.28, size * 0.22, 0, Math.PI * 2); ctx.fill();
   // small center cross + label
   ctx.strokeStyle = hexA(p.muted, 0.6); ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(W / 2 - 10, H / 2); ctx.lineTo(W / 2 + 10, H / 2); ctx.moveTo(W / 2, H / 2 - 10); ctx.lineTo(W / 2, H / 2 + 10); ctx.stroke();
   ctx.fillStyle = hexA(p.fg, 0.7); font(ctx, 22, comp.theme.fontMono); ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.fillText(`follow · ${s.data.path}`, 24, 20);
+  ctx.fillText(`follow · ${path}`, 24, 20);
   progressBar(ctx, comp, s, lt, p.accent2);
+};
+
+const sceneEyeIntro: SceneFn = (ctx, comp, s, lt) => {
+  const { width: W, height: H } = comp;
+  // The first frame is deliberately quiet: one target, one point of focus,
+  // no title-card decoration competing with the exercise.
+  ctx.fillStyle = "#030508";
+  ctx.fillRect(0, 0, W, H);
+  const pulse = 1 + Math.sin(lt * 1.8) * 0.035;
+  const radius = Math.min(W, H) * 0.045 * pulse;
+  ctx.shadowColor = "#f4f7fb";
+  ctx.shadowBlur = radius * 1.5;
+  ctx.fillStyle = "#f4f7fb";
+  ctx.beginPath(); ctx.arc(W / 2, H / 2, radius, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#b8c4d2";
+  ctx.beginPath(); ctx.arc(W / 2 - radius * 0.28, H / 2 - radius * 0.28, radius * 0.2, 0, Math.PI * 2); ctx.fill();
+  void s;
 };
 
 const sceneEyeSaccade: SceneFn = (ctx, comp, s, lt) => {
@@ -1831,7 +1921,19 @@ export function sceneAt(comp: Composition, t: number) {
 }
 
 function drawScene(ctx: C2D, comp: Composition, s: Scene, lt: number, cache: Cache) {
-  drawBackground(ctx, s, comp, lt);
+  if (comp.category === "eye_training" && s.kind === "title") {
+    sceneEyeIntro(ctx, comp, s, lt, cache);
+    return;
+  }
+  if (["brain", "trivia", "riddles"].includes(comp.category) && s.kind === "title") {
+    scenePuzzleIntro(ctx, comp, s, lt, cache);
+    return;
+  }
+  if (["brain", "trivia", "riddles"].includes(comp.category)) {
+    drawPuzzleBackground(ctx, comp, s, lt);
+  } else {
+    drawBackground(ctx, s, comp, lt);
+  }
   const fn = RENDERERS[s.kind];
   if (fn) fn(ctx, comp, s, lt, cache);
 }

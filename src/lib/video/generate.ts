@@ -54,16 +54,19 @@ function push(ctx: Ctx, kind: SceneKind, duration: number, data: Record<string, 
 
 // ---------------- EYE TRAINING ----------------
 const EYE_INTROS = [
-  "Welcome to today's visual comfort session. Sit comfortably, blink naturally, and let only your eyes move when it feels easy.",
-  "This is a gentle gaze and screen-break routine. Relax your shoulders, breathe naturally, and follow the shapes without straining.",
-  "We will practice comfortable tracking and fixation. Keep your head steady only if that feels natural, and stay about an arm's length from the screen.",
-  "This session is for visual awareness and relaxation, not for diagnosing or treating an eye condition. Stop if anything feels uncomfortable.",
-  "Move within a comfortable range and blink whenever you need to. There is no benefit to forcing a stretch or chasing a target perfectly.",
-  "Before we begin: stop for pain, dizziness, nausea, headache, double vision, or unusual blur, and speak with an eye-care professional about persistent symptoms.",
-  "Take a few minutes away from close work. Keep your gaze soft, your forehead relaxed, and pause whenever your eyes need a break.",
-  "This is a guided visual reset. It may help you pause from screen work, but it does not improve eyesight or replace an eye examination.",
+  "A smooth visual reset. Follow the shape at your own pace, blink naturally, and keep the movement comfortable.",
+  "Let your eyes settle. Track the motion smoothly, keep your gaze relaxed, and look away whenever you need a break.",
+  "We are starting with gentle tracking. No forcing, no perfect target—just an easy, steady gaze.",
+  "Take a screen break with us. Soften your focus, follow the motion, and stay within a range that feels good.",
+  "Begin comfortably. Let the target lead and keep your eyes moving smoothly rather than reaching for it.",
+  "A few minutes of calm visual movement. Blink freely, pause when needed, and follow what feels natural.",
+  "Reset your gaze. Keep your face relaxed and let the motion do the work.",
+  "This is a visual comfort routine, not a test. Follow gently and stop if anything feels uncomfortable.",
 ];
-const FOLLOW_PATHS = ["circle", "figure8", "lissajous", "zigzag", "spiral", "wave", "square", "random", "diagonal", "bowtie", "triangle"] as const;
+// Keep the target consistent: the viewer follows one clean ball, not a set of
+// decorative shapes. Wave motion is deliberately excluded because it reads as
+// a screen animation rather than a controlled visual drill.
+const FOLLOW_PATHS = ["circle", "figure8", "lissajous", "zigzag", "spiral", "square", "random", "diagonal", "bowtie", "triangle"] as const;
 const FOLLOW_LINES: Record<string, string[]> = {
   circle: ["Follow the dot as it travels in a circle. Keep the motion smooth, no jumping ahead.", "Trace the circle with your eyes. Smooth and steady.", "A full circle now. Exhale slowly as you complete each loop.", "Round and round. Your eyes should glide, not jump."],
   figure8: ["Now a figure eight. Let your eyes glide through the crossing point without stopping.", "Follow the infinity loop. Relax your brow as you track it.", "The infinity path. Smooth through the center, no pausing.", "Infinity shape — a classic tracking exercise. Stay fluid through every curve."],
@@ -80,7 +83,7 @@ const FOLLOW_LINES: Record<string, string[]> = {
 
 function eyeTraining(ctx: Ctx, target: number) {
   const r = ctx.rng;
-  push(ctx, "title", 6, {
+  push(ctx, "title", 3.5, {
     title: r.pick(["Visual Reset", "Gaze Practice", "Focus & Track", "Screen Break", "Daily Eye Care", "Visual Comfort", "Gentle Tracking", "Look Away & Reset"]),
     sub: r.pick(["Guided session", "Follow at your own pace", "Keep your gaze comfortable", "Daily screen break", "No equipment needed", "Pause from close work", "Visual awareness", "5–10 minutes a day"]),
     eyebrow: r.pick(["VISUAL COMFORT", "SCREEN BREAK", "GENTLE GAZE PRACTICE"]),
@@ -100,8 +103,7 @@ function eyeTraining(ctx: Ctx, target: number) {
     if (drill === "follow") {
       const path = r.pick(FOLLOW_PATHS);
       const dur = r.int(20, 52);
-      const shape = r.pick(["dot", "ring", "star", "square", "diamond", "cross", "arrow"]);
-      push(ctx, "eye-follow", dur, { path, speed: r.range(0.45, 1.5), size: r.int(12, 36), shape, trail: r.chance(0.4), color: r.pick(["red", "cyan", "white", "green", "yellow"]), rotateDir: r.chance(0.5) ? 1 : -1 }, r.pick(FOLLOW_LINES[path] ?? FOLLOW_LINES.circle));
+      push(ctx, "eye-follow", dur, { path, speed: r.range(0.45, 1.05), size: r.int(16, 24), shape: "dot", trail: false, color: "white", rotateDir: r.chance(0.5) ? 1 : -1 }, r.pick(FOLLOW_LINES[path] ?? FOLLOW_LINES.circle));
     } else if (drill === "saccade") {
       const dur = r.int(18, 42);
       const style = r.pick(["horizontal", "vertical", "diagonal", "corners", "random", "cross", "star-pattern"]);
@@ -144,7 +146,7 @@ function eyeTraining(ctx: Ctx, target: number) {
       ]));
     } else if (drill === "blink-count") {
       const dur = r.int(16, 30);
-      push(ctx, "eye-follow", dur, { path: "wave", speed: 0.4, size: 22, shape: "ring", trail: false, rotateDir: 1, blinkCued: true, color: "cyan" }, r.pick([
+      push(ctx, "eye-follow", dur, { path: "circle", speed: 0.4, size: 22, shape: "dot", trail: false, rotateDir: 1, blinkCued: true, color: "white" }, r.pick([
         "Blink training. Each time the ring pulses, do one full, slow blink. This resets your tear film.",
         "Deliberate blinking now. When the pulse happens, blink fully and slowly. Don't squint.",
         "Blink with the rhythm. Full blinks help rehydrate your eyes — especially after screen time.",
@@ -609,7 +611,7 @@ function calm(ctx: Ctx, target: number) {
     n++;
     const k = r.pick(["breathing", "breathing", "eye-follow", "eye-focus", "interlude"]);
     if (k === "breathing") push(ctx, "breathing", r.int(30, 60), { inhale: r.int(4, 5), hold: r.int(2, 7), exhale: r.int(5, 8) }, n === 1 ? "Inhale as the circle grows. Hold. Exhale as it shrinks." : r.pick(["Keep breathing with the circle.", "Slow and easy.", undefined, undefined]));
-    else if (k === "eye-follow") push(ctx, "eye-follow", r.int(25, 45), { path: r.pick(["wave", "circle", "spiral"]), speed: r.range(0.3, 0.6), size: r.int(20, 34), shape: "ring", trail: true, rotateDir: 1 }, r.pick(["Let your eyes drift with the shape.", "Follow gently. No effort.", undefined]));
+    else if (k === "eye-follow") push(ctx, "eye-follow", r.int(25, 45), { path: r.pick(["circle", "spiral"]), speed: r.range(0.3, 0.6), size: r.int(18, 24), shape: "dot", trail: false, rotateDir: 1 }, r.pick(["Follow the ball smoothly.", "Stay with the ball at an easy pace.", undefined]));
     else if (k === "eye-focus") push(ctx, "eye-focus", r.int(20, 40), { period: r.range(6, 9), shape: "ring", letter: "O" }, r.pick(["Soften your focus as it grows, sharpen as it shrinks.", undefined]));
     else push(ctx, "interlude", r.int(6, 12), { text: r.pick(["...", "just breathe", "nowhere to be", "notice the quiet", "unclench"]) });
   }

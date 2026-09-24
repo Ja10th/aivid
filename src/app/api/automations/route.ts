@@ -15,7 +15,9 @@ export async function POST(req: NextRequest) {
     categories: Array.isArray(b.categories) ? b.categories.map(String) : [],
     channelIds: Array.isArray(b.channelIds) ? b.channelIds.map(Number) : [],
     perDay: Math.min(12, Math.max(1, Number(b.perDay || 1))),
-    mode: b.mode === "auto" ? "auto" : "review",
+    // An automation with a channel should publish at its configured times by
+    // default. Users can still choose review mode explicitly in the UI.
+    mode: b.mode === "review" ? "review" : "auto",
     postTimes: Array.isArray(b.postTimes) ? b.postTimes.map(String).filter((t: string) => /^\d{2}:\d{2}$/.test(t)) : [],
     orientation: ["landscape", "portrait", "mixed"].includes(b.orientation) ? b.orientation : "landscape",
     voice: b.voice || "random",

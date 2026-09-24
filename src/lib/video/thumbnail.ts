@@ -5,11 +5,9 @@ import {
   drawEyeTrainingThumbnail,
   drawGameplayThumbnail,
   drawMathThumbnail,
-  drawBrainThumbnail,
+  drawBrandedPuzzleThumbnail,
   drawStoryThumbnail,
   drawCalmThumbnail,
-  drawRiddlesThumbnail,
-  drawTriviaThumbnail,
   drawMemoryThumbnail,
   drawWouldYouRatherThumbnail,
   drawMythBustersThumbnail,
@@ -192,7 +190,7 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
   }
 
   if (cat === "brain") {
-    drawBrainThumbnail(ctx, W, H, themeVariant, rng, hook);
+    drawBrandedPuzzleThumbnail(ctx, W, H, "brain", themeVariant, hook);
     return true;
   }
 
@@ -202,12 +200,12 @@ function drawReferenceThumbnail(ctx: C2D, comp: Composition, p: Palette, W: numb
   }
 
   if (cat === "riddles") {
-    drawRiddlesThumbnail(ctx, W, H, themeVariant, rng, hook);
+    drawBrandedPuzzleThumbnail(ctx, W, H, "riddles", themeVariant, hook);
     return true;
   }
 
   if (cat === "trivia") {
-    drawTriviaThumbnail(ctx, W, H, themeVariant, rng, hook);
+    drawBrandedPuzzleThumbnail(ctx, W, H, "trivia", themeVariant, hook);
     return true;
   }
 
