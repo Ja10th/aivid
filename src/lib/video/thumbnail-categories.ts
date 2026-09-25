@@ -156,7 +156,7 @@ function splitHeadline(text: string): string[] {
   return [text];
 }
 
-// Shared Loop Foundry identity for the thinking formats. The old category
+// Shared Brain Teaser identity for the thinking formats. The old category
 // illustrations were busy and inconsistent; these thumbnails read as one
 // recognisable series while keeping a different accent and symbol per format.
 export function drawBrandedPuzzleThumbnail(
@@ -180,11 +180,11 @@ export function drawBrandedPuzzleThumbnail(
   const step = 64 + (v % 3) * 10;
   for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  ctx.strokeStyle = brand.accent; ctx.lineWidth = 14; ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
-  ctx.strokeStyle = hexA(brand.secondary, 0.75); ctx.lineWidth = 3; ctx.strokeRect(pad + 18, pad + 18, W - (pad + 18) * 2, H - (pad + 18) * 2);
+  ctx.strokeStyle = hexA(brand.accent, 0.72); ctx.lineWidth = 3; ctx.strokeRect(pad, pad, W - pad * 2, H - pad * 2);
+  ctx.strokeStyle = hexA(brand.secondary, 0.4); ctx.lineWidth = 1; ctx.strokeRect(pad + 12, pad + 12, W - (pad + 12) * 2, H - (pad + 12) * 2);
   ctx.fillStyle = brand.accent; ctx.fillRect(pad, pad, 170, 44);
   ctx.fillStyle = "#050609"; ctx.font = `800 22px "VT323", "DejaVu Sans Mono", monospace`; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(brand.code, pad + 18, pad + 22);
-  ctx.fillStyle = hexA(brand.secondary, 0.95); ctx.font = `800 20px "VT323", "DejaVu Sans Mono", monospace`; ctx.textAlign = "right"; ctx.fillText("LOOP / FOUNDRY", W - pad - 14, pad + 22);
+  ctx.fillStyle = hexA(brand.secondary, 0.95); ctx.font = `800 20px "VT323", "DejaVu Sans Mono", monospace`; ctx.textAlign = "right"; ctx.fillText("BRAIN TEASER", W - pad - 14, pad + 22);
 
   const cx = W * 0.74, cy = H * 0.48;
   ctx.save(); ctx.translate(cx, cy);

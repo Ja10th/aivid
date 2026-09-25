@@ -199,7 +199,8 @@ export async function renderVideo(id: number, comp: Composition, musicFile: stri
   let idx = 1;
   if (musicFile && fs.existsSync(musicFile)) {
     inputs.push("-stream_loop", "-1", "-i", musicFile);
-    filters.push(`[${idx}:a]aformat=sample_rates=44100:channel_layouts=stereo,volume=${comp.music.volume.toFixed(2)},atrim=0:${D.toFixed(2)},asetpts=PTS-STARTPTS,afade=t=in:d=2,afade=t=out:st=${Math.max(0, D - 3).toFixed(2)}:d=3[m]`);
+    const musicVolume = Math.max(0, Math.min(0.08, Number(comp.music.volume) || 0));
+    filters.push(`[${idx}:a]aformat=sample_rates=44100:channel_layouts=stereo,volume=${musicVolume.toFixed(2)},atrim=0:${D.toFixed(2)},asetpts=PTS-STARTPTS,afade=t=in:d=2,afade=t=out:st=${Math.max(0, D - 3).toFixed(2)}:d=3[m]`);
     mixIn.push("[m]");
     idx++;
   }

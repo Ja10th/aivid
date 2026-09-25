@@ -279,12 +279,12 @@ function drawPuzzleBackground(ctx: C2D, comp: Composition, s: Scene, lt: number)
   const offset = (lt * 3) % step;
   for (let x = -step + offset; x < W + step; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = -step + offset; y < H + step; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  ctx.strokeStyle = brand.accent;
-  ctx.lineWidth = 8;
-  ctx.strokeRect(18, 18, W - 36, H - 36);
-  ctx.strokeStyle = hexA(brand.accent2, 0.55);
+  ctx.strokeStyle = hexA(brand.accent, 0.72);
   ctx.lineWidth = 2;
-  ctx.strokeRect(34, 34, W - 68, H - 68);
+  ctx.strokeRect(24, 24, W - 48, H - 48);
+  ctx.strokeStyle = hexA(brand.accent2, 0.4);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(36, 36, W - 72, H - 72);
   ctx.fillStyle = hexA(brand.accent, 0.85);
   ctx.fillRect(42, 42, 8, 36);
   ctx.fillRect(42, 42, 36, 8);
@@ -295,7 +295,7 @@ function drawPuzzleBackground(ctx: C2D, comp: Composition, s: Scene, lt: number)
   font(ctx, 20, comp.theme.fontMono, "bold"); ctx.textAlign = "left"; ctx.textBaseline = "top";
   ctx.fillText(brand.label, 64, 48);
   ctx.textAlign = "right";
-  ctx.fillText("LOOP / FOUNDRY", W - 64, 48);
+  ctx.fillText("BRAIN TEASER", W - 64, 48);
   ctx.fillStyle = hexA(brand.accent, 0.8);
   ctx.beginPath(); ctx.arc(W - 62, H - 62, 5 + Math.sin(lt * 3) * 1.5, 0, Math.PI * 2); ctx.fill();
   void s;

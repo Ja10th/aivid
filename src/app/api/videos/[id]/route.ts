@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: P) {
         return next;
       });
     composition.duration = start;
-    composition.music = { ...composition.music, volume: Math.max(0, Math.min(1, Number(composition.music?.volume ?? 0.16))) };
+    composition.music = { ...composition.music, volume: Math.max(0, Math.min(1, Number(composition.music?.volume ?? 0.06))) };
     set.composition = composition;
     set.durationSec = start;
     set.status = "queued";

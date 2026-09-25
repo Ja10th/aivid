@@ -588,7 +588,7 @@ function brain(ctx: Ctx, target: number) {
       push(ctx, "memory-sequence", showDur + recall + 4, { seq, showDur, recall, grid: r.pick(["2x2", "4x1", "diamond"]) }, "Memorize the sequence.", { narrationAt: 0.3 });
     } else if (kind === "trivia" && ti < trivia.length) {
       const t = trivia[ti++];
-      const think = r.int(6, 10);
+      const think = r.int(12, 18);
       push(ctx, "trivia", think + 5, { ...t, think, layout: r.pick(["stack", "grid", "row"]) }, t.q, { narrationAt: 0.5 });
 
     } else if (wi < words.length) {
@@ -638,7 +638,7 @@ function riddles(ctx: Ctx, target: number) {
     const riddleData = shuffled[riddleIndex % shuffled.length];
     riddleIndex++;
     
-    const thinkTime = riddleData.difficulty === "easy" ? r.int(8, 12) : riddleData.difficulty === "medium" ? r.int(12, 16) : r.int(15, 20);
+    const thinkTime = riddleData.difficulty === "easy" ? r.int(12, 16) : riddleData.difficulty === "medium" ? r.int(16, 22) : r.int(20, 28);
     const revealTime = r.int(4, 6);
     
     // Question
@@ -691,7 +691,7 @@ function trivia(ctx: Ctx, target: number) {
     const triviaData = shuffled[triviaIndex % shuffled.length];
     triviaIndex++;
     
-    const thinkTime = triviaData.difficulty === "easy" ? r.int(6, 10) : triviaData.difficulty === "medium" ? r.int(10, 14) : r.int(12, 16);
+    const thinkTime = triviaData.difficulty === "easy" ? r.int(12, 16) : triviaData.difficulty === "medium" ? r.int(16, 22) : r.int(20, 28);
     const revealTime = r.int(4, 6);
     
     // Question
@@ -1111,7 +1111,7 @@ export function generateComposition(opts: GenerateOptions): Composition {
       fontMono: rng.pick(FONTS.mono),
     },
     scenes: ctx.scenes,
-    music: { mood, volume: 0.08 },
+    music: { mood, volume: 0.06 },
     voice: { name: voiceName, fallbackVoice: opts.fallbackVoice || "en-CA-Liam", rate: isCalm ? rng.pick(["-8%", "-12%", "-5%"]) : rng.pick(["+0%", "+4%", "-3%"]), pitch: rng.pick(["+0Hz", "-2Hz", "+2Hz"]) },
     meta: { title: "", description: "", tags: [], thumbText: "", thumbSub: "" },
   };
